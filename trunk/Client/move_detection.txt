@@ -1,0 +1,1 @@
+! Server supports partially - support on client or delete capability!
