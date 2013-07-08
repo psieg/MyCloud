@@ -1,0 +1,20 @@
+...
+
+0.2.0
++ aes-256 encryption for files and filenames
+
+...
+
+0.2.5
++ new crypt format for filenames (same name = same cryptname, depends on path)
++ Server Code for Offset mismatch (rather than badqry)
+* changed autoconflict options: For this dir and below
+
+0.2.6
++ restored Client "compilability", terminal-based frontend (low priority but working)
++ Update to Qt5.1.0 for x86 and x64, switched x86 to MSVC2012
+* shorter popup-messages
+* Conflict window spawns center screen when main window not visible / at previous position
+* minor progressbar fix (short reset of last block)
+* Quitting App while Conflict Dialog active causes crash
+* minor fix of caching of encrypted filenames

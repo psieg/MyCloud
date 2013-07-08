@@ -1,0 +1,28 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Resources/down.png</file>
+        <file>Resources/up.png</file>
+        <file>Resources/icon_sync.png</file>
+        <file>Resources/tool_add.png</file>
+        <file>Resources/tool_remove.png</file>
+        <file>Resources/tool_settings.png</file>
+        <file>Resources/icon.png</file>
+        <file>Resources/icon_cf.png</file>
+        <file>Resources/icon_dl.png</file>
+        <file>Resources/icon_err.png</file>
+        <file>Resources/icon_ok.png</file>
+        <file>Resources/icon_ul.png</file>
+        <file>Resources/icon_conn.png</file>
+        <file>Resources/status_sync.png</file>
+        <file>Resources/status_err.png</file>
+        <file>Resources/status_ok.png</file>
+        <file>Resources/act_db.png</file>
+        <file>Resources/act_fs.png</file>
+        <file>Resources/act_nodb.png</file>
+        <file>Resources/act_nofs.png</file>
+        <file>Resources/act_nosrv.png</file>
+        <file>Resources/act_srv.png</file>
+        <file>Resources/lock.png</file>
+        <file>Resources/status_done.png</file>
+    </qresource>
+</RCC>
