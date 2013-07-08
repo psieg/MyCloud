@@ -5,7 +5,7 @@
 using namespace std;
 
 /* config */
-#define MC_MAXTIMEDIFF 5
+#define MC_MAXTIMEDIFF	10
 #define MC_NETTIMEOUT	30
 #define MC_SENDBLOCKSIZE 1024*1024 // 1MB
 #define MC_RECVBLOCKSIZE 1024*1024 // 1MB
