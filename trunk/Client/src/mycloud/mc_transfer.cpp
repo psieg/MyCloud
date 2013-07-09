@@ -430,8 +430,10 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 			}
 			if(srv == NULL){
 				newdb.id = MC_FID_NONE;
+				//cryptname will be generated
 			} else {
 				newdb.id = srv->id;
+				newdb.cryptname = srv->cryptname;
 			}
 			newdb.name = fs->name;
 			newdb.ctime = fs->ctime;

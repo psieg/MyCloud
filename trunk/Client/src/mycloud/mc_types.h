@@ -275,7 +275,9 @@ inline void ClearBuf(mc_buf *buf){
 }
 
 inline void ResetBuf(mc_buf *buf){
-	buf->mem = ( char*) realloc(buf->mem,4);
+	void* p = realloc(buf->mem,4);
+	MC_MEM(p,4);
+	buf->mem = ( char*) p;
 	buf->used = 0;
 	buf->size = 4;
 }
@@ -285,7 +287,9 @@ inline void MatchBuf(mc_buf *buf, size_t required){
 	if(required > buf->size){
 		if(newsize == 0) return; //error condition
 		while(newsize < required) newsize *= 2;
-		buf->mem = (char*) realloc(buf->mem,newsize);
+		void* p = realloc(buf->mem,newsize);
+		MC_MEM(p,newsize);
+		buf->mem = (char*) p;
 		MC_MEM(buf->mem,newsize);
 		buf->size = newsize;
 		//memset(&buf->mem[buf->used],0,required-buf->used);
