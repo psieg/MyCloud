@@ -244,7 +244,7 @@ int _db_close(){
 		sqlite3_finalize(stmt_update_file);
 		sqlite3_finalize(stmt_delete_file);
 		rc = _db_execstr("UPDATE status SET locked = 0");
-		if(rc) if(rc =! SQLITE_READONLY) MC_WRN("Failed to close db cleanly");
+		if(rc) if(rc != SQLITE_READONLY) MC_WRN("Failed to close db cleanly");
 		rc = sqlite3_close_v2(db);
 		if(rc) MC_WRN("Failed to close db");
 		db = NULL;
