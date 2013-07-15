@@ -3,27 +3,16 @@
 
 /* get all filter rules that apply to sync	*/
 int get_filters(list<mc_filter> *filter, int sid){
-	::regex var;
-	list<mc_filter> l;
-	list<mc_filter>::iterator lit,lend;
+	regex var;
 	int rc;
 	MC_DBG("Creating filters for sid: " << sid);
 	rc = db_list_filter_sid(filter,sid);
 	MC_CHKERR(rc);
-	/*lit = l.begin();
-	lend = l.end();
-	while(lit != lend){
-		MC_DBGL("Creating filter " << lit->id << ": " << lit->rule);
-		var = ::regex(lit->rule.c_str());
-		filter->push_back(var);
-		++lit;
-	}*/
 	return 0;
 }
 /* update filter lists for sync from server	*/
 int update_filters(int sid){
 	list<mc_filter> l;
-	list<mc_filter>::iterator lit,lend;
 	int rc;
 	MC_DBG("Updating filter lists for sid: " << sid);
 	//clear all
@@ -32,12 +21,9 @@ int update_filters(int sid){
 	//load new
 	rc = srv_listfilters(&l,sid);
 	MC_CHKERR(rc);
-	lit = l.begin();
-	lend = l.end();
-	while(lit != lend){
-		rc = db_insert_filter(&*(lit));
+	for(mc_filter& f : l){
+		rc = db_insert_filter(&f);
 		MC_CHKERR(rc);
-		++lit;
 	}
 	return 0;
 }
@@ -46,77 +32,73 @@ int update_filters(int sid){
 /* match the full path against all filters, returns wether hit	
 *	is_dir will append a / to the path for matching	*/
 bool _match_full(const string& path, const string& fname, bool is_dir, list<mc_filter> *filter){
-	list<mc_filter>::iterator fit,fend;
-	::regex r;
+	regex r;
 	string fpath,name,ext;
 	size_t dotpos = fname.find_last_of('.');
 	name = fname.substr(0,dotpos);
 	if(dotpos == string::npos) ext = "";
 	else ext = fname.substr(fname.find_last_of('.')+1);
 	fpath.assign(path).append(fname);
-	fit = filter->begin();
-	fend = filter->end();
 	MC_DBGL("Matching " << fpath);
-	while(fit != fend){
-		if(is_dir && !fit->directories){ ++fit; continue; }
-		if(!is_dir && !fit->files){ ++fit; continue; }
-		switch(fit->type){
+	for(mc_filter& f : *filter){
+		if(is_dir && !f.directories){ continue; }
+		if(!is_dir && !f.files){ continue; }
+		switch(f.type){
 			case MC_FILTERT_MATCH_NAME:
-				if(nocase_equals(name,fit->rule)){
-					MC_DBG("Matched " << fname << " against " << fit->rule);
+				if(nocase_equals(name,f.rule)){
+					MC_DBG("Matched " << fname << " against " << f.rule);
 					return true;
 				}
 				break;
 			case MC_FILTERT_MATCH_EXTENSION:
-				if(nocase_equals(ext,fit->rule)){
-					MC_DBG("Matched " << fname << " against " << fit->rule);
+				if(nocase_equals(ext,f.rule)){
+					MC_DBG("Matched " << fname << " against " << f.rule);
 					return true;
 				}
 				break;
 			case MC_FILTERT_MATCH_FULLNAME:
-				if(nocase_equals(fname,fit->rule)){
-					MC_DBG("Matched " << fname << " against " << fit->rule);
+				if(nocase_equals(fname,f.rule)){
+					MC_DBG("Matched " << fname << " against " << f.rule);
 					return true;
 				}
 				break;
 			case MC_FILTERT_MATCH_PATH:
-				if(nocase_equals(fpath,fit->rule)){
-					MC_DBG("Matched " << fname << " against " << fit->rule);
+				if(nocase_equals(fpath,f.rule)){
+					MC_DBG("Matched " << fname << " against " << f.rule);
 					return true;
 				}
 				break;
 			case MC_FILTERT_REGEX_NAME:
-				r = ::regex(fit->rule.c_str());
-				if(::regex_match(name,r,::regex_constants::match_default)){
-					MC_DBG("Matched " << fname << " against " << fit->rule);
+				r = regex(f.rule.c_str());
+				if(regex_match(name,r,regex_constants::match_default)){
+					MC_DBG("Matched " << fname << " against " << f.rule);
 					return true;
 				}
 				break;
 			case MC_FILTERT_REGEX_EXTENSION:
-				r = ::regex(fit->rule.c_str());
-				if(::regex_match(ext,r,::regex_constants::match_default)){
-					MC_DBG("Matched " << fname << " against " << fit->rule);
+				r = regex(f.rule.c_str());
+				if(regex_match(ext,r,regex_constants::match_default)){
+					MC_DBG("Matched " << fname << " against " << f.rule);
 					return true;
 				}
 				break;
 			case MC_FILTERT_REGEX_FULLNAME:
-				r = ::regex(fit->rule.c_str());
-				if(::regex_match(fname,r,::regex_constants::match_default)){
-					MC_DBG("Matched " << fname << " against " << fit->rule);
+				r = regex(f.rule.c_str());
+				if(regex_match(fname,r,regex_constants::match_default)){
+					MC_DBG("Matched " << fname << " against " << f.rule);
 					return true;
 				}
 				break;
 			case MC_FILTERT_REGEX_PATH:
-				r = ::regex(fit->rule.c_str());
-				if(::regex_match(fpath,r,::regex_constants::match_default)){
-					MC_DBG("Matched " << fname << " against " << fit->rule);
+				r = regex(f.rule.c_str());
+				if(regex_match(fpath,r,regex_constants::match_default)){
+					MC_DBG("Matched " << fname << " against " << f.rule);
 					return true;
 				}
 				break;
 			default:
-				MC_ERR_MSG(false,"Unkown filter type: " << fit->type);
+				MC_ERR_MSG(false,"Unkown filter type: " << f.type);
 		}
-		++fit;
 	}
 	return false;
 }

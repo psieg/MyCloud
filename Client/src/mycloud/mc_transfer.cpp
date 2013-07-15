@@ -15,19 +15,16 @@
 	clearall MUST be false	*/
 int cleardir(mc_sync_ctx *ctx, const string& path, bool clearall = false){
 	list<mc_file_fs> onfs;
-	list<mc_file_fs>::iterator lit,lend;
 	string fpath;
 	int rc;
 	fpath.assign(ctx->sync->path).append(path).append("/");
 	MC_DBG("Clearing directory " << path << " of filtered files");
 	rc = fs_listdir(&onfs, fpath);
 	MC_CHKERR(rc);
-	lit = onfs.begin();
-	lend = onfs.end();
-	while(lit != lend){
-		if(clearall || match_full(fpath,&*lit,ctx->filter)){
-			fpath.assign(path).append("/").append(lit->name);
-			if(lit->is_dir){
+	for(mc_file_fs& f : onfs){
+		if(clearall || match_full(fpath,&f,ctx->filter)){
+			fpath.assign(path).append("/").append(f.name);
+			if(f.is_dir){
 				rc = cleardir(ctx,fpath,true);
 				MC_CHKERR(rc);
 				rc = fs_rmdir(fpath);
@@ -37,7 +34,6 @@ int cleardir(mc_sync_ctx *ctx, const string& path, bool clearall = false){
 				MC_CHKERR(rc);
 			}
 		}
-		++lit;
 	}
 	return 0;
 }
@@ -47,14 +43,13 @@ int cleardir(mc_sync_ctx *ctx, const string& path, bool clearall = false){
 int dirempty(int id, bool *empty){
 	int rc;
 	list<mc_file> l;
-	list<mc_file>::iterator lit,lend;
+	int shit;
 	rc = db_list_file_parent(&l,id);
 	MC_CHKERR(rc);
 
 	*empty = true;
-	lend = l.end();
-	for(lit = l.begin(); lit != lend; ++lit){
-		if(lit->status != MC_FILESTAT_DELETED){
+	for(mc_file& f : l){
+		if(f.status != MC_FILESTAT_DELETED){
 			*empty = false;
 			break;
 		}

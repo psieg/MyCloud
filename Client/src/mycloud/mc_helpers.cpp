@@ -3,7 +3,6 @@
 /* cascade up the tree and recalc hashes from db */
 int directoryHash(mc_sync_ctx *ctx, int id, unsigned char hash[16]){
 	list<mc_file> l;
-	list<mc_file>::iterator lit,lend;
 	string hashstr = "";
 	int rc;
 	MC_DBGL("Hashing directory " << id);
@@ -13,11 +12,8 @@ int directoryHash(mc_sync_ctx *ctx, int id, unsigned char hash[16]){
 
 	l.sort(compare_mc_file_id);
 
-	lit = l.begin();
-	lend = l.end();
-	while(lit != lend){
-		crypt_filestring(ctx,&*lit,&hashstr);
-		++lit;
+	for(mc_file& f : l){
+		crypt_filestring(ctx,&f,&hashstr);
 	}
 	rc = strmd5(hash,hashstr);
 	MC_CHKERR(rc);
