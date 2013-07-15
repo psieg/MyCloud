@@ -292,14 +292,12 @@ int add_dir(string path, int id, QStringList *l, int rdepth){
 		list<mc_file>::iterator filesit,filesend;
 		rc = db_list_file_parent(&files,id);
 		MC_CHKERR(rc);
-		filesit = files.begin();
-		filesend = files.end();
-		for(;filesit != filesend; ++filesit){
-			if(filesit->is_dir && filesit->status != MC_FILESTAT_DELETED){
-				fpath.assign(path).append(filesit->name).append("/");
-				rc = add_dir(fpath,filesit->id,l,rdepth+1);
+		for(mc_file& f : files){
+			if(f.is_dir && f.status != MC_FILESTAT_DELETED){
+				fpath.assign(path).append(f.name).append("/");
+				rc = add_dir(fpath,f.id,l,rdepth+1);
 				MC_CHKERR(rc);
-			} else if(filesit->status != MC_FILESTAT_DELETED){
+			} else if(f.status != MC_FILESTAT_DELETED){
 				//fpath.assign(path).append(filesit->name);
 				//MC_DBGL("Adding " << fpath << " to watchlist");
 				//l->append(fpath.c_str());
