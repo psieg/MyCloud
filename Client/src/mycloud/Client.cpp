@@ -125,9 +125,9 @@ int runmc()
 									MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
 									init_sync_ctx(&context,&*dbsyncsit,&filter);
 									if(memcmp(dbsyncsit->hash,srvsyncsit->hash,16) == 0){
-										//MC_INF(dbsyncsit->name << " has not been updated on server, walking locally");
-										wrc = walk_nochange(&context,"",-dbsyncsit->id,hash);
-										//MC_INF("Sync completed (Code " << wrc << ")");
+										MC_INFL(dbsyncsit->name << " has not been updated on server, walking locally");
+										rc = walk_nochange(&context,"",-dbsyncsit->id,hash);
+										MC_INFL("Sync completed (Code " << wrc << ")");
 										rc = db_select_sync(&*dbsyncsit);
 										if(rc) throw rc;
 										memcpy(dbsyncsit->hash,hash,16);

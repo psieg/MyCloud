@@ -41,17 +41,85 @@ int cleardir(mc_sync_ctx *ctx, const string& path, bool clearall = false){
 	}
 	return 0;
 }
+
+/* Check wether the db says the directory is empty of non-deleted files.
+*	This is used as an indicator that it can be deleted/overriden	*/
+int dirempty(int id, bool *empty){
+	int rc;
+	list<mc_file> l;
+	list<mc_file>::iterator lit,lend;
+	rc = db_list_file_parent(&l,id);
+	MC_CHKERR(rc);
+
+	*empty = true;
+	lend = l.end();
+	for(lit = l.begin(); lit != lend; ++lit){
+		if(lit->status != MC_FILESTAT_DELETED){
+			*empty = false;
+			break;
+		}
+	}
+	return 0;
+}
+
+/* Download helpers	*/
+int download_checkmodified(mc_crypt_ctx *cctx, mc_file *srv, mc_file_fs *fs, const string& fpath, bool *modified){
+	FILE *fdesc = 0;
+	unsigned char hash[16];
+	int rc;
+	MC_DBGL("Opening file " << fpath << " for reading");
+	MC_NOTIFYSTART(MC_NT_DL,fpath);
+	fdesc = fs_fopen(fpath,"rb");
+	if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not read the file");
+				
+	rc = crypt_filemd5_known(cctx,srv,hash,fpath,fdesc);
+	MC_CHKERR_FD(rc,fdesc);
+
+	fclose(fdesc);
+
+	if(memcmp(srv->hash,hash,16) == 0){ //File not modified
+		*modified = false;
+		MC_DBG("File contents not modified");
+		MC_NOTIFYEND(MC_NT_DL);
+	} else {
+		*modified = true;
+	}
+	return 0;
+}
+int download_actual(mc_crypt_ctx *cctx, mc_file *srv, const string& fpath){
+	int64 offset = 0, written = 0;
+	FILE *fdesc = 0;
+	int rc;
+	MC_DBGL("Opening file " << fpath << " for writing");
+	MC_NOTIFYSTART(MC_NT_DL,fpath);
+	fdesc = fs_fopen(fpath,"wb");
+	if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not (re)write the file");
+	rc = crypt_init_download(cctx,srv);
+	MC_CHKERR_FD(rc,fdesc);
+					
+	while(offset < srv->size){
+		MC_NOTIFYPROGRESS(offset,srv->size);
+		MC_CHECKTERMINATING_FD(fdesc);
+		rc = crypt_getfile(cctx,srv->id,offset,MC_RECVBLOCKSIZE,fdesc,&written,srv->hash);
+		MC_CHKERR_FD(rc,fdesc);
+		offset += written;
+	}
+
+	rc = crypt_finish_download(cctx,offset,fdesc);
+	MC_CHKERR_FD(rc,fdesc);
+
+	fclose(fdesc);
+	MC_NOTIFYEND(MC_NT_DL);
+	return 0;
+}
+
 /* Download the file from the server
 *	fs and db may be NULL	*/
 int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr, bool recursive, mc_crypt_ctx *extcctx){
-	unsigned char hash[16], serverhash[16];
-	FILE *fdesc = 0;
-	int64 offset = 0, written = 0;
+	unsigned char serverhash[16];
 	int rc;
 	int rrc = 0; //recursive return value, only changed by walk-calls
 	string fpath,rpath; //full path, for fs calls and rpath for recursive calls
-	list<mc_file> l;
-	list<mc_file>::iterator lit,lend;
 	bool empty;
 	bool modified;
 	bool terminating = false;
@@ -88,26 +156,15 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 				if(recursive){
 					//TODO: walk_newdeleted ?
 					rrc = walk_nolocal(ctx,rpath,srv->id,srv->hash);
-					//rrc = rc;
 
 					//walk_nolocal will never leave stuff behind, so we're done
 				}
 			} else { //fs->is_dir				
 				if(recursive){
 					rrc = walk_noremote(ctx,rpath,srv->id,srv->hash);
-					//rrc = rc;
 
-					rc = db_list_file_parent(&l,srv->id);
+					rc = dirempty(srv->id,&empty);
 					MC_CHKERR(rc);
-
-					empty = true;
-					lend = l.end();
-					for(lit = l.begin(); lit != lend; ++lit){
-						if(lit->status != MC_FILESTAT_DELETED){
-							empty = false;
-							break;
-						}
-					}
 				} else {
 					empty = true;
 				}
@@ -140,19 +197,9 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 					MC_DBG("Replacing a dir with a deleted file");
 					if(recursive){
 						rrc = walk_noremote(ctx,rpath,srv->id,NULL);
-						//rrc = rc;
 
-						rc = db_list_file_parent(&l,srv->id);
+						rc = dirempty(srv->id,&empty);
 						MC_CHKERR(rc);
-
-						empty = true;
-						lend = l.end();
-						for(lit = l.begin(); lit != lend; ++lit){
-							if(lit->status != MC_FILESTAT_DELETED) {
-								empty = false;
-								break;
-							}
-						}
 					} else {
 						empty = true;
 					}
@@ -200,7 +247,6 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 					rrc = walk_nochange(ctx,rpath,srv->id,srv->hash);
 				else
 					rrc = walk(ctx,rpath,srv->id,srv->hash);
-				//rrc = rc;
 
 				//Hashupdate
 				rc = db_update_file(srv);
@@ -212,21 +258,8 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 				modified = true;
 				if(fs != NULL){
 					if(srv->size == fs->size){ //modify check only on size match
-						MC_DBGL("Opening file " << fpath << " for reading");
-						MC_NOTIFYSTART(MC_NT_DL,fpath);
-						fdesc = fs_fopen(fpath,"rb");
-						if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not read the file");
-				
-						rc = crypt_filemd5_known(&cctx,srv,hash,fpath,fdesc);
+						rc = download_checkmodified(&cctx,srv,fs,fpath,&modified);
 						MC_CHKERR(rc);
-
-						fclose(fdesc);
-
-						if(memcmp(srv->hash,hash,16) == 0){ //File not modified
-							modified = false;
-							MC_DBG("File contents not modified");
-							MC_NOTIFYEND(MC_NT_DL);
-						}
 					}
 				}
 				if(modified){
@@ -234,26 +267,9 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 					if(db == NULL) rc = db_insert_file(srv);
 					else rc = db_update_file(srv);
 					MC_CHKERR(rc);
-					MC_DBGL("Opening file " << fpath << " for writing");
-					MC_NOTIFYSTART(MC_NT_DL,fpath);
-					fdesc = fs_fopen(fpath,"wb");
-					if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not (re)write the file");
-					rc = crypt_init_download(&cctx,srv);
-					MC_CHKERR_FD(rc,fdesc);
-					
-					while(offset < srv->size){
-						MC_NOTIFYPROGRESS(offset,srv->size);
-						MC_CHECKTERMINATING_FD(fdesc);
-						rc = crypt_getfile(&cctx,srv->id,offset,MC_RECVBLOCKSIZE,fdesc,&written,srv->hash);
-						MC_CHKERR_FD(rc,fdesc);
-						offset += written;
-					}
+					rc = download_actual(&cctx,srv,fpath);
+					MC_CHKERR(rc);
 
-					rc = crypt_finish_download(&cctx,offset,fdesc);
-					MC_CHKERR_FD(rc,fdesc);
-
-					fclose(fdesc);
-					MC_NOTIFYEND(MC_NT_DL);
 				} else {
 					if(db == NULL){
 						rc = db_insert_file(srv);
@@ -270,20 +286,9 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 
 				if(recursive){
 					rrc = walk_noremote(ctx,rpath,srv->id,srv->hash);
-					//rrc = rc;
 
-
-					rc = db_list_file_parent(&l,srv->id);
+					rc = dirempty(srv->id,&empty);
 					MC_CHKERR(rc);
-
-					empty = true;
-					lend = l.end();
-					for(lit = l.begin(); lit != lend; ++lit){
-						if(lit->status != MC_FILESTAT_DELETED) {
-							empty = false;
-							break;
-						}
-					}
 				} else {
 					empty = true;
 				}
@@ -298,24 +303,9 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 					MC_CHKERR(rc);
 
 					//Only if it was empty we can download the actual file
-					MC_DBGL("Opening file " << fpath << " for writing");
-					MC_NOTIFYSTART(MC_NT_DL,fpath);
-					fdesc = fs_fopen(fpath,"wb");
-					if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not (re)write the file");
-					rc = crypt_init_download(&cctx,srv);
+					rc = download_actual(&cctx,srv,fpath);
 					MC_CHKERR(rc);
-
-					while(offset < srv->size){
-						rc = crypt_getfile(&cctx,srv->id,offset,MC_RECVBLOCKSIZE,fdesc,&written,srv->hash);
-						MC_CHKERR_FD(rc,fdesc);
-						offset += written;
-					}
-					rc = crypt_finish_download(&cctx,offset,fdesc);
-					MC_CHKERR_FD(rc,fdesc);
-
-					fclose(fdesc);
-					MC_NOTIFYEND(MC_NT_DL);
-					
+										
 					srv->status = MC_FILESTAT_COMPLETE;
 					rc = db_update_file(srv);
 					MC_CHKERR(rc);
@@ -378,19 +368,9 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 			if(srv->is_dir){
 				if(recursive){
 					rrc = walk_nolocal(ctx,rpath,srv->id,srv->hash);
-					//rrc = rc;
-					
-					rc = db_list_file_parent(&l,srv->id);
-					MC_CHKERR(rc);
 
-					empty = true;
-					lend = l.end();
-					for(lit = l.begin(); lit != lend; ++lit){
-						if(lit->status != MC_FILESTAT_DELETED){
-							empty = false;
-							break;
-						}
-					}
+					rc = dirempty(srv->id,&empty);
+					MC_CHKERR(rc);
 				} else {
 					empty = true;
 				}
@@ -470,7 +450,6 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 
 					if(recursive){
 						rrc = walk(ctx,rpath,newdb.id,newdb.hash);
-						//rrc = rc;
 					}
 				} else {
 					fseek(fdesc,0,SEEK_SET);
@@ -566,23 +545,13 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 				if(db->is_dir){					
 					if(recursive){
 						rrc = walk_nolocal(ctx,rpath,db->id,db->hash);
-						//rrc = rc;
 						
 						rc = db_update_file(db);
 						MC_CHKERR(rc);
 						crypt_filestring(ctx,db,hashstr);
-
-						rc = db_list_file_parent(&l,db->id);
+						
+						rc = dirempty(db->id,&empty);
 						MC_CHKERR(rc);
-
-						empty = true;
-						lend = l.end();
-						for(lit = l.begin(); lit != lend; ++lit){
-							if(lit->status != MC_FILESTAT_DELETED){
-								empty = false;
-								break;
-							}
-						}
 					} else {
 						empty = true;
 						crypt_filestring(ctx,db,hashstr);
@@ -648,7 +617,6 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 				//Can't get here if is_dir
 				//if(fs->is_dir && recursive){
 				//	rrc = walk(ctx,rpath,db->id,db->hash);
-				//	//rrc = rc;
 				//}
 				//Hashupdate
 				//rc = db_update_file(db);
@@ -678,7 +646,6 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 					
 					if(recursive){
 						rrc = walk(ctx,rpath,db->id,db->hash);
-						//rrc = rc;
 
 					}
 					// Hashupdate
@@ -750,19 +717,9 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 
 						if(recursive){
 							rrc = walk_nolocal(ctx,rpath,db->id,NULL);
-							//rrc = rc;
 
-							rc = db_list_file_parent(&l,db->id);
-							MC_CHKERR_FD(rc,fdesc);
-
-							empty = true;
-							lend = l.end();
-							for(lit = l.begin(); lit != lend; ++lit){
-								if(lit->status != MC_FILESTAT_DELETED){
-									empty = false;
-									break;
-								}
-							}
+							rc = dirempty(db->id,&empty);
+							MC_CHKERR(rc);
 						} else {
 							empty = true;
 						}
@@ -844,7 +801,6 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 
 					if(recursive){
 						rrc = walk(ctx,rpath,db->id,db->hash);
-						//rrc = rc;
 					}
 				} else {
 					fseek(fdesc,0,SEEK_SET);
