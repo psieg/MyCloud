@@ -12,7 +12,7 @@ QtWatcher::QtWatcher(const QStringList &paths, list<mc_sync_db> *syncs, const QS
 	connect(this,SIGNAL(_startLocalWatch()),this,SLOT(__startLocalWatch()));
 	watcher = new QFileSystemWatcher(paths);
 	connect(watcher,SIGNAL(directoryChanged(const QString &)),this,SLOT(directoryChanged(const QString &)));
-	connect(watcher,SIGNAL(fileChanged(const QString &)),this,SLOT(directoryChanged(const QString &)));
+	//connect(watcher,SIGNAL(fileChanged(const QString &)),this,SLOT(directoryChanged(const QString &))); //TODO: implement for file
 	watchsyncs = syncs;
 	QString _url = "https://";
 	_url.append(url);
@@ -299,6 +299,10 @@ int add_dir(string path, int id, QStringList *l, int rdepth){
 				fpath.assign(path).append(filesit->name).append("/");
 				rc = add_dir(fpath,filesit->id,l,rdepth+1);
 				MC_CHKERR(rc);
+			} else if(filesit->status != MC_FILESTAT_DELETED){
+				//fpath.assign(path).append(filesit->name);
+				//MC_DBGL("Adding " << fpath << " to watchlist");
+				//l->append(fpath.c_str());
 			}
 		}
 	}
