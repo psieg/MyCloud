@@ -926,6 +926,8 @@ int complete_up(mc_sync_ctx *ctx, const string& fpath, mc_file_fs *fs, mc_file *
 	rc = crypt_initresume_up(&cctx,db,&sent);
 	MC_CHKERR(rc);
 	
+	if(sent > db->size) MC_ERR_MSG(MC_ERR_VERIFY,"File on server bigger than original: " << sent << "/" << db->size);
+
 	MC_DBG("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL,fpath);
 	fdesc = fs_fopen(fpath,"rb");
@@ -956,11 +958,14 @@ int complete_up(mc_sync_ctx *ctx, const string& fpath, mc_file_fs *fs, mc_file *
 	fclose(fdesc);
 	MC_NOTIFYEND(MC_NT_UL);
 
-	srv->status = MC_FILESTAT_COMPLETE;
+	rc = crypt_finish_upload(&cctx,db->id);
+	MC_CHKERR(rc);
+
+	db->status = MC_FILESTAT_COMPLETE;
 	rc = db_update_file(db);
 	MC_CHKERR(rc);
 
-	crypt_filestring(ctx,srv,hashstr);
+	crypt_filestring(ctx,db,hashstr);
 
 	return 0;
 }
@@ -1001,10 +1006,13 @@ int complete_down(mc_sync_ctx *ctx, const string& fpath, mc_file_fs *fs, mc_file
 		MC_CHKERR_FD(rc,fdesc);
 		offset += written;
 	}
+	
+	rc = crypt_finish_download(&cctx,offset,fdesc);
+	MC_CHKERR_FD(rc,fdesc);
 
 	fclose(fdesc);
 	MC_NOTIFYEND(MC_NT_DL);
-
+	
 	rc = fs_touch(fpath,srv->mtime,srv->ctime);
 	MC_CHKERR(rc);
 

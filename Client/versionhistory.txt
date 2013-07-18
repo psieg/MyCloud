@@ -18,3 +18,4 @@
 * minor progressbar fix (short reset of last block)
 * Quitting App while Conflict Dialog active causes crash
 * minor fix of caching of encrypted filenames
+* fix for incorrect file state after completed resume
