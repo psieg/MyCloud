@@ -132,7 +132,7 @@ QtNetworkPerformer::QtNetworkPerformer(const QString& url, const QString& certfi
 }
 
 QtNetworkPerformer::~QtNetworkPerformer(){
-	delete rep;
+	if(rep) delete rep;
 }
 
 void QtNetworkPerformer::checkquit(){

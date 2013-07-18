@@ -1,8 +1,8 @@
 #include "mc_crypt.h"
 #ifdef MC_QTCLIENT
-#	ifdef MC_IONOTIFY
-#		include "qtClient.h"
-#	endif
+#	include "qtClient.h"
+#else
+#	include "mc_workerthread.h"
 #endif
 #include "openssl/rand.h"
 
@@ -362,6 +362,8 @@ int crypt_resumetopos_down(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE
 			rc = EVP_DecryptUpdate(cctx->evp, (unsigned char*) cctx->pbuf.mem, &written, (unsigned char*) cctx->pbuf.mem, blocksize);
 			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptUpdate failed");
 			pos += cctx->pbuf.used;
+
+			MC_CHECKTERMINATING();
 		}
 
 		EVP_CIPHER_CTX_cleanup(eevp);
@@ -528,7 +530,10 @@ int crypt_initresume_up(mc_crypt_ctx *cctx, mc_file *file, int64 *offset){
 			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptInit failed");
 
 			rc = srv_getoffset(file->id,offset);
-			*offset -= MC_CRYPT_OFFSET;
+			if(*offset - MC_CRYPT_OFFSET > file->size) //if offset behind file (=Padding of nothing missing)
+				*offset = file->size; // tell caller the server has everything
+			else *offset -= MC_CRYPT_OFFSET;
+
 			return rc;
 		//}
 	} else return srv_getoffset(file->id,offset);
@@ -550,7 +555,8 @@ int crypt_resumetopos_up(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE *
 			MC_NOTIFYIOSTART(MC_NT_FS);
 			read = fread(cctx->pbuf.mem,bs,1,fdesc);
 			MC_NOTIFYIOEND(MC_NT_FS);
-			if(read != 1) MC_ERR_MSG(MC_ERR_IO,"Reading from file failed: " << ferror(fdesc));
+			if(read != 1) 
+				MC_ERR_MSG(MC_ERR_IO,"Reading from file failed: " << ferror(fdesc));
 			//cctx->pbuf.used += blocksize;
 
 			//Crypted data to cryptbuf
@@ -558,6 +564,8 @@ int crypt_resumetopos_up(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE *
 			cctx->pbuf.used = written;
 			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptUpdate failed");
 			pos += cctx->pbuf.used;
+
+			MC_CHECKTERMINATING();
 		}
 	} else {
 		fseek(fdesc,offset,SEEK_SET);
@@ -687,14 +695,6 @@ int crypt_finish_upload(mc_crypt_ctx *cctx, int id){
 	int rc = 0;
 	if(cctx->ctx->sync->crypted){
 		if(!cctx->f->is_dir){
-			if(!cctx->hastag){
-				MC_WRN("Do we need this?");
-				/*
-				//if(cctx->hastag) //TODO: compare hashing-tag with Encrpytion tag - should match
-				memset(buftag.mem,0,MC_CRYPT_PADDING); // TODO: get TAG from Encryption
-				cctx->hastag = true;
-				rc = srv_addfile(id,cctx->f->size+MC_CRYPT_OFFSET,MC_CRYPT_PADDING,cctx->tag,cctx->f->hash);*/
-			}
 			EVP_CIPHER_CTX_cleanup(cctx->evp);
 			EVP_CIPHER_CTX_free(cctx->evp);
 			FreeBuf(&cctx->pbuf);
