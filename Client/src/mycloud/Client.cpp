@@ -203,7 +203,7 @@ int runmc()
 								break;
 							case MC_ERR_CRYPTOALERT:
 								cerr << "Crypt Verify Fail. Aborting." << endl;
-							srv_close();
+								srv_close();
 								cerr << "Server can't be trusted. Disabling all Syncs." << endl;
 								db_execstr("UPDATE syncs SET status = " STRX(MC_SYNCSTAT_DISABLED));
 								cerr << "Changing server url to force manual interaction." << endl;

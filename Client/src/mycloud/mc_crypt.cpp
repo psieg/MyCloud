@@ -112,7 +112,7 @@ int crypt_translate_fromsrv(mc_sync_ctx *ctx, const string& path, mc_file *f){
 		MC_CHKERR(crypt_nameiv(&cctx,path)); //the IV is not part of the string as it is implicit
 		
 		cctx.evp = EVP_CIPHER_CTX_new();
-		MC_DBGL("Decrypting Name at " << path << " with " << MD5BinToHex(cctx.iv));
+		MC_DBGL("Decrypting Name " << MD5BinToHex((unsigned char*)buf.data()) << " with " << MD5BinToHex(cctx.iv));
 		
 		rc = EVP_DecryptInit_ex(cctx.evp,EVP_aes_256_gcm(),NULL,cctx.ctx->sync->cryptkey,cctx.iv+MC_CRYPTNAME_IDOFFSET);
 		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptInit failed");
@@ -158,7 +158,7 @@ void crypt_filestring(mc_sync_ctx *ctx, mc_file *f, string *s){
 	s->append((const char*)&f->id,sizeof(int));
 	if(ctx->sync->crypted) {
 		if(f->cryptname != "") s->append(f->cryptname); 
-		//else MC_WRN("Empty cryptname string"); //TODO: Remove when crypt is running
+		else MC_WRN("Empty cryptname string"); //TODO: Remove when crypt is running
 	} else s->append(f->name);
 	//s->append((const char*)&f->ctime,sizeof(int64)); //not a deciding/important criteria
 	s->append((const char*)&f->mtime,sizeof(int64));
