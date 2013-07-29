@@ -26,7 +26,7 @@ int _srv_timecheck();
 int _srv_listsyncs(list<mc_sync> *l);
 int _srv_listfilters(list<mc_filter> *l, int sid);
 int _srv_listdir(list<mc_file> *l, int parent);
-int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], mc_buf *skipfront = NULL, mc_buf *skipback = NULL);
+int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16]);
 int _srv_getfile(int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16]); 
 int _srv_getoffset(int id, int64 *offset);
 int _srv_getpreview(int id, unsigned char buf[32]);
@@ -210,7 +210,7 @@ int QtNetworkPerformer::processReply(){
 				return QNetworkReply::OperationCanceledError; //User abort
 			}
 		} else {
-			int rc = rep->error();
+			int rc = MC_ERR_NETWORK; //rep->error();
 			MC_WRN("Network failure: " << qPrintable(rep->errorString()) << " (Code " << rep->error() << ")");
 			if(rep) if(async) rep->deleteLater(); else delete rep;
 			rep = NULL;
@@ -538,38 +538,38 @@ int _srv_listdir(list<mc_file> *l, int parent){
 	return 0;
 }
 
-SAFEFUNC8(srv_getfile,int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], mc_buf *skipfront, mc_buf *skipback, \
-		 id,offset,blocksize,fdesc,byteswritten,hash,skipfront,skipback)
-int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], mc_buf *skipfront, mc_buf *skipback){
-	MC_DBGL("Getting file " << id << " at offset " << offset);
+int _srv_getfile_actual(int id, int64 offset, int64 blocksize, unsigned char hash[16], int64 *write){
 	int rc;
-	int64 write,written;
-	int64 foffset = 0;
 	pack_getfile(&ibuf,authtoken,id,offset,blocksize,hash);
 	rc = srv_perform(MC_SRVSTAT_FILE,true);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_FILE); }
 	MC_CHKERR(rc);
 
-	unpack_file(&obuf,&write);
-	if(obuf.used-write < sizeof(int)) return MC_ERR_PROTOCOL; //Server did not send enough data
-	if(skipfront){
-		write -= skipfront->size;
-		foffset += skipfront->size;
-		memcpy(skipfront->mem,obuf.mem+sizeof(int)+sizeof(int64),skipfront->size);
-		skipfront->used = skipfront->size;
-	}
-	if(skipback){ 
-		write -= skipback->size;
-		memcpy(skipback->mem,obuf.mem+obuf.used-skipback->size,skipback->size);
-		skipback->used = skipback->size;
-	}
+	unpack_file(&obuf,write);
+	if(obuf.used-*write < (int64)(sizeof(int)+sizeof(int64))) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Error: Server did not send enough data"); //Server did not send enough data
+	if(obuf.used-*write > (int64)(sizeof(int)+sizeof(int64))) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Error: Server sent too much data"); //Server did not send enough data
+
+	return 0;
+}
+
+SAFEFUNC6(srv_getfile,int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], \
+		 id,offset,blocksize,fdesc,byteswritten,hash)
+int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16]){
+	MC_DBGL("Getting file " << id << " at offset " << offset);
+	int rc;
+	int64 write,written;
+	int64 foffset = 0;
+
+	rc = _srv_getfile_actual(id,offset,blocksize,hash,&write);
+	MC_CHKERR(rc);
+
 	if(write){
 		MC_NOTIFYIOSTART(MC_NT_FS);
 		written = fwrite(obuf.mem+sizeof(int)+sizeof(int64)+foffset,write,1,fdesc);
 		MC_NOTIFYIOEND(MC_NT_FS);
 		if (written != 1) MC_ERR_MSG(MC_ERR_IO,"Writing to file failed: " << ferror(fdesc));
-		*byteswritten = write;
+		if(byteswritten) *byteswritten = write;
 	}
 	return 0;
 }
@@ -580,19 +580,13 @@ int _srv_getfile(int id, int64 offset, int64 blocksize, char *buf, int64 *bytesw
 	MC_DBGL("Getting file " << id << " at offset " << offset);
 	int rc;
 	int64 write;
-	pack_getfile(&ibuf,authtoken,id,offset,blocksize,hash);
-	rc = srv_perform(MC_SRVSTAT_FILE,true);
-	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
-		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_FILE); }
-	MC_CHKERR(rc);
 
-	unpack_file(&obuf,&write);
-	if(obuf.used-write < (int64)(sizeof(int)+sizeof(int64))) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Error: Server did not send enough data"); //Server did not send enough data
-	if(obuf.used-write > (int64)(sizeof(int)+sizeof(int64))) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Error: Server sent too much data"); //Server did not send enough data
+	rc = _srv_getfile_actual(id,offset,blocksize,hash,&write);
+	MC_CHKERR(rc);
 	
 	if(write){
 		memcpy(buf,obuf.mem+sizeof(int)+sizeof(int64),write);
-		*byteswritten = write;
+		if(byteswritten) *byteswritten = write;
 	}
 	return 0;
 }
@@ -608,20 +602,6 @@ int _srv_getoffset(int id, int64 *offset){
 	MC_CHKERR(rc);
 
 	unpack_offset(&obuf,offset);
-	return 0;
-}
-
-SAFEFUNC2(srv_getpreview,int id,unsigned char buf[16],id,buf);
-int _srv_getpreview(int id, unsigned char buf[16]){
-	MC_DBGL("Getting file preview of " << id);
-	int rc;
-	pack_getpreview(&ibuf,authtoken,id);
-	rc = srv_perform(MC_SRVSTAT_FILEPREVIEW);
-	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
-		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_FILEPREVIEW); }
-	MC_CHKERR(rc);
-
-	unpack_filepreview(&obuf,buf);
 	return 0;
 }
 

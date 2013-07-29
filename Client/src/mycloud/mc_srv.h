@@ -20,10 +20,9 @@ int srv_timecheck();
 int srv_listsyncs(list<mc_sync> *l);
 int srv_listfilters(list<mc_filter> *l, int sid);
 int srv_listdir(list<mc_file> *l, int parent);
-int srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], mc_buf *skipfront = NULL, mc_buf *skipback = NULL);
+int srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16]);
 int srv_getfile(int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16]); //requires buf to be blocksize big
 int srv_getoffset(int id, int64 *offset);
-int srv_getpreview(int id, unsigned char buf[16]);
 int srv_putfile(mc_file *file, int64 blocksize, FILE *fdesc);
 int srv_putfile(mc_file *file, int64 blocksize, char *buf);
 int srv_addfile(int id, int64 offset, int64 blocksize, FILE *fdesc, unsigned char hash[16]);

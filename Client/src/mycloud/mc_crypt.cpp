@@ -282,7 +282,7 @@ int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16
 		MC_DBGL("Calculating CryptMD5 of file " << fpath);
 
 		//For known we need the IV on the server
-		rc = srv_getpreview(file->id,cctx->iv);
+		rc = srv_getfile(file->id,0,MC_CRYPT_PADDING,(char*)cctx->iv,NULL,file->hash);
 		MC_CHKERR(rc);
 		//cctx->hasiv = true; //has old iv but that is not good for a new upload...
 				
@@ -319,8 +319,8 @@ int crypt_initresume_down(mc_crypt_ctx *cctx, mc_file *file){
 			SetBuf(&cctx->pbuf,MC_RECVBLOCKSIZE);
 			cctx->evp = EVP_CIPHER_CTX_new();
 			
-			if(!cctx->hasiv){ 
-				rc = srv_getpreview(file->id,cctx->iv);
+			if(!cctx->hasiv){
+				rc = srv_getfile(file->id,0,MC_CRYPT_PADDING,(char*)cctx->iv,NULL,file->hash);
 				MC_CHKERR(rc);
 				cctx->hasiv = true;
 			}
@@ -484,7 +484,8 @@ int crypt_finish_download(mc_crypt_ctx *cctx, int64 offset, FILE *fdesc){
 			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"CipherCTXCtrl failed");
 
 			rc = EVP_DecryptFinal_ex(cctx->evp,NULL,&written);
-			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTOALERT,"DecryptFinal failed! This means the file was modified by someone without the key!");
+			if(!rc) 
+				MC_ERR_MSG(MC_ERR_CRYPTOALERT,"DecryptFinal failed! This means the file was modified by someone without the key!");
 			//TODO: rename file and tell user etc.
 
 			EVP_CIPHER_CTX_cleanup(cctx->evp);
@@ -520,8 +521,8 @@ int crypt_initresume_up(mc_crypt_ctx *cctx, mc_file *file, int64 *offset){
 	if(cctx->ctx->sync->crypted){
 		//if(!file->is_dir){//resume only on files
 			SetBuf(&cctx->pbuf,MC_SENDBLOCKSIZE);
-			if(!cctx->hasiv){ 
-				rc = srv_getpreview(file->id,cctx->iv);
+			if(!cctx->hasiv){
+				rc = srv_getfile(file->id,0,MC_CRYPT_PADDING,(char*)cctx->iv,NULL,file->hash);
 				MC_CHKERR(rc);
 				cctx->hasiv = true;
 			}

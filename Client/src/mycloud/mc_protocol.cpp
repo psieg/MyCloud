@@ -83,16 +83,6 @@ void pack_getoffset(mc_buf *buf, unsigned char authtoken[16], int id){
 	buf->used = sizeof(int)+sizeof(int64)+16;
 }
 
-void pack_getpreview(mc_buf *buf, unsigned char authtoken[16], int id){
-	int num = MC_SRVQRY_GETPREVIEW;
-	MatchBuf(buf,sizeof(int)+sizeof(int64)+16);
-	memcpy(&buf->mem[0],&num,sizeof(int));
-	memcpy(&buf->mem[sizeof(int)],authtoken,16);
-
-	memcpy(&buf->mem[sizeof(int)+16],&id,sizeof(int));
-	buf->used = sizeof(int)+sizeof(int64)+16;
-}
-
 //Note the caller has to append the filedata (size blocksize) itself to the buffer
 void pack_putfile(mc_buf *buf, unsigned char authtoken[16], mc_file *file, int64 blocksize){
 	int num = MC_SRVQRY_PUTFILE;
@@ -344,14 +334,6 @@ void unpack_file(mc_buf *buf, int64 *offset){
 void unpack_offset(mc_buf *buf, int64 *offset){
 	try {
 		memcpy(offset,&buf->mem[sizeof(int)],sizeof(int64));
-	} catch (...){
-		throw MC_ERR_PROTOCOL;
-	}
-}
-
-void unpack_filepreview(mc_buf *buf, unsigned char buffer[16]){
-	try {
-		memcpy(buffer,&buf->mem[sizeof(int)],16);
 	} catch (...){
 		throw MC_ERR_PROTOCOL;
 	}
