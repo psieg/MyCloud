@@ -18,4 +18,8 @@
 * minor progressbar fix (short reset of last block)
 * Quitting App while Conflict Dialog active causes crash
 * minor fix of caching of encrypted filenames
+
+0.2.7
+* max timediff is now 10 (timediff almost never is an issue and 90% annoying)
 * fix for incorrect file state after completed resume
+* refactoring + protocol update
