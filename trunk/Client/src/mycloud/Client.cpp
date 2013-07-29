@@ -154,7 +154,8 @@ int runmc()
 										if(rc) throw rc;
 
 									}
-									if(wrc == MC_ERR_CRYPTOALERT) throw MC_ERR_CRYPTOALERT;
+									if(wrc == MC_ERR_CRYPTOALERT) 
+										throw MC_ERR_CRYPTOALERT;
 									MC_NOTIFYEND(MC_NT_SYNC);
 								}
 							}

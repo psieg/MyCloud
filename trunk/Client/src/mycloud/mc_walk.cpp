@@ -28,7 +28,7 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 		if(!fs->is_dir && !srv->is_dir && fs->size == srv->size && srv->status == MC_FILESTAT_COMPLETE){
 			init_crypt_ctx(&cctx,ctx);
 			rc = crypt_filemd5_known(&cctx,srv,chkhash,fpath); //fs_filemd5(chkhash,fpath,fs->size);
-			if(rc) return rc;
+			MC_CHKERR(rc);
 			if(memcmp(chkhash,srv->hash,16) == 0){
 				MC_DBG("File contents not modified");
 				if(fs->mtime <= srv->mtime)

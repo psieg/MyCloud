@@ -3,7 +3,7 @@
 #include "mc.h"
 /* This unit defines the Codes used in our protocol and functions to pack/unpack messages */
 
-#define MC_CLIENT_PROTOCOL_VERSION		4
+#define MC_CLIENT_PROTOCOL_VERSION		5
 #define MC_MIN_SERVER_PROTOCOL_VERSION	4
 
 typedef int MC_SRVQUERY;
@@ -18,7 +18,6 @@ typedef int MC_SRVQUERY;
 #define MC_SRVQRY_GETFILE		402	// Get the content of a file
 #define MC_SRVQRY_GETMETA		403	// Get a file's metadata
 #define MC_SRVQRY_GETOFFSET		404	// Get the offset of an incomplete file (to complete it)
-#define MC_SRVQRY_GETPREVIEW	405 // Get first 32 byte of file (for crypt)
 #define MC_SRVQRY_PUTFILE		410	// Add/Replace a file
 #define MC_SRVQRY_ADDFILE		411	// Add the following content to a file
 #define MC_SRVQRY_PATCHFILE		412	// Patch the metaddata of a file
@@ -36,7 +35,6 @@ typedef int MC_SRVSTATUS;
 #define MC_SRVSTAT_FILE			401	// Here are contents of the file
 #define MC_SRVSTAT_FILEMETA		402	// Metadata of the file
 #define MC_SRVSTAT_OFFSET		403	// Here's how much of the file I have
-#define MC_SRVSTAT_FILEPREVIEW	404	// First 32 bytes
 #define MC_SRVSTAT_FILEID		410	// ID of file just created
 #define MC_SRVSTAT_CHANGE		500 // ID of the changed watched sync
 #define MC_SRVSTAT_NOCHANGE		501 // None of the watched syncs has changed 
@@ -60,7 +58,6 @@ void pack_listfilters(mc_buf *buf, unsigned char authtoken[16], int syncid);
 void pack_listdir(mc_buf *buf, unsigned char authtoken[16], int parent);
 void pack_getfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 offset, int64 blocksize, unsigned char hash[16]);
 void pack_getoffset(mc_buf *buf, unsigned char authtoken[16], int id);
-void pack_getpreview(mc_buf *buf, unsigned char authtoken[16], int id);
 void pack_putfile(mc_buf *buf, unsigned char authtoken[16], mc_file *file, int64 blocksize);
 void pack_addfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 offset, int64 blocksize, unsigned char hash[16]);
 void pack_patchfile(mc_buf *buf, unsigned char authtoken[16], mc_file *file);
@@ -76,7 +73,6 @@ void unpack_filterlist(mc_buf *buf, list<mc_filter> *l);
 void unpack_dirlist(mc_buf *buf, list<mc_file> *l);
 void unpack_file(mc_buf *buf, int64 *offset);
 void unpack_offset(mc_buf *buf, int64 *offset);
-void unpack_filepreview(mc_buf *buf, unsigned char buffer[32]);
 void unpack_fileid(mc_buf *buf, int *id);
 void unpack_filemeta(mc_buf *buf, mc_file *file);
 void unpack_change(mc_buf *buf, int *id);
