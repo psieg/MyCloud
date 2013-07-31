@@ -57,7 +57,7 @@ int dirempty(int id, bool *empty){
 }
 
 /* Download helpers	*/
-int download_checkmodified(mc_crypt_ctx *cctx, mc_file *srv, mc_file_fs *fs, const string& fpath, bool *modified){
+int download_checkmodified(mc_crypt_ctx *cctx, const string& fpath, mc_file *srv, mc_file_fs *fs, bool *modified){
 	FILE *fdesc = 0;
 	unsigned char hash[16];
 	int rc;
@@ -80,7 +80,7 @@ int download_checkmodified(mc_crypt_ctx *cctx, mc_file *srv, mc_file_fs *fs, con
 	}
 	return 0;
 }
-int download_actual(mc_crypt_ctx *cctx, mc_file *srv, const string& fpath){
+int download_actual(mc_crypt_ctx *cctx, const string& fpath, mc_file *srv){
 	int64 offset = 0, written = 0;
 	FILE *fdesc = 0;
 	int rc;
@@ -111,7 +111,7 @@ int download_deleted_dir(mc_sync_ctx *ctx, const string& fpath, const string& rp
 	int rc;
 	bool empty;
 
-	if(db == NULL) rc = db_insert_file(srv);
+	if(!db) rc = db_insert_file(srv);
 	else rc = db_update_file(srv);
 	MC_CHKERR(rc);
 
@@ -155,7 +155,7 @@ int download_deleted_file(mc_sync_ctx *ctx, const string& fpath, const string& r
 	int rc;
 	bool empty;
 	
-	if(db == NULL) rc = db_insert_file(srv);
+	if(!db) rc = db_insert_file(srv);
 	else rc = db_update_file(srv);
 	MC_CHKERR(rc);
 
@@ -190,7 +190,7 @@ int download_deleted_file(mc_sync_ctx *ctx, const string& fpath, const string& r
 int download_dir(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *db, mc_file *srv, bool recursive, unsigned char serverhash[16], int* rrc){
 	int rc;
 
-	if(db == NULL) rc = db_insert_file(srv);
+	if(!db) rc = db_insert_file(srv);
 	else rc = db_update_file(srv);
 	MC_CHKERR(rc);			
 	
@@ -201,7 +201,7 @@ int download_dir(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc_
 		fs = NULL;
 	}
 
-	if(fs == NULL){
+	if(!fs){
 		rc = fs_mkdir(fpath);
 		MC_CHKERR(rc);
 	}			
@@ -215,6 +215,9 @@ int download_dir(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc_
 		rc = db_update_file(srv);
 		MC_CHKERR(rc);
 	}
+
+	rc = fs_touch(fpath,srv->mtime,srv->ctime);
+	MC_CHKERR(rc);
 	return 0;
 }
 int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *db, mc_file *srv, bool recursive, mc_crypt_ctx *extcctx, int* rrc){
@@ -236,7 +239,7 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 		}
 		if(!recursive || empty){
 			srv->status = MC_FILESTAT_DELETED;
-			if(db == NULL) rc = db_insert_file(srv);
+			if(!db) rc = db_insert_file(srv);
 			else rc = db_update_file(srv);
 			MC_CHKERR(rc);
 
@@ -259,7 +262,7 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 	} else { // fs || !fs->is_dir
 		doit = true;
 		if(fs && srv->size == fs->size){ //modify check only on size match
-			rc = download_checkmodified(&cctx,srv,fs,fpath,&doit);
+			rc = download_checkmodified(&cctx,fpath,srv,fs,&doit);
 			MC_CHKERR(rc);
 		}
 		if(!doit){ //not modified
@@ -279,7 +282,7 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 		else rc = db_update_file(srv);
 		MC_CHKERR(rc);
 
-		rc = download_actual(&cctx,srv,fpath);
+		rc = download_actual(&cctx,fpath,srv);
 		MC_CHKERR(rc);
 
 		srv->status = MC_FILESTAT_COMPLETE;
@@ -305,7 +308,7 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 
 	if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 		MC_INF("Not downloading file " << srv->id << ": " << printname(srv) << ", file is not complete");
-		if(db) crypt_filestring(ctx,db,hashstr); //We use db to have a hash mismatch -> no fullsync
+		if(db) crypt_filestring(ctx,db,hashstr); //We use db to have a hash mismatch -> no fullsync (see #3)
 		return MC_ERR_INCOMPLETE_SKIP;
 		//TODO: Partial download?
 
@@ -330,6 +333,347 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 	return rrc;
 }
 
+/* Upload helpers */
+int upload_checkmodified(mc_crypt_ctx *cctx, const string& fpath, mc_file_fs *fs, mc_file *srv, unsigned char hash[16], bool *modified){
+	int rc;
+	FILE* fdesc;
+
+	if(fs->is_dir){
+		MC_DBGL("Opening file " << fpath << " for reading");
+		MC_NOTIFYSTART(MC_NT_UL,fpath);
+		fdesc = fs_fopen(fpath,"rb");
+		if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not read the file");
+
+		if(srv && (!fs->is_dir) && (!srv->is_dir) && (fs->size == srv->size) && (srv->status == MC_FILESTAT_COMPLETE))
+			rc = crypt_filemd5_known(cctx,srv,hash,fpath,fdesc);
+		else
+			rc = crypt_filemd5_new(cctx,hash,fpath,fs->size,fdesc);
+		MC_CHKERR_FD(rc,fdesc);
+	
+		fclose(fdesc);
+
+		if((srv != NULL) && (!fs->is_dir) && (!srv->is_dir) && (fs->size == srv->size) && (srv->status == MC_FILESTAT_COMPLETE) && (memcmp(srv->hash,hash,16) == 0)){ // File not modified
+			*modified = false;
+			MC_DBG("File contents not modified");
+			MC_NOTIFYEND(MC_NT_UL);
+		} else {
+			*modified = true;
+		}
+	} else {
+		memset(hash,0,16);
+		*modified = true; //dirs are always modified (otherwise we would not have come here)
+	}
+
+	return 0;
+}
+int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, mc_file_fs *fs, mc_file *db, bool insertnew = false){
+	int rc;
+	FILE* fdesc;
+	int64 sent;
+
+	MC_DBGL("Opening file " << fpath << " for reading");
+	MC_NOTIFYSTART(MC_NT_UL,fpath);
+	fdesc = fs_fopen(fpath,"rb");
+
+	fseek(fdesc,0,SEEK_SET);
+	rc = crypt_init_upload(cctx,db);
+	MC_CHKERR_FD(rc,fdesc);
+
+	MC_NOTIFYPROGRESS(0,db->size);						
+	MC_CHECKTERMINATING_FD(fdesc);
+	if(db->size <= MC_SENDBLOCKSIZE){
+		rc = crypt_putfile(cctx,path,db,db->size,fdesc);
+		MC_CHKERR_FD(rc,fdesc);
+		sent = db->size;
+	} else {
+		rc = crypt_putfile(cctx,path,db,MC_SENDBLOCKSIZE,fdesc);
+		MC_CHKERR_FD(rc,fdesc);
+		sent = MC_SENDBLOCKSIZE;
+	}
+
+	if(insertnew){
+		rc = db_insert_file(db);
+		MC_CHKERR_FD(rc,fdesc);
+	}
+
+	if(sent < db->size){
+		// Complete the upload
+		while(sent < fs->size){
+			MC_NOTIFYPROGRESS(sent,db->size);
+			MC_CHECKTERMINATING_FD(fdesc);
+			if(db->size-sent <= MC_SENDBLOCKSIZE){
+				rc = crypt_addfile(cctx,db->id,sent,db->size-sent,fdesc,db->hash);
+				sent += db->size-sent;
+			} else {
+				rc = crypt_addfile(cctx,db->id,sent,MC_SENDBLOCKSIZE,fdesc,db->hash);
+				sent += MC_SENDBLOCKSIZE;
+			}
+			MC_CHKERR_FD(rc,fdesc);
+		}
+	}
+	rc = crypt_finish_upload(cctx,db->id);
+	MC_CHKERR_FD(rc,fdesc);
+	
+	fclose(fdesc);
+	MC_NOTIFYEND(MC_NT_UL);
+
+	return 0;
+}
+/* sub-uploads */
+int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *newdb, mc_file *srv, string *hashstr, int parent, bool recursive, mc_crypt_ctx *extcctx, int *rrc){
+	int rc;
+	bool modified;
+	mc_crypt_ctx cctx;
+	if(extcctx) init_crypt_ctx_copy(&cctx,extcctx);
+	else init_crypt_ctx(&cctx,ctx);
+
+	rc = upload_checkmodified(&cctx, fpath, fs, srv, newdb->hash, &modified);
+	MC_CHKERR(rc);
+
+	if(srv == NULL){
+		newdb->id = MC_FID_NONE;
+		//cryptname will be generated
+	} else {
+		newdb->id = srv->id;
+		newdb->cryptname = srv->cryptname;
+	}
+	newdb->name = fs->name;
+	newdb->ctime = fs->ctime;
+	newdb->mtime = fs->mtime;
+	newdb->size = fs->size;
+	newdb->is_dir = fs->is_dir;
+	newdb->parent = parent;
+	if(fs->is_dir) newdb->status = MC_FILESTAT_COMPLETE;
+	else newdb->status = MC_FILESTAT_INCOMPLETE_UP;
+
+	if(!modified){ // File not modified
+			newdb->mtime = fs->mtime;
+			newdb->ctime = fs->ctime;
+			newdb->status = MC_FILESTAT_COMPLETE;
+			
+			rc = db_insert_file(newdb);
+			MC_CHKERR(rc);
+
+			rc = crypt_patchfile(&cctx,path,newdb);
+			MC_CHKERR(rc);
+			
+	} else {
+			
+		if(fs->is_dir){
+			rc = crypt_putfile(&cctx,path,newdb,0,NULL);
+			MC_CHKERR(rc);
+						
+			rc = db_insert_file(newdb);
+			MC_CHKERR(rc);
+
+			if(recursive){
+				*rrc = walk(ctx,rpath,newdb->id,newdb->hash);
+			}
+		} else {			
+			rc = upload_actual(&cctx,path,fpath,fs,newdb,true);
+			MC_CHKERR(rc);
+
+			newdb->status = MC_FILESTAT_COMPLETE;
+		}
+		rc = db_update_file(newdb);
+		MC_CHKERR(rc);
+	}
+	return 0;
+}
+int upload_patchdeleted(mc_sync_ctx *ctx, const string& path, const string& rpath, mc_file_fs *fs, mc_file *db, mc_file *srv, bool recursive, mc_crypt_ctx *extcctx, int *rrc){
+	int rc;
+	mc_crypt_ctx cctx;
+	if(extcctx) init_crypt_ctx_copy(&cctx,extcctx);
+	else init_crypt_ctx(&cctx,ctx);
+
+	rc = crypt_patchfile(&cctx,path,db);
+	MC_CHKERR(rc);
+	if(recursive && db->is_dir){
+		*rrc = walk_nolocal(ctx,rpath,db->id,db->hash);
+		//Hashupdate
+		rc = db_update_file(db);
+		MC_CHKERR(rc);
+	}
+	return 0;
+}
+int upload_deleted(mc_sync_ctx *ctx, const string& rpath, mc_file_fs *fs, mc_file *db, mc_file *srv, bool recursive, int *rrc){
+	int rc;
+	bool empty;
+
+	db->status = MC_FILESTAT_DELETED;
+	db->mtime = time(NULL);
+
+	rc = db_update_file(db);
+	MC_CHKERR(rc);
+	if(db->is_dir){					
+		if(recursive){
+			*rrc = walk_nolocal(ctx,rpath,db->id,db->hash);
+						
+			rc = db_update_file(db);
+			MC_CHKERR(rc);
+						
+			rc = dirempty(db->id,&empty);
+			MC_CHKERR(rc);
+		} else {
+			empty = true;
+		}					
+
+		if(empty){
+			rc = srv_delfile(db);
+			MC_CHKERR(rc);
+		} else { // files remain
+			//Underlying handlers...?!
+		}
+	} else {
+		rc = srv_delfile(db);
+		MC_CHKERR(rc);
+	}
+	return 0;
+}
+int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *db, mc_file *srv, bool recursive, mc_crypt_ctx *extcctx, int *rrc){
+	int rc;
+	unsigned char hash[16];
+	bool empty;
+	bool modified;
+	mc_crypt_ctx cctx;
+	if(extcctx) init_crypt_ctx_copy(&cctx,extcctx);
+	else init_crypt_ctx(&cctx,ctx);
+	
+	rc = upload_checkmodified(&cctx, fpath, fs, srv, hash, &modified);
+	MC_CHKERR(rc);
+
+	if(!modified){
+		db->mtime = fs->mtime;
+		db->ctime = fs->ctime;
+
+		rc = db_update_file(db);
+		MC_CHKERR(rc);
+
+		rc = crypt_patchfile(&cctx,path,db);
+		MC_CHKERR(rc);
+
+	} else if(srv != NULL){
+		if(fs->is_dir){
+			if(!srv->is_dir){
+				MC_DBG("Replacing a file with a dir");
+				srv->status = MC_FILESTAT_DELETED;
+				srv->mtime = time(NULL);
+
+				rc = srv_delfile(srv);
+				MC_CHKERR(rc);
+			}
+
+			db->mtime = fs->mtime;
+			db->ctime = fs->ctime;
+			db->size = fs->size;
+			db->status = MC_FILESTAT_COMPLETE;
+
+			rc = db_update_file(db);
+			MC_CHKERR(rc);
+
+			rc = crypt_putfile(&cctx,path,db,0,NULL);
+			MC_CHKERR(rc);
+					
+			if(recursive){
+				*rrc = walk(ctx,rpath,db->id,db->hash);
+
+			}
+			// Hashupdate
+			rc = db_update_file(db);
+			MC_CHKERR(rc);
+		} else { // !fs->is_dir
+			if(!srv->is_dir){
+				db->mtime = fs->mtime;
+				db->ctime = fs->ctime;
+				db->size = fs->size;
+				db->status = MC_FILESTAT_INCOMPLETE_UP;
+				memcpy(db->hash,hash,16);
+
+				rc = db_update_file(db);
+				MC_CHKERR(rc);
+
+				rc = upload_actual(&cctx,path,fpath,fs,db);
+				MC_CHKERR(rc);
+
+				db->status = MC_FILESTAT_COMPLETE;
+				rc = db_update_file(db);
+				MC_CHKERR(rc);
+			} else { // srv->is_dir
+				MC_DBG("Replacing a dir with a file");
+				db->mtime = fs->mtime;
+				db->ctime = fs->ctime;
+				db->size = fs->size;
+				db->status = MC_FILESTAT_COMPLETE;
+				db->is_dir = true;
+
+				rc = db_update_file(db);
+				MC_CHKERR(rc);
+
+				if(recursive){
+					*rrc = walk_nolocal(ctx,rpath,db->id,NULL);
+
+					rc = dirempty(db->id,&empty);
+					MC_CHKERR(rc);
+				} else {
+					empty = true;
+				}
+				if(empty){
+					rc = srv_delfile(db);
+					MC_CHKERR(rc);
+							
+					db->status = MC_FILESTAT_INCOMPLETE_UP;
+					memcpy(db->hash,hash,16);
+					//db->mtime = time(NULL);
+
+					rc = db_update_file(db);
+					MC_CHKERR(rc);
+
+					rc = upload_actual(&cctx,path,fpath,fs,db);
+					MC_CHKERR(rc);
+
+					db->status = MC_FILESTAT_COMPLETE;
+					rc = db_update_file(db);
+					MC_CHKERR(rc);
+
+
+				} else { // files remain
+					//Underlying handlers?
+				}
+			}
+		}
+	} else { // srv == NULL
+		rc = db_delete_file(db->id); //old ID is most likely void, let server generate new
+		MC_CHKERR(rc);
+		db->id = MC_FID_NONE;
+		db->name = fs->name;
+		db->ctime = fs->ctime;
+		db->mtime = fs->mtime;
+		db->size = fs->size;
+		db->status = MC_FILESTAT_INCOMPLETE_UP;
+		memcpy(db->hash,hash,16);
+
+
+		if(fs->is_dir){
+			rc = crypt_putfile(&cctx,path,db,0,NULL);
+			MC_CHKERR(rc);
+
+			rc = db_insert_file(db);
+			MC_CHKERR(rc);
+
+			if(recursive){
+				*rrc = walk(ctx,rpath,db->id,db->hash);
+			}
+		} else {
+			rc = upload_actual(&cctx,path,fpath,fs,db,true);
+			MC_CHKERR(rc);
+		}
+
+		db->status = MC_FILESTAT_COMPLETE;
+		rc = db_update_file(db);
+		MC_CHKERR(rc);
+	}
+	return 0;
+}
 /* Upload the file to the server
 *	srv may be NULL 
 *	if db is NULL, fs and parent must be set
@@ -346,167 +690,24 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 	list<mc_file>::iterator lit,lend;
 	bool empty;
 	bool terminating = false;
-	mc_crypt_ctx cctx;
 	fpath.assign(ctx->sync->path);
 	rpath.assign(path);
-	if(extcctx) init_crypt_ctx_copy(&cctx,extcctx);
-	else init_crypt_ctx(&cctx,ctx);
 
-	//mc_sleepms(10);
 
 	if(db == NULL){
 		if(fs == NULL){
-			MC_INF("Uploading never known deleted file " << printname(srv));
-			rpath.append(srv->name);
-			fpath.append(rpath);
-
-			srv->status = MC_FILESTAT_DELETED;
-			srv->mtime = time(NULL);
-
-			rc = db_insert_file(srv);
-			MC_CHKERR(rc);
-
-			if(srv->is_dir){
-				if(recursive){
-					rrc = walk_nolocal(ctx,rpath,srv->id,srv->hash);
-
-					rc = dirempty(srv->id,&empty);
-					MC_CHKERR(rc);
-				} else {
-					empty = true;
-				}
-				if(empty){
-					rc = srv_delfile(srv);
-					MC_CHKERR(rc);
-
-					crypt_filestring(ctx,srv,hashstr);
-				} else { // files remain
-					//Underlying handlers...
-					//TODO: no filestring handlers
-				}
-			} else {
-				crypt_filestring(ctx,srv,hashstr);
-
-				rc = srv_delfile(srv);
-				MC_CHKERR(rc);
-			}
+			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"if db is NULL, fs and parent must be set");
+			//MC_INF("Uploading never known deleted file " << printname(srv));
 		} else {
 			MC_INF("Uploading new file: " << printname(fs));
 			rpath.append(fs->name);
 			fpath.append(rpath);
+			mc_file newdb;
 
-			if(fs->is_dir){
-				memset(newdb.hash,0,16);
-			} else {
-				MC_DBGL("Opening file " << fpath << " for reading");
-				MC_NOTIFYSTART(MC_NT_UL,fpath);
-				fdesc = fs_fopen(fpath,"rb");
-				if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not read the file");
-		
-				if((srv != NULL) && (!fs->is_dir) && (!srv->is_dir) && (fs->size == srv->size) && (srv->status == MC_FILESTAT_COMPLETE))
-					rc = crypt_filemd5_known(&cctx,srv,newdb.hash,fpath,fdesc);
-				else
-					rc = crypt_filemd5_new(&cctx,newdb.hash,fpath,fs->size,fdesc);
-				MC_CHKERR_FD(rc,fdesc);
-			}
-			if(srv == NULL){
-				newdb.id = MC_FID_NONE;
-				//cryptname will be generated
-			} else {
-				newdb.id = srv->id;
-				newdb.cryptname = srv->cryptname;
-			}
-			newdb.name = fs->name;
-			newdb.ctime = fs->ctime;
-			newdb.mtime = fs->mtime;
-			newdb.size = fs->size;
-			newdb.is_dir = fs->is_dir;
-			newdb.parent = parent;
-			if(fs->is_dir) newdb.status = MC_FILESTAT_COMPLETE;
-			else newdb.status = MC_FILESTAT_INCOMPLETE_UP;
+			rc = upload_new(ctx, path, fpath, rpath, fs, &newdb, srv, hashstr, parent, recursive, extcctx, &rrc);
+			MC_CHKERR(rc);
 
-			if((srv != NULL) && (!fs->is_dir) && (!srv->is_dir) && (fs->size == srv->size) && (srv->status == MC_FILESTAT_COMPLETE) && (memcmp(srv->hash,newdb.hash,16) == 0)){ // File not modified
-					newdb.mtime = fs->mtime;
-					newdb.ctime = fs->ctime;
-					newdb.status = MC_FILESTAT_COMPLETE;
-
-					MC_DBG("File contents not modified");
-
-					rc = db_insert_file(&newdb);
-					MC_CHKERR(rc);
-
-					rc = crypt_patchfile(&cctx,path,&newdb);
-					MC_CHKERR(rc);
-
-					crypt_filestring(ctx,&newdb,hashstr);
-
-			} else {
-			
-				if(fs->is_dir){
-					rc = crypt_putfile(&cctx,path,&newdb,0,NULL);
-					MC_CHKERR(rc);
-						
-					rc = db_insert_file(&newdb);
-					MC_CHKERR(rc);
-
-					if(recursive){
-						rrc = walk(ctx,rpath,newdb.id,newdb.hash);
-					}
-				} else {
-					fseek(fdesc,0,SEEK_SET);
-					rc = crypt_init_upload(&cctx,&newdb);
-					MC_CHKERR_FD(rc,fdesc);
-
-					MC_NOTIFYPROGRESS(0,fs->size);
-					MC_CHECKTERMINATING_FD(fdesc);
-					if(newdb.size <= MC_SENDBLOCKSIZE){
-						rc = crypt_putfile(&cctx,path,&newdb,newdb.size,fdesc);
-						MC_CHKERR_FD(rc,fdesc);
-						sent = newdb.size;
-					} else {
-						rc = crypt_putfile(&cctx,path,&newdb,MC_SENDBLOCKSIZE,fdesc);
-						MC_CHKERR_FD(rc,fdesc);
-						sent = MC_SENDBLOCKSIZE;
-					}
-					rc = db_insert_file(&newdb);
-					MC_CHKERR_FD(rc,fdesc);
-				}
-				
-
-				if(fs->is_dir){
-					// We're done
-				} else {
-					if (sent == newdb.size){
-						// We're done
-						rc = crypt_finish_upload(&cctx,newdb.id);
-						MC_CHKERR_FD(rc,fdesc);
-					} else {
-						// Complete the upload
-						while(sent < fs->size){
-							MC_NOTIFYPROGRESS(sent,fs->size);
-							MC_CHECKTERMINATING_FD(fdesc);
-							if(newdb.size-sent <= MC_SENDBLOCKSIZE){
-								rc = crypt_addfile(&cctx, newdb.id,sent,newdb.size-sent,fdesc,newdb.hash);
-								sent += newdb.size-sent;
-							} else {
-								rc = crypt_addfile(&cctx, newdb.id,sent,MC_SENDBLOCKSIZE,fdesc,newdb.hash);
-								sent += MC_SENDBLOCKSIZE;
-							}
-							MC_CHKERR_FD(rc,fdesc);
-						}
-						rc = crypt_finish_upload(&cctx,newdb.id);
-						MC_CHKERR_FD(rc,fdesc);
-					}
-					newdb.status = MC_FILESTAT_COMPLETE;
-				}
-				rc = db_update_file(&newdb);
-				MC_CHKERR_FD(rc,fdesc);
-				crypt_filestring(ctx,&newdb,hashstr);
-			}
-			if(!fs->is_dir){			
-				fclose(fdesc);
-				MC_NOTIFYEND(MC_NT_UL);
-			}
+			crypt_filestring(ctx,&newdb,hashstr);
 		}
 	} else { // db != NULL
 		if(fs == NULL){
@@ -524,333 +725,30 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 				} else { //db->mtime != srv->mtime
 					MC_INF("Patching deleted file " << db->id << ": " << printname(db));
 					rpath.append(db->name);
-					rc = crypt_patchfile(&cctx,path,db);
+
+					rc = upload_patchdeleted(ctx, path, rpath, fs, db, srv, recursive, extcctx, &rrc);
 					MC_CHKERR(rc);
-					if(db->is_dir){
-						rrc = walk_nolocal(ctx,rpath,db->id,db->hash);
-						//Hashupdate
-						rc = db_update_file(db);
-						MC_CHKERR(rc);
-					}
+					
 					crypt_filestring(ctx,db,hashstr);
 				}
 			} else {
 				MC_INF("Uploading deleted file " << db->id << ": " << printname(db));
 				rpath.append(db->name);
 
-				db->status = MC_FILESTAT_DELETED;
-				db->mtime = time(NULL);
-
-				rc = db_update_file(db);
+				rc = upload_deleted(ctx, rpath, fs, db, srv, recursive, &rrc);
 				MC_CHKERR(rc);
-				if(db->is_dir){					
-					if(recursive){
-						rrc = walk_nolocal(ctx,rpath,db->id,db->hash);
-						
-						rc = db_update_file(db);
-						MC_CHKERR(rc);
-						crypt_filestring(ctx,db,hashstr);
-						
-						rc = dirempty(db->id,&empty);
-						MC_CHKERR(rc);
-					} else {
-						empty = true;
-						crypt_filestring(ctx,db,hashstr);
-					}					
 
-					if(empty){
-						rc = srv_delfile(db);
-						MC_CHKERR(rc);
-					} else { // files remain
-						//Underlying handlers...?!
-						//db->status = MC_FILESTAT_COMPLETE;
-
-						//rc = db_update_file(db);
-						//MC_CHKERR(rc);
-
-						//rc = fs_touch(fpath,maxt);
-						//MC_CHKERR(rc);
-					}
-				} else {
-					crypt_filestring(ctx,db,hashstr);
-
-					rc = srv_delfile(db);
-					MC_CHKERR(rc);
-				}
+				crypt_filestring(ctx,db,hashstr);
 			}
 		} else { // fs != NULL
 			MC_INF("Uploading file " << db->id << ": " << printname(db));
 			rpath.append(db->name);
 			fpath.append(rpath);
 
-			if(fs->is_dir){
-				memset(hash,0,16);
-			} else {
-				MC_DBGL("Opening file " << fpath << " for reading");
-				MC_NOTIFYSTART(MC_NT_UL,fpath);
-				fdesc = fs_fopen(fpath,"rb");
-				if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not read the file");
+			rc = upload_normal(ctx, path, fpath, rpath, fs, db, srv, recursive, extcctx, &rrc);
+			MC_CHKERR(rc);
 
-				if((srv != NULL) && (!fs->is_dir) && (!srv->is_dir) && (fs->size == srv->size) && (srv->status == MC_FILESTAT_COMPLETE))
-					rc = crypt_filemd5_known(&cctx,srv,hash,fpath,fdesc);
-				else
-					rc = crypt_filemd5_new(&cctx,hash,fpath,fs->size,fdesc);
-				MC_CHKERR_FD(rc,fdesc);
-								
-			}
-
-			if((srv != NULL) && (!fs->is_dir) && (!srv->is_dir) && (fs->size == srv->size) && (srv->status == MC_FILESTAT_COMPLETE) && (memcmp(srv->hash,hash,16) == 0)){ // File not modified
-				db->mtime = fs->mtime;
-				db->ctime = fs->ctime;
-
-				MC_DBG("File contents not modified");
-
-				rc = db_update_file(db);
-				MC_CHKERR_FD(rc,fdesc);
-
-				rc = crypt_patchfile(&cctx,path,db);
-				MC_CHKERR_FD(rc,fdesc);
-
-
-				//Can't get here if is_dir
-				//if(fs->is_dir && recursive){
-				//	rrc = walk(ctx,rpath,db->id,db->hash);
-				//}
-				//Hashupdate
-				//rc = db_update_file(db);
-				//MC_CHKERR(rc);
-				crypt_filestring(ctx,db,hashstr);
-			} else if(srv != NULL){
-				if(fs->is_dir){
-					if(!srv->is_dir){
-						MC_DBG("Replacing a file with a dir");
-						srv->status = MC_FILESTAT_DELETED;
-						srv->mtime = time(NULL);
-
-						rc = srv_delfile(srv);
-						MC_CHKERR(rc);
-					}
-
-					db->mtime = fs->mtime;
-					db->ctime = fs->ctime;
-					db->size = fs->size;
-					db->status = MC_FILESTAT_COMPLETE;
-
-					rc = db_update_file(db);
-					MC_CHKERR(rc);
-
-					rc = crypt_putfile(&cctx,path,db,0,NULL);
-					MC_CHKERR(rc);
-					
-					if(recursive){
-						rrc = walk(ctx,rpath,db->id,db->hash);
-
-					}
-					// Hashupdate
-					rc = db_update_file(db);
-					MC_CHKERR(rc);
-					crypt_filestring(ctx,db,hashstr);
-				} else { // !fs->is_dir
-					if(!srv->is_dir){
-						db->mtime = fs->mtime;
-						db->ctime = fs->ctime;
-						db->size = fs->size;
-						db->status = MC_FILESTAT_INCOMPLETE_UP;
-						memcpy(db->hash,hash,16);
-
-						rc = db_update_file(db);
-						MC_CHKERR_FD(rc,fdesc);
-
-						fseek(fdesc,0,SEEK_SET);
-						rc = crypt_init_upload(&cctx,db);
-						MC_CHKERR_FD(rc,fdesc);
-
-						MC_NOTIFYPROGRESS(0,db->size);						
-						MC_CHECKTERMINATING_FD(fdesc);
-						if(db->size <= MC_SENDBLOCKSIZE){
-							rc = crypt_putfile(&cctx,path,db,db->size,fdesc);
-							MC_CHKERR_FD(rc,fdesc);
-							sent = db->size;
-						} else {
-							rc = crypt_putfile(&cctx,path,db,MC_SENDBLOCKSIZE,fdesc);
-							MC_CHKERR_FD(rc,fdesc);
-							sent = MC_SENDBLOCKSIZE;
-						}
-						if (sent == db->size){
-							// We're done
-							rc = crypt_finish_upload(&cctx,db->id);
-							MC_CHKERR_FD(rc,fdesc);
-						} else {
-							// Complete the upload
-							while(sent < fs->size){
-								MC_NOTIFYPROGRESS(sent,db->size);
-								MC_CHECKTERMINATING_FD(fdesc);
-								if(db->size-sent <= MC_SENDBLOCKSIZE){
-									rc = crypt_addfile(&cctx,db->id,sent,db->size-sent,fdesc,db->hash);
-									sent += db->size-sent;
-								} else {
-									rc = crypt_addfile(&cctx,db->id,sent,MC_SENDBLOCKSIZE,fdesc,db->hash);
-									sent += MC_SENDBLOCKSIZE;
-								}
-								MC_CHKERR_FD(rc,fdesc);
-							}							
-							rc = crypt_finish_upload(&cctx,db->id);
-							MC_CHKERR_FD(rc,fdesc);
-						}
-
-						db->status = MC_FILESTAT_COMPLETE;
-						rc = db_update_file(db);
-						MC_CHKERR_FD(rc,fdesc);
-						crypt_filestring(ctx,db,hashstr);
-					} else { // srv->is_dir
-						MC_DBG("Replacing a dir with a file");
-						db->mtime = fs->mtime;
-						db->ctime = fs->ctime;
-						db->size = fs->size;
-						db->status = MC_FILESTAT_COMPLETE;
-						db->is_dir = true;
-
-						rc = db_update_file(db);
-						MC_CHKERR_FD(rc,fdesc);
-
-						if(recursive){
-							rrc = walk_nolocal(ctx,rpath,db->id,NULL);
-
-							rc = dirempty(db->id,&empty);
-							MC_CHKERR(rc);
-						} else {
-							empty = true;
-						}
-						if(empty){
-							rc = srv_delfile(db);
-							MC_CHKERR_FD(rc,fdesc);
-							
-							db->status = MC_FILESTAT_INCOMPLETE_UP;
-							memcpy(db->hash,hash,16);
-							//db->mtime = time(NULL);
-
-							rc = db_update_file(db);
-							MC_CHKERR_FD(rc,fdesc);
-
-							fseek(fdesc,0,SEEK_SET);
-							rc = crypt_init_upload(&cctx,db);
-							MC_CHKERR_FD(rc,fdesc);
-
-							MC_NOTIFYPROGRESS(0,db->size);
-							MC_CHECKTERMINATING_FD(fdesc);
-							if(db->size <= MC_SENDBLOCKSIZE){
-								rc = crypt_putfile(&cctx,path,db,db->size,fdesc);
-								MC_CHKERR_FD(rc,fdesc);
-								sent = db->size;
-							} else {
-								rc = crypt_putfile(&cctx,path,db,MC_SENDBLOCKSIZE,fdesc);
-								MC_CHKERR_FD(rc,fdesc);
-								sent = MC_SENDBLOCKSIZE;
-								// Complete the upload
-								while(sent < fs->size){
-									MC_NOTIFYPROGRESS(sent,fs->size);
-									MC_CHECKTERMINATING_FD(fdesc);
-									if(db->size-sent <= MC_SENDBLOCKSIZE){
-										rc = crypt_addfile(&cctx,db->id,sent,db->size-sent,fdesc,db->hash);
-										sent += db->size-sent;
-									} else {
-										rc = crypt_addfile(&cctx,db->id,sent,MC_SENDBLOCKSIZE,fdesc,db->hash);
-										sent += MC_SENDBLOCKSIZE;
-									}
-									MC_CHKERR_FD(rc,fdesc);
-								}						
-							}
-							db->status = MC_FILESTAT_COMPLETE;
-							rc = db_update_file(db);
-							MC_CHKERR_FD(rc,fdesc);
-
-							crypt_filestring(ctx,db,hashstr);
-
-						} else { // files remain
-							//Underlying handlers?
-							//db->status = MC_FILESTAT_COMPLETE;
-
-							//rc = db_update_file(db);
-							//MC_CHKERR(rc);
-
-							//rc = fs_touch(fpath,maxt);
-							//MC_CHKERR(rc);
-						}
-					}
-				}
-			} else { // srv == NULL
-				rc = db_delete_file(db->id);
-				MC_CHKERR_FD(rc,fdesc);
-				db->id = MC_FID_NONE;
-				db->name = fs->name;
-				db->ctime = fs->ctime;
-				db->mtime = fs->mtime;
-				db->size = fs->size;
-				db->status = MC_FILESTAT_INCOMPLETE_UP;
-				memcpy(db->hash,hash,16);
-
-
-				if(fs->is_dir){
-					rc = crypt_putfile(&cctx,path,db,0,NULL);
-					MC_CHKERR(rc);
-
-					rc = db_insert_file(db);
-					MC_CHKERR(rc);
-
-					if(recursive){
-						rrc = walk(ctx,rpath,db->id,db->hash);
-					}
-				} else {
-					fseek(fdesc,0,SEEK_SET);
-					rc = crypt_init_upload(&cctx,db);
-					MC_CHKERR_FD(rc,fdesc);
-					
-					MC_NOTIFYPROGRESS(0,db->size);
-					MC_CHECKTERMINATING_FD(fdesc);
-					if(db->size <= MC_SENDBLOCKSIZE){
-						rc = crypt_putfile(&cctx,path,db,db->size,fdesc);
-						sent = db->size;
-					} else {
-						rc = crypt_putfile(&cctx,path,db,MC_SENDBLOCKSIZE,fdesc);
-						sent = MC_SENDBLOCKSIZE;
-					}
-					MC_CHKERR_FD(rc,fdesc);
-					rc = db_insert_file(db);
-					MC_CHKERR(rc);
-				}
-
-				if(fs->is_dir){
-					// We're done
-				} else if(sent == db->size){
-					// We're done
-					rc = crypt_finish_upload(&cctx,db->id);
-					MC_CHKERR_FD(rc,fdesc);
-				} else {
-					// Complete the upload
-					while(sent < fs->size){
-						MC_NOTIFYPROGRESS(sent,fs->size);
-						MC_CHECKTERMINATING_FD(fdesc);
-						if(db->size-sent <= MC_SENDBLOCKSIZE){
-							rc = crypt_addfile(&cctx,db->id,sent,db->size-sent,fdesc,db->hash);
-							sent += db->size-sent;
-						} else {
-							rc = crypt_addfile(&cctx,db->id,sent,MC_SENDBLOCKSIZE,fdesc,db->hash);
-							sent += MC_SENDBLOCKSIZE;
-						}
-						MC_CHKERR_FD(rc,fdesc);
-					}
-					rc = crypt_finish_upload(&cctx,db->id);
-					MC_CHKERR_FD(rc,fdesc);
-				}
-				db->status = MC_FILESTAT_COMPLETE;
-				rc = db_update_file(db);
-				MC_CHKERR_FD(rc,fdesc);
-				crypt_filestring(ctx,db,hashstr);
-			}
-			if(!fs->is_dir) {
-				fclose(fdesc);
-				MC_NOTIFYEND(MC_NT_UL);
-			}
+			crypt_filestring(ctx,db,hashstr);
 		}
 	}
 
