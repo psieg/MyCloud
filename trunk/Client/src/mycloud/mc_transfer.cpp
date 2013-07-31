@@ -43,7 +43,6 @@ int cleardir(mc_sync_ctx *ctx, const string& path, bool clearall = false){
 int dirempty(int id, bool *empty){
 	int rc;
 	list<mc_file> l;
-	int shit;
 	rc = db_list_file_parent(&l,id);
 	MC_CHKERR(rc);
 
@@ -107,7 +106,191 @@ int download_actual(mc_crypt_ctx *cctx, mc_file *srv, const string& fpath){
 	MC_NOTIFYEND(MC_NT_DL);
 	return 0;
 }
+/* sub-downloads */
+int download_deleted_dir(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *db, mc_file *srv, bool recursive, int* rrc){
+	int rc;
+	bool empty;
 
+	if(db == NULL) rc = db_insert_file(srv);
+	else rc = db_update_file(srv);
+	MC_CHKERR(rc);
+
+	if(fs == NULL || !fs->is_dir){
+		if(fs){ // then !fs->is_dir
+			MC_DBG("Replacing a file with a deleted dir");
+			rc = fs_delfile(fpath);
+			MC_CHKERR(rc);
+			fs = NULL;
+		}
+		if(recursive){
+			//TODO: walk_newdeleted ?
+			*rrc = walk_nolocal(ctx,rpath,srv->id,srv->hash);
+
+			//walk_nolocal will never leave stuff behind, so we're done
+		}
+	} else { //fs->is_dir				
+		if(recursive){
+			*rrc = walk_noremote(ctx,rpath,srv->id,srv->hash);
+
+			rc = dirempty(srv->id,&empty);
+			MC_CHKERR(rc);
+		} else {
+			empty = true;
+		}
+		if(empty){
+			rc = cleardir(ctx,rpath);
+			MC_CHKERR(rc);
+			rc = fs_rmdir(fpath);
+			MC_CHKERR(rc);
+		} else { // files remain
+			// Umnderlying handlers will have taken care of that
+		}
+	}
+	//Hash was updated
+	rc = db_update_file(srv);
+	MC_CHKERR(rc);
+	return 0;
+}
+int download_deleted_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *db, mc_file *srv, bool recursive, int* rrc){
+	int rc;
+	bool empty;
+	
+	if(db == NULL) rc = db_insert_file(srv);
+	else rc = db_update_file(srv);
+	MC_CHKERR(rc);
+
+	if(fs){
+		if(!fs->is_dir){
+			rc = fs_delfile(fpath);
+			MC_CHKERR(rc);
+		} else {
+			MC_DBG("Replacing a dir with a deleted file");
+			if(recursive){
+				*rrc = walk_noremote(ctx,rpath,srv->id,NULL);
+
+				rc = dirempty(srv->id,&empty);
+				MC_CHKERR(rc);
+			}
+			if(!recursive || empty){ // empty
+				srv->status = MC_FILESTAT_DELETED;
+				if(db == NULL) rc = db_insert_file(srv);
+				else rc = db_update_file(srv);
+				MC_CHKERR(rc);
+				rc = cleardir(ctx,rpath);
+				MC_CHKERR(rc);
+				rc = fs_rmdir(fpath);
+				MC_CHKERR(rc);
+			} else { // files remain
+				// Underlying handlers will have taken care of that
+			}
+		}
+	}
+	return 0;
+}
+int download_dir(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *db, mc_file *srv, bool recursive, unsigned char serverhash[16], int* rrc){
+	int rc;
+
+	if(db == NULL) rc = db_insert_file(srv);
+	else rc = db_update_file(srv);
+	MC_CHKERR(rc);			
+	
+	if(fs && !fs->is_dir){
+		MC_DBG("Replacing a file with a dir");
+		rc = fs_delfile(fpath);
+		MC_CHKERR(rc);
+		fs = NULL;
+	}
+
+	if(fs == NULL){
+		rc = fs_mkdir(fpath);
+		MC_CHKERR(rc);
+	}			
+	if(recursive){
+		if(db && memcmp(serverhash,db->hash,16) == 0)
+			*rrc = walk_nochange(ctx,rpath,srv->id,srv->hash);
+		else
+			*rrc = walk(ctx,rpath,srv->id,srv->hash);
+
+		//Hashupdate
+		rc = db_update_file(srv);
+		MC_CHKERR(rc);
+	}
+	return 0;
+}
+int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *db, mc_file *srv, bool recursive, mc_crypt_ctx *extcctx, int* rrc){
+	int rc;
+	bool empty;
+	bool doit;
+	mc_crypt_ctx cctx;
+	if(extcctx) init_crypt_ctx_copy(&cctx,extcctx);
+	else init_crypt_ctx(&cctx,ctx);
+
+	if(fs && fs->is_dir){
+		MC_DBG("Replacing a dir with a file");
+
+		if(recursive){
+			*rrc = walk_noremote(ctx,rpath,srv->id,srv->hash);
+
+			rc = dirempty(srv->id,&empty);
+			MC_CHKERR(rc);
+		}
+		if(!recursive || empty){
+			srv->status = MC_FILESTAT_DELETED;
+			if(db == NULL) rc = db_insert_file(srv);
+			else rc = db_update_file(srv);
+			MC_CHKERR(rc);
+
+			rc = cleardir(ctx,rpath);
+			MC_CHKERR(rc);
+			rc = fs_rmdir(fpath);
+			MC_CHKERR(rc);
+
+			//Only if it was empty we can download the actual file
+			doit = true;
+		} else { // files remain
+			// Underlying handlers will have taken care of that
+			doit = false;
+
+			rc = fs_touch(fpath,srv->mtime,srv->ctime);
+			MC_CHKERR(rc);
+
+			//TODO: They won't take care of filestring!
+		}
+	} else { // fs || !fs->is_dir
+		doit = true;
+		if(fs && srv->size == fs->size){ //modify check only on size match
+			rc = download_checkmodified(&cctx,srv,fs,fpath,&doit);
+			MC_CHKERR(rc);
+		}
+		if(!doit){ //not modified
+			rc = fs_touch(fpath,srv->mtime,srv->ctime);
+			MC_CHKERR(rc);
+
+			if(!db){
+				rc = db_insert_file(srv);
+				MC_CHKERR(rc);
+			}
+		}
+	}
+
+	if(doit){
+		srv->status = MC_FILESTAT_INCOMPLETE_DOWN;				
+		if(db == NULL) rc = db_insert_file(srv);
+		else rc = db_update_file(srv);
+		MC_CHKERR(rc);
+
+		rc = download_actual(&cctx,srv,fpath);
+		MC_CHKERR(rc);
+
+		srv->status = MC_FILESTAT_COMPLETE;
+		rc = db_update_file(srv);
+		MC_CHKERR(rc);
+
+		rc = fs_touch(fpath,srv->mtime,srv->ctime);
+		MC_CHKERR(rc);
+	}
+	return 0;
+}
 /* Download the file from the server
 *	fs and db may be NULL	*/
 int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr, bool recursive, mc_crypt_ctx *extcctx){
@@ -115,12 +298,6 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 	int rc;
 	int rrc = 0; //recursive return value, only changed by walk-calls
 	string fpath,rpath; //full path, for fs calls and rpath for recursive calls
-	bool empty;
-	bool modified;
-	bool terminating = false;
-	mc_crypt_ctx cctx;
-	if(extcctx) init_crypt_ctx_copy(&cctx,extcctx);
-	else init_crypt_ctx(&cctx,ctx);
 	rpath.assign(path).append(srv->name);
 	fpath.assign(ctx->sync->path).append(rpath);
 
@@ -131,199 +308,28 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 		if(db) crypt_filestring(ctx,db,hashstr); //We use db to have a hash mismatch -> no fullsync
 		return MC_ERR_INCOMPLETE_SKIP;
 		//TODO: Partial download?
+
 	} else if(srv->status == MC_FILESTAT_DELETED){
 		MC_INF("Downloading deleted file " << srv->id << ": " << printname(srv));
-		if(srv->is_dir){
-			if(db == NULL){
-				rc = db_insert_file(srv);
-				MC_CHKERR(rc);
-			} else {
-				rc = db_update_file(srv);
-				MC_CHKERR(rc);
-			}
-			if(fs == NULL || !fs->is_dir){
-				if(fs){ // then !fs->is_dir
-					MC_DBG("Replacing a file with a deleted dir");
-					rc = fs_delfile(fpath);
-					MC_CHKERR(rc);
-					fs = NULL;
-				}
-				if(recursive){
-					//TODO: walk_newdeleted ?
-					rrc = walk_nolocal(ctx,rpath,srv->id,srv->hash);
 
-					//walk_nolocal will never leave stuff behind, so we're done
-				}
-			} else { //fs->is_dir				
-				if(recursive){
-					rrc = walk_noremote(ctx,rpath,srv->id,srv->hash);
+		if(srv->is_dir) rc = download_deleted_dir(ctx,fpath,rpath,fs,db,srv,recursive,&rrc);
+		else rc = download_deleted_file(ctx,fpath,rpath,fs,db,srv,recursive,&rrc);
+		MC_CHKERR(rc);
 
-					rc = dirempty(srv->id,&empty);
-					MC_CHKERR(rc);
-				} else {
-					empty = true;
-				}
-				if(empty){
-					rc = cleardir(ctx,rpath);
-					MC_CHKERR(rc);
-					rc = fs_rmdir(fpath);
-					MC_CHKERR(rc);
-				} else { // files remain
-					// Underlying handlers will have taken care of that
-				}
-			}
-			//Hash was updated
-			rc = db_update_file(srv);
-			MC_CHKERR(rc);
-			crypt_filestring(ctx,srv,hashstr);
-		} else { //!srv->is_dir
-			if(db == NULL){
-				rc = db_insert_file(srv);
-				MC_CHKERR(rc);
-			} else {
-				rc = db_update_file(srv);
-				MC_CHKERR(rc);
-			}
-			if(fs){
-				if(!fs->is_dir){
-					rc = fs_delfile(fpath);
-					MC_CHKERR(rc);
-				} else {
-					MC_DBG("Replacing a dir with a deleted file");
-					if(recursive){
-						rrc = walk_noremote(ctx,rpath,srv->id,NULL);
+		crypt_filestring(ctx,srv,hashstr);
 
-						rc = dirempty(srv->id,&empty);
-						MC_CHKERR(rc);
-					} else {
-						empty = true;
-					}
-					if(empty){ // empty
-						srv->status = MC_FILESTAT_DELETED;
-						if(db == NULL) rc = db_insert_file(srv);
-						else rc = db_update_file(srv);
-						MC_CHKERR(rc);
-						rc = cleardir(ctx,rpath);
-						MC_CHKERR(rc);
-						rc = fs_rmdir(fpath);
-						MC_CHKERR(rc);
-					} else { // files remain
-						// Underlying handlers will have taken care of that
-					}
-				}
-			}
-			crypt_filestring(ctx,srv,hashstr);
-		}
 	} else { // srv->status == MC_FILESTAT_COMPLETE
 		MC_INF("Downloading file " << srv->id << ": " << printname(srv));
-		if(db && fs && (srv->mtime-fs->mtime==3600 || srv->mtime-fs->mtime==-3600))
-			MC_WRN("Exact 1-hour offset, something smells wrong");
-		if(srv->is_dir){
-			if((fs != NULL) && !fs->is_dir){
-				MC_DBG("Replacing a file with a dir");
-				rc = fs_delfile(fpath);
-				MC_CHKERR(rc);
-				fs = NULL;
-			}
-			if(db == NULL){
-				rc = db_insert_file(srv);
-				MC_CHKERR(rc);
-			} else {
-				rc = db_update_file(srv);
-				MC_CHKERR(rc);
-			}
-			if(fs == NULL){
-				rc = fs_mkdir(fpath);
-				MC_CHKERR(rc);
-			}
-			
-			if(recursive){
-				if(db && memcmp(serverhash,db->hash,16) == 0)
-					rrc = walk_nochange(ctx,rpath,srv->id,srv->hash);
-				else
-					rrc = walk(ctx,rpath,srv->id,srv->hash);
 
-				//Hashupdate
-				rc = db_update_file(srv);
-				MC_CHKERR(rc);
-				crypt_filestring(ctx,srv,hashstr);
-			}
-		} else { //!srv->is_dir
-			if((fs == NULL) || (!fs->is_dir)){
-				modified = true;
-				if(fs != NULL){
-					if(srv->size == fs->size){ //modify check only on size match
-						rc = download_checkmodified(&cctx,srv,fs,fpath,&modified);
-						MC_CHKERR(rc);
-					}
-				}
-				if(modified){
-					srv->status = MC_FILESTAT_INCOMPLETE_DOWN;				
-					if(db == NULL) rc = db_insert_file(srv);
-					else rc = db_update_file(srv);
-					MC_CHKERR(rc);
-					rc = download_actual(&cctx,srv,fpath);
-					MC_CHKERR(rc);
+		if(srv->is_dir) rc = download_dir(ctx,fpath,rpath,fs,db,srv,recursive,serverhash,&rrc);
+		else rc = download_file(ctx,fpath,rpath,fs,db,srv,recursive,extcctx,&rrc);
+		MC_CHKERR(rc);
 
-				} else {
-					if(db == NULL){
-						rc = db_insert_file(srv);
-						MC_CHKERR(rc);
-					}
-				}
-				
-				srv->status = MC_FILESTAT_COMPLETE;
-				rc = db_update_file(srv);
-				MC_CHKERR(rc);
-				crypt_filestring(ctx,srv,hashstr);
-			} else { //fs->is_dir
-				MC_DBG("Replacing a dir with a file");
-
-				if(recursive){
-					rrc = walk_noremote(ctx,rpath,srv->id,srv->hash);
-
-					rc = dirempty(srv->id,&empty);
-					MC_CHKERR(rc);
-				} else {
-					empty = true;
-				}
-				if(empty){
-					srv->status = MC_FILESTAT_DELETED;
-					if(db == NULL) rc = db_insert_file(srv);
-					else rc = db_update_file(srv);
-					MC_CHKERR(rc);
-					rc = cleardir(ctx,rpath);
-					MC_CHKERR(rc);
-					rc = fs_rmdir(fpath);
-					MC_CHKERR(rc);
-
-					//Only if it was empty we can download the actual file
-					rc = download_actual(&cctx,srv,fpath);
-					MC_CHKERR(rc);
-										
-					srv->status = MC_FILESTAT_COMPLETE;
-					rc = db_update_file(srv);
-					MC_CHKERR(rc);
-					crypt_filestring(ctx,srv,hashstr);
-				} else { // files remain
-					// Underlying handlers will have taken care of that
-					//srv->status = MC_FILESTAT_COMPLETE;
-					//rc = db_update_file(srv);
-					//MC_CHKERR(rc);
-					//rc = fs_touch(fpath,maxt); //bad idea, will trigger reupload next time
-					//MC_CHKERR(rc);
-
-					//TODO: They won't take care of filestring!
-				}
-			}
-		}
-		if(srv->status != MC_FILESTAT_DELETED){
-			rc = fs_touch(fpath,srv->mtime,srv->ctime);
-			MC_CHKERR(rc);
-		}
+		crypt_filestring(ctx,srv,hashstr);
 	}
 	return rrc;
 }
+
 /* Upload the file to the server
 *	srv may be NULL 
 *	if db is NULL, fs and parent must be set
@@ -576,9 +582,6 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 			MC_INF("Uploading file " << db->id << ": " << printname(db));
 			rpath.append(db->name);
 			fpath.append(rpath);
-
-			if(srv && (srv->mtime-fs->mtime==3600 || srv->mtime-fs->mtime==-3600))
-				MC_WRN("Exact 1-hour offset, something smells wrong");
 
 			if(fs->is_dir){
 				memset(hash,0,16);
