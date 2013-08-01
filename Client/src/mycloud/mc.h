@@ -182,8 +182,11 @@ using namespace std;
 #	define MC_MEM(ptr,size)			{ throw ENOMEM; }
 #endif
 
-#define MC_CHKERR(rc)			{ if(rc) return rc; }
-#define MC_CHKERR_FD(rc,fd)		{ if(rc){ if(fd) fclose(fd); return rc; } }
+//#define MC_CHKERR(rc)			{ if(rc) return rc; }
+//#define MC_CHKERR_FD(rc,fd)		{ if(rc){ if(fd) fclose(fd); return rc; } }
+
+#define MC_CHKERR(rc)			{ if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); return rc; } }
+#define MC_CHKERR_FD(rc,fd)		{ if(rc){ if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); if(fd) fclose(fd); return rc; } }
 
 
 /* return wether the WorkerThreads terminating-indicator is set */

@@ -206,7 +206,7 @@ int runmc()
 								cerr << "Crypt Verify Fail. Aborting." << endl;
 								srv_close();
 								cerr << "Server can't be trusted. Disabling all Syncs." << endl;
-								db_execstr("UPDATE syncs SET status = " STRX(MC_SYNCSTAT_DISABLED));
+								db_execstr(string("UPDATE syncs SET status = ") + to_string(MC_SYNCSTAT_DISABLED));
 								cerr << "Changing server url to force manual interaction." << endl;
 								db_execstr("UPDATE status SET url = 'UNTRUSTED: ' || url");
 								MC_NOTIFYEND(MC_NT_SYNC); //Trigger ListSyncs
