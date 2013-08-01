@@ -268,10 +268,6 @@ int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16
 		rc = crypt_filemd5_known(cctx,file,hash,fpath,fdesc);
 		MC_CHKERR_FD(rc,fdesc);
 
-		if(memcmp(hash,file->hash,16) != 0){
-			rc = crypt_filemd5_new(cctx,hash,fpath,file->size,fdesc);
-		}
-
 		fclose(fdesc);
 		return rc;
 	} else return fs_filemd5(hash,fpath,file->size);
@@ -286,7 +282,14 @@ int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16
 		MC_CHKERR(rc);
 		//cctx->hasiv = true; //has old iv but that is not good for a new upload...
 				
-		return crypt_filemd5_actual(cctx,fpath,file->size,fdesc,hash);
+		rc = crypt_filemd5_actual(cctx,fpath,file->size,fdesc,hash);
+		MC_CHKERR(rc);
+
+		//if(memcmp(hash,file->hash,16) != 0){
+		//	rc = crypt_filemd5_new(cctx,hash,fpath,file->size,fdesc);
+		//}
+
+		return rc;
 	} else return fs_filemd5(hash,fpath,file->size,fdesc);
 }
 

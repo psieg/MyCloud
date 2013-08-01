@@ -254,8 +254,6 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 			// Underlying handlers will have taken care of that
 			doit = false;
 
-			rc = fs_touch(fpath,srv->mtime,srv->ctime);
-			MC_CHKERR(rc);
 
 			//TODO: They won't take care of filestring!
 		}
@@ -266,9 +264,6 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 			MC_CHKERR(rc);
 		}
 		if(!doit){ //not modified
-			rc = fs_touch(fpath,srv->mtime,srv->ctime);
-			MC_CHKERR(rc);
-
 			if(!db){
 				rc = db_insert_file(srv);
 				MC_CHKERR(rc);
@@ -288,10 +283,10 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 		srv->status = MC_FILESTAT_COMPLETE;
 		rc = db_update_file(srv);
 		MC_CHKERR(rc);
-
-		rc = fs_touch(fpath,srv->mtime,srv->ctime);
-		MC_CHKERR(rc);
 	}
+
+	rc = fs_touch(fpath,srv->mtime,srv->ctime);
+	MC_CHKERR(rc);
 	return 0;
 }
 /* Download the file from the server
@@ -338,16 +333,13 @@ int upload_checkmodified(mc_crypt_ctx *cctx, const string& fpath, mc_file_fs *fs
 	int rc;
 	FILE* fdesc;
 
-	if(!fs->is_dir){
+	if(!fs->is_dir && srv && (!fs->is_dir) && (!srv->is_dir) && (fs->size == srv->size) && (srv->status == MC_FILESTAT_COMPLETE)){ //only try if there's a chance
 		MC_DBGL("Opening file " << fpath << " for reading");
 		MC_NOTIFYSTART(MC_NT_UL,fpath);
 		fdesc = fs_fopen(fpath,"rb");
 		if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not read the file");
 
-		if(srv && (!fs->is_dir) && (!srv->is_dir) && (fs->size == srv->size) && (srv->status == MC_FILESTAT_COMPLETE))
-			rc = crypt_filemd5_known(cctx,srv,hash,fpath,fdesc);
-		else
-			rc = crypt_filemd5_new(cctx,hash,fpath,fs->size,fdesc);
+		rc = crypt_filemd5_known(cctx,srv,hash,fpath,fdesc);
 		MC_CHKERR_FD(rc,fdesc);
 	
 		fclose(fdesc);
@@ -360,8 +352,9 @@ int upload_checkmodified(mc_crypt_ctx *cctx, const string& fpath, mc_file_fs *fs
 			*modified = true;
 		}
 	} else {
-		memset(hash,0,16);
-		*modified = true; //dirs are always modified (otherwise we would not have come here)
+		if(fs->is_dir) memset(hash,0,16); //dirs are always modified (otherwise we would not have come here)
+		*modified = true; //if there's no srv it must be "modified"
+		
 	}
 
 	return 0;
@@ -457,8 +450,7 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 			rc = crypt_patchfile(&cctx,path,newdb);
 			MC_CHKERR(rc);
 			
-	} else {
-			
+	} else {			
 		if(fs->is_dir){
 			rc = crypt_putfile(&cctx,path,newdb,0,NULL);
 			MC_CHKERR(rc);
@@ -469,7 +461,10 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 			if(recursive){
 				*rrc = walk(ctx,rpath,newdb->id,newdb->hash);
 			}
-		} else {			
+		} else {
+			rc = crypt_filemd5_new(&cctx,newdb->hash,fpath,newdb->size);
+			MC_CHKERR(rc);		
+
 			rc = upload_actual(&cctx,path,fpath,fs,newdb,true);
 			MC_CHKERR(rc);
 
@@ -587,8 +582,11 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				db->ctime = fs->ctime;
 				db->size = fs->size;
 				db->status = MC_FILESTAT_INCOMPLETE_UP;
-				memcpy(db->hash,hash,16);
 
+							
+				rc = crypt_filemd5_new(&cctx,db->hash,fpath,db->size);
+				MC_CHKERR(rc);	
+				
 				rc = db_update_file(db);
 				MC_CHKERR(rc);
 
@@ -622,7 +620,8 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 					MC_CHKERR(rc);
 							
 					db->status = MC_FILESTAT_INCOMPLETE_UP;
-					memcpy(db->hash,hash,16);
+					rc = crypt_filemd5_new(&cctx,db->hash,fpath,db->size);
+					MC_CHKERR(rc);	
 					//db->mtime = time(NULL);
 
 					rc = db_update_file(db);

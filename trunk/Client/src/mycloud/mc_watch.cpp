@@ -330,8 +330,8 @@ int enter_watchmode(int timeout){
 			rdepth = 0;
 			rc = add_dir(dbsyncsit->path,-dbsyncsit->id,&l,rdepth);
 			MC_CHKERR(rc);
-		}		
-		watchlist.push_back(*dbsyncsit);
+			watchlist.push_back(*dbsyncsit);
+		}
 	}
 	if(l.size() == 0){
 		MC_WRN("Nothing to watch, sleeping");
