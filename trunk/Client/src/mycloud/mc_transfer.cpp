@@ -705,6 +705,7 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 
 			rc = upload_new(ctx, path, fpath, rpath, fs, &newdb, srv, parent, recursive, extcctx, &rrc);
 			MC_CHKERR(rc);
+			db = &newdb;
 
 			crypt_filestring(ctx,&newdb,hashstr);
 		}
@@ -754,10 +755,8 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 	//While this sometimes overwrites legit changes, generally it undoes unwanted mtime changes from
 	//things we did within the directory
 	if((db && db->is_dir && db->status != MC_FILESTAT_DELETED) || 
-		(!db && srv && srv->status != MC_FILESTAT_DELETED) ||
-		(!db && !srv && newdb.is_dir && newdb.status != MC_FILESTAT_DELETED)){
-		if(db) rc = fs_touch(fpath,db->mtime,db->ctime);
-		else rc = fs_touch(fpath,newdb.mtime,newdb.ctime);
+		(!db && srv && srv->status != MC_FILESTAT_DELETED)){
+		rc = fs_touch(fpath,db->mtime,db->ctime);
 		MC_CHKERR(rc);
 	}
 
