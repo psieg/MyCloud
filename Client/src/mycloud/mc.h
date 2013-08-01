@@ -187,7 +187,7 @@ using namespace std;
 
 
 /* return wether the WorkerThreads terminating-indicator is set */
-#define MC_TERMINATING()					QtWorkerThread::instance()->terminating
+#define MC_TERMINATING()				QtWorkerThread::instance()->terminating
 /* if the terminating indicator is set, return MC_ERR_TERMINATING */
 #define MC_CHECKTERMINATING()			if(QtWorkerThread::instance()->terminating) MC_ERR_MSG(MC_ERR_TERMINATING, "Aborting");
 /* if the terminating indicator is set, close fd and return MC_ERR_TERMINATING */
@@ -198,7 +198,7 @@ using namespace std;
 	/* notify the UI thread of these events */
 #	define MC_NOTIFYSTART(evt,param)		QtClient::instance()->notifyStart(evt,param);
 #	define MC_NOTIFYEND(evt)				QtClient::instance()->notifyEnd(evt);
-#	define MC_NOTIFYPROGRESS(val,tot)		{ QtClient::instance()->notifyProgress(val,tot); }
+#	define MC_NOTIFYPROGRESS(val,tot)		QtClient::instance()->notifyProgress(val,tot);
 #	define MC_NOTIFYSUBPROGRESS(val,tot)	QtClient::instance()->notifySubProgress(val,tot);
 #	ifdef MC_IONOTIFY
 #		define MC_NOTIFYIOSTART(evt)		QtClient::instance()->notifyIOStart(evt);

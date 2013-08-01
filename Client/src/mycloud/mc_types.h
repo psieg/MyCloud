@@ -21,18 +21,19 @@ using namespace std;
 
 #ifdef MC_QTCLIENT
 /* Events sent to QtClient with the MC_NOTIFY macro, -Start have a string parameter */
-#	define MC_NT_CONN		0
-#	define MC_NT_SYNC		1
-#	define MC_NT_UL			2
-#	define MC_NT_DL			3
-#	define MC_NT_FULLSYNC	4 //A little out of row, has no end
-#	define MC_NT_ERROR		5
+enum MC_NOTIFYTYPE : int {
+	MC_NT_CONN		= 0,
+	MC_NT_SYNC		= 1,
+	MC_NT_UL		= 2,
+	MC_NT_DL		= 3,
+	MC_NT_FULLSYNC	= 4, //A little out of row, has no end
+	MC_NT_ERROR		= 5
 #	ifdef MC_IONOTIFY
-#		define MC_NT_DB		6
-#		define MC_NT_FS		7
-#		define MC_NT_SRV	8
+	,	MC_NT_DB	= 6,
+		MC_NT_FS	= 7,
+		MC_NT_SRV	= 8
 #	endif
-#	define MC_NT_WALKTEST	9
+};
 /* conflict dialog filename maxlen */
 #	define MC_QTCONFLICTMAXLEN	35
 #endif
@@ -93,43 +94,48 @@ typedef struct _mc_status {
 	string updateversion;
 } mc_status;
 
-typedef int MC_SYNCSTATUS;
-#define MC_SYNCSTAT_UNKOWN		0
-#define MC_SYNCSTAT_RUNNING		1
-#define MC_SYNCSTAT_COMPLETED	2
-#define MC_SYNCSTAT_SYNCED		3
-#define MC_SYNCSTAT_UNAVAILABLE	4
-#define MC_SYNCSTAT_FAILED		5
-#define MC_SYNCSTAT_ABORTED		6
-#define MC_SYNCSTAT_DISABLED	7
+enum MC_SYNCSTATUS : int {
+	MC_SYNCSTAT_UNKOWN		= 0,
+	MC_SYNCSTAT_RUNNING		= 1,
+	MC_SYNCSTAT_COMPLETED	= 2,
+	MC_SYNCSTAT_SYNCED		= 3,
+	MC_SYNCSTAT_UNAVAILABLE	= 4,
+	MC_SYNCSTAT_FAILED		= 5,
+	MC_SYNCSTAT_ABORTED		= 6,
+	MC_SYNCSTAT_DISABLED	= 7
+};
 
-typedef int MC_FILESTATUS;
-#define MC_FILESTAT_COMPLETE		0
-#define MC_FILESTAT_DELETED			1
-#define MC_FILESTAT_INCOMPLETE_UP	2	// for files only
-#define MC_FILESTAT_INCOMPLETE_DOWN	3	// for files only
+enum MC_FILESTATUS : int {
+	MC_FILESTAT_COMPLETE		= 0,
+	MC_FILESTAT_DELETED			= 1,
+	MC_FILESTAT_INCOMPLETE_UP	= 2,	// for files only
+	MC_FILESTAT_INCOMPLETE_DOWN	= 3		// for files only
+};
 
-typedef int MC_FILTERTYPE;
-#define MC_FILTERT_MATCH_NAME			0
-#define MC_FILTERT_MATCH_EXTENSION		1
-#define MC_FILTERT_MATCH_FULLNAME		2
-#define MC_FILTERT_MATCH_PATH			3
-#define MC_FILTERT_REGEX_NAME			10
-#define MC_FILTERT_REGEX_EXTENSION		11
-#define MC_FILTERT_REGEX_FULLNAME		12
-#define MC_FILTERT_REGEX_PATH			13
+enum MC_FILTERTYPE : int {
+	MC_FILTERT_MATCH_NAME			= 0,
+	MC_FILTERT_MATCH_EXTENSION		= 1,
+	MC_FILTERT_MATCH_FULLNAME		= 2,
+	MC_FILTERT_MATCH_PATH			= 3,
+	MC_FILTERT_REGEX_NAME			= 10,
+	MC_FILTERT_REGEX_EXTENSION		= 11,
+	MC_FILTERT_REGEX_FULLNAME		= 12,
+	MC_FILTERT_REGEX_PATH			= 13
+};
 
-typedef int MC_CONFLICTACTION;
-#define MC_CONFLICTACT_UNKNOWN	0	//not decided yet
-#define MC_CONFLICTACT_SKIP		1
-#define MC_CONFLICTACT_KEEP		2
-#define MC_CONFLICTACT_UP		3
-#define MC_CONFLICTACT_DOWN		4
+enum MC_CONFLICTACTION : int {
+	MC_CONFLICTACT_UNKNOWN	= 0,	//not decided yet
+	MC_CONFLICTACT_SKIP		= 1,
+	MC_CONFLICTACT_KEEP		= 2,
+	MC_CONFLICTACT_UP		= 3,
+	MC_CONFLICTACT_DOWN		= 4
+};
 
-typedef int MC_CONFLICTRECOMMENDATION;
-#define MC_CONFLICTREC_DONTKNOW	0
-#define MC_CONFLICTREC_UP		1
-#define MC_CONFLICTREC_DOWN		2
+enum MC_CONFLICTRECOMMENDATION : int {
+	MC_CONFLICTREC_DONTKNOW	= 0,
+	MC_CONFLICTREC_UP		= 1,
+	MC_CONFLICTREC_DOWN		= 2
+};
 
 inline bool compare_hashstr(const string& a, const string& b){ return *((int*)a.c_str()) < *((int*)b.c_str()); }
 

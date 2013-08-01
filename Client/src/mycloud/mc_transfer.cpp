@@ -338,7 +338,7 @@ int upload_checkmodified(mc_crypt_ctx *cctx, const string& fpath, mc_file_fs *fs
 	int rc;
 	FILE* fdesc;
 
-	if(fs->is_dir){
+	if(!fs->is_dir){
 		MC_DBGL("Opening file " << fpath << " for reading");
 		MC_NOTIFYSTART(MC_NT_UL,fpath);
 		fdesc = fs_fopen(fpath,"rb");
