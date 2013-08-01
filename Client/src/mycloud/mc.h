@@ -47,10 +47,6 @@ using namespace std;
 #	define MC_IONOTIFY
 #endif
 
-
-#define STR(X) #X
-#define STRX(X) STR(X)
-
 #ifdef MC_LOGFILE
 	extern ofstream mc_logfile;
 #endif
@@ -182,11 +178,8 @@ using namespace std;
 #	define MC_MEM(ptr,size)			{ throw ENOMEM; }
 #endif
 
-//#define MC_CHKERR(rc)			{ if(rc) return rc; }
-//#define MC_CHKERR_FD(rc,fd)		{ if(rc){ if(fd) fclose(fd); return rc; } }
-
-#define MC_CHKERR(rc)			{ if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); return rc; } }
-#define MC_CHKERR_FD(rc,fd)		{ if(rc){ if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); if(fd) fclose(fd); return rc; } }
+#define MC_CHKERR(rc)			{ if(rc) return rc; }
+#define MC_CHKERR_FD(rc,fd)		{ if(rc){ if(fd) fclose(fd); return rc; } }
 
 
 /* return wether the WorkerThreads terminating-indicator is set */
