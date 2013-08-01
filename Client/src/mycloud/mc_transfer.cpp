@@ -413,7 +413,7 @@ int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, m
 	return 0;
 }
 /* sub-uploads */
-int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *newdb, mc_file *srv, string *hashstr, int parent, bool recursive, mc_crypt_ctx *extcctx, int *rrc){
+int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *newdb, mc_file *srv, int parent, bool recursive, mc_crypt_ctx *extcctx, int *rrc){
 	int rc;
 	bool modified;
 	mc_crypt_ctx cctx;
@@ -703,7 +703,7 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 			fpath.append(rpath);
 			mc_file newdb;
 
-			rc = upload_new(ctx, path, fpath, rpath, fs, &newdb, srv, hashstr, parent, recursive, extcctx, &rrc);
+			rc = upload_new(ctx, path, fpath, rpath, fs, &newdb, srv, parent, recursive, extcctx, &rrc);
 			MC_CHKERR(rc);
 
 			crypt_filestring(ctx,&newdb,hashstr);
@@ -811,17 +811,20 @@ int purge(mc_file *db, mc_file *srv){
 }
 /* Called by verifyandcomplete, resumes an interrupted upload 
 *	Should not be called on dirs	*/
-int complete_up(mc_sync_ctx *ctx, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr){
+int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr){
 	FILE *fdesc;
 	int64 sent;
 	mc_crypt_ctx cctx;
 	int rc;
 	MC_INF("Resuming upload of file " << db->id << ": " << printname(db));
 	if(fs->is_dir) MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"not to be called on dirs");
-	//if(ctx->sync->crypted) MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Can't resume crypted yet");
-	init_crypt_ctx(&cctx,ctx);
+	
+	if(memcmp(db->hash,srv->hash,16)){
+		MC_INF("Hash mismatch, restarting upload");
+		return upload(ctx, path, fs, db, srv, hashstr);
+	}
 
-	if(memcmp(db->hash,srv->hash,16)) MC_ERR_MSG(MC_ERR_VERIFY,"Hash mismatch");
+	init_crypt_ctx(&cctx,ctx);
 	
 	rc = crypt_initresume_up(&cctx,db,&sent);
 	MC_CHKERR(rc);
@@ -872,17 +875,20 @@ int complete_up(mc_sync_ctx *ctx, const string& fpath, mc_file_fs *fs, mc_file *
 
 /* Called by verifyandcomplete, resumes an interrupted download 
 *	Should not be called on dirs	*/
-int complete_down(mc_sync_ctx *ctx, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr){
+int complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr){
 	FILE *fdesc;
 	int64 offset,written;
 	mc_crypt_ctx cctx;
 	int rc;
 	MC_INF("Resuming download of file " << db->id << ": " << printname(db));
 	if(srv->is_dir) MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"not to be called on dirs");
-	//if(ctx->sync->crypted) MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Can't resume crypted yet");
-	init_crypt_ctx(&cctx,ctx);
 
-	if(memcmp(db->hash,srv->hash,16)) MC_ERR_MSG(MC_ERR_VERIFY,"Hash mismatch");
+	if(memcmp(db->hash,srv->hash,16)){
+		MC_INF("Hash mismatch, restarting download");
+		return download(ctx, path, fs, db, srv, hashstr);
+	}
+
+	init_crypt_ctx(&cctx,ctx);
 
 	rc = crypt_initresume_down(&cctx,srv);
 	MC_CHKERR(rc);

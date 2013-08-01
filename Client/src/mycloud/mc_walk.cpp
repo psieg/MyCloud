@@ -498,7 +498,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				MC_CHKERR(rc);
 
 
-				return complete_up(ctx,fpath,fs,srv,srv,hashstr);
+				return complete_up(ctx,path,fpath,fs,srv,srv,hashstr);
 			} else { //srv->status == MC_FILESTAT_DELETED
 				return conflicted(ctx,path,fs,NULL,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
 			}
@@ -529,7 +529,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				} else if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 					//Shouldn't actually happen: The file was complete but is incomplete now, although its the same file?
 					//Continue upload
-					return complete_up(ctx,fpath,fs,srv,srv,hashstr);
+					return complete_up(ctx,path,fpath,fs,srv,srv,hashstr);
 				} else { //srv->status == MC_FILESTAT_DELETED
 					return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
 				}
@@ -544,7 +544,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 			} else if(db->status == MC_FILESTAT_INCOMPLETE_DOWN){
 				if(srv->status == MC_FILESTAT_COMPLETE){
 					//Continue download
-					return complete_down(ctx,fpath,fs,db,srv,hashstr);
+					return complete_down(ctx,path,fpath,fs,db,srv,hashstr);
 				} else if(srv->status == MC_FILESTAT_INCOMPLETE_UP) {
 					//Since we don't start downloading incomplete uploads, this shouldn't happen either
 					MC_INFL("Not downloading file " << srv->id << ": " << srv->name << ", file is not complete");
@@ -560,7 +560,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 					MC_CHKERR(rc);
 				} else if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 					//Continue upload
-					return complete_up(ctx,fpath,fs,db,srv,hashstr);
+					return complete_up(ctx,path,fpath,fs,db,srv,hashstr);
 				} else {  //srv->status == MC_FILESTAT_DELETED
 					return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
 				}
@@ -746,7 +746,7 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 						if(indbit->status == MC_FILESTAT_INCOMPLETE_DOWN){
 							string spath;
 							spath.assign(fpath).append(onsrvit->name);
-							rc = complete_down(ctx,spath,&*onfsit,&*indbit,&*onsrvit,&hashstr);
+							rc = complete_down(ctx,path,spath,&*onfsit,&*indbit,&*onsrvit,&hashstr);
 						} else {
 							rc = upload(ctx,path,&*onfsit,&*indbit,&*onsrvit,&hashstr);
 						}

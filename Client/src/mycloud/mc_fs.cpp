@@ -187,7 +187,8 @@ int fs_touch(const string& path, int64 mtime, int64 ctime){
 	//if(rc){
 	//	if(errno == EACCES){ //... path is a directory
 			h = CreateFileW(utf8_to_unicode(path).c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-			if(h == INVALID_HANDLE_VALUE) MC_ERR_MSG(MC_ERR_IO,"Failed to set mtime for file " << path << ": " << GetLastError());
+			if(h == INVALID_HANDLE_VALUE)
+				MC_ERR_MSG(MC_ERR_IO,"Failed to set mtime for file " << path << ": " << GetLastError());
 
 			mt = PosixToFileTime(mtime);
 
@@ -197,7 +198,8 @@ int fs_touch(const string& path, int64 mtime, int64 ctime){
 				ct = PosixToFileTime(ctime);
 				rc = SetFileTime(h,&ct,NULL,&mt);
 			}
-			if(rc == 0) MC_ERR_MSG(MC_ERR_IO,"Failed to set mtime for file " << path << ": " << GetLastError());
+			if(rc == 0) 
+				MC_ERR_MSG(MC_ERR_IO,"Failed to set mtime for file " << path << ": " << GetLastError());
 
 			CloseHandle(h);
 	//	} else {

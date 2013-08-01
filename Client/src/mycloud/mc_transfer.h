@@ -19,9 +19,9 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 /* Purge the file from the entire system, ignoring fs - USE WITH CAUTION */
 int purge(mc_file *db, mc_file *srv);
 /* Resumes an interrupted upload */
-int complete_up(mc_sync_ctx *ctx, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr);
+int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr);
 /* Resumes an interrupted download */
-int complete_down(mc_sync_ctx *ctx, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr);
+int complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr);
 
 
 #endif /* MC_TRANSFER_H */
