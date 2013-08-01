@@ -53,7 +53,7 @@ public:
 			if(this->isRunning()){
 				cout << "Killing Worker Thread" << endl;
 				this->terminate();
-				db_execstr("UPDATE syncs SET status = " STRX(MC_SYNCSTAT_ABORTED) " WHERE status = " STRX(MC_SYNCSTAT_RUNNING));
+				db_execstr(string("UPDATE syncs SET status = ") + to_string(MC_SYNCSTAT_ABORTED) + " WHERE status = " + to_string(MC_SYNCSTAT_RUNNING));
 				//srv_mutex.unlock();
 				//srv_close();
 				//db_mutex.unlock();
