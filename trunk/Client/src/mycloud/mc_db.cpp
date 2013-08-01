@@ -199,7 +199,7 @@ int _db_open(const string& fname){
 		MC_CHKERR_MSG(rc, "Couldn't determine db status");
 		if(status.locked){ //TODO: cleanup?
 			MC_INF("Unclean shutdown detected");
-			rc = _db_execstr("UPDATE syncs SET status = " STRX(MC_SYNCSTAT_ABORTED) " WHERE status = " STRX(MC_SYNCSTAT_RUNNING));
+			rc = _db_execstr(string("UPDATE syncs SET status = ") + to_string(MC_SYNCSTAT_ABORTED) + " WHERE status = " + to_string(MC_SYNCSTAT_RUNNING));
 			MC_CHKERR_MSG(rc, "Failed to cleanup db");
 		}
 
@@ -340,7 +340,7 @@ int _db_select_sync(mc_sync_db *var){
 		var->path.assign((const char*)sqlite3_column_text(stmt_select_sync,3));
 		var->filterversion = sqlite3_column_int(stmt_select_sync,4);
 		var->crypted = sqlite3_column_int(stmt_select_sync,5) != 0;
-		var->status = sqlite3_column_int(stmt_select_sync,6);
+		var->status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_select_sync,6);
 		var->lastsync = sqlite3_column_int64(stmt_select_sync,7);
 		memcpy(var->hash,sqlite3_column_blob(stmt_select_sync,8),16);
 		memcpy(var->cryptkey,sqlite3_column_blob(stmt_select_sync,9),32);
@@ -363,7 +363,7 @@ int _db_list_sync(list<mc_sync_db> *l){
 		var.path.assign((const char*)sqlite3_column_text(stmt_list_sync,3));
 		var.filterversion = sqlite3_column_int(stmt_list_sync,4);
 		var.crypted = sqlite3_column_int(stmt_list_sync,5) != 0;
-		var.status = sqlite3_column_int(stmt_list_sync,6);
+		var.status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_list_sync,6);
 		var.lastsync = sqlite3_column_int64(stmt_list_sync,7);
 		memcpy(var.hash,sqlite3_column_blob(stmt_list_sync,8),16);
 		memcpy(var.cryptkey,sqlite3_column_blob(stmt_list_sync,9),32);
@@ -470,7 +470,7 @@ int _db_select_filter(mc_filter *var){
 		var->sid = sqlite3_column_int(stmt_select_filter,1);
 		var->files = sqlite3_column_int(stmt_select_filter,2) != 0;
 		var->directories = sqlite3_column_int(stmt_select_filter,3) != 0;
-		var->type = sqlite3_column_int(stmt_select_filter,4);
+		var->type = (MC_FILTERTYPE) sqlite3_column_int(stmt_select_filter,4);
 		var->rule.assign((const char*)sqlite3_column_text(stmt_select_filter,5));
 	}
 	return 0;
@@ -493,7 +493,7 @@ int _db_list_filter_sid(list<mc_filter> *l, int sid){
 		var.sid = sqlite3_column_int(stmt_list_filter_sid,1);
 		var.files = sqlite3_column_int(stmt_list_filter_sid,2) != 0;
 		var.directories = sqlite3_column_int(stmt_list_filter_sid,3) != 0;
-		var.type = sqlite3_column_int(stmt_list_filter_sid,4);
+		var.type = (MC_FILTERTYPE) sqlite3_column_int(stmt_list_filter_sid,4);
 		var.rule.assign((const char*)sqlite3_column_text(stmt_list_filter_sid,5));
 		l->push_back(var);
 		rc = sqlite3_step(stmt_list_filter_sid);
@@ -602,7 +602,7 @@ int _db_select_file_name(mc_file *var){
 		var->is_dir = sqlite3_column_int(stmt_select_file_name,6) != 0;
 		var->parent = sqlite3_column_int(stmt_select_file_name,7);
 		memcpy(var->hash,sqlite3_column_blob(stmt_select_file_name,8),16);
-		var->status = sqlite3_column_int(stmt_select_file_name,9);
+		var->status = (MC_FILESTATUS) sqlite3_column_int(stmt_select_file_name,9);
 	}
 	return 0;
 }
@@ -629,7 +629,7 @@ int _db_select_file_id(mc_file *var){
 		var->is_dir = sqlite3_column_int(stmt_select_file_id,6) != 0;
 		var->parent = sqlite3_column_int(stmt_select_file_id,7);
 		memcpy(var->hash,sqlite3_column_blob(stmt_select_file_id,8),16);
-		var->status = sqlite3_column_int(stmt_select_file_id,9);
+		var->status = (MC_FILESTATUS) sqlite3_column_int(stmt_select_file_id,9);
 	}
 	return 0;
 }
@@ -656,7 +656,7 @@ int _db_list_file_parent(list<mc_file> *l, int parent){
 		var.is_dir = sqlite3_column_int(stmt_list_file_parent,6) != 0;
 		var.parent = sqlite3_column_int(stmt_list_file_parent,7);
 		memcpy(var.hash,sqlite3_column_blob(stmt_list_file_parent,8),16);
-		var.status = sqlite3_column_int(stmt_list_file_parent,9);
+		var.status = (MC_FILESTATUS) sqlite3_column_int(stmt_list_file_parent,9);
 		l->push_back(var);
 		rc = sqlite3_step(stmt_list_file_parent);
 	}
