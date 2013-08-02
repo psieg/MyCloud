@@ -10,7 +10,6 @@ define("MC_SRVQRY_LISTDIR",	401);	// List all files in a dir (with their stats)
 define("MC_SRVQRY_GETFILE",	402);	// Get the content of a file
 define("MC_SRVQRY_GETMETA",	403);	// Get a file's metadata
 define("MC_SRVQRY_GETOFFSET",	404);	// Get the offset of an incomplete file (to complete it)
-define("MC_SRVQRY_GETPREVIEW",	405);	// Get first 32 byte of file (for crypto)
 define("MC_SRVQRY_PUTFILE",	410);	// Add/Replace a file
 define("MC_SRVQRY_ADDFILE",	411);	// Add the following content to a file
 define("MC_SRVQRY_PATCHFILE",	412);	// Patch the metaddata of a file
@@ -27,7 +26,6 @@ define("MC_SRVSTAT_DIRLIST",	400);	// Here's the directory listing you requested
 define("MC_SRVSTAT_FILE",	401);	// Here are contents of the file
 define("MC_SRVSTAT_FILEMETA",	402);	// Metadata of the file
 define("MC_SRVSTAT_OFFSET",	403);	// Here's how much of the file I have
-define("MC_SRVSTAT_FILEPREVIEW",404);	// First 32 bytes
 define("MC_SRVSTAT_FILEID",	410);	// ID of file just created
 define("MC_SRVSTAT_CHANGE",	500);	// ID of the changed watched sync
 define("MC_SRVSTAT_NOCHANGE",	501);	// None of the watched syncs has changed
