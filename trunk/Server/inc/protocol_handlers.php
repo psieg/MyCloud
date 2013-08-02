@@ -43,7 +43,6 @@ function handle_getfile($ibuf,$uid){
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$res = $q->fetch_row();
 	if($res[1]) return pack_code(MC_SRVSTAT_BADQRY); // Can't get a directory, it has no contents
-	if($res[5] != MC_FILESTAT_COMPLETE) return pack_code(MC_SRVSTAT_BADQRY); // Incomplete files should not be downloaded
 	if(strncmp($res[6],$qry[3],16)) return pack_code(MC_SRVSTAT_VERIFYFAIL);
 	if($qry[2] < 0) return pack_code(MC_SRVSTAT_BADQRY); //Negative blocksize
 	//if($qry[2] > $res[4]-$qry[1]) return pack_code(MC_SRVSTAT_BADQRY); //Can't get more than there is //can, just read whats there
