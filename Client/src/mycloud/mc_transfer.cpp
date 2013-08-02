@@ -260,7 +260,7 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 	} else { // fs || !fs->is_dir
 		doit = true;
 		if(fs && srv->size == fs->size){ //modify check only on size match
-			rc = download_checkmodified(&cctx,fpath,srv,fs,&doit);
+			rc = download_checkmodified(&cctx,fpath,srv,fs,&doit); //TODO: simply compare srv->hash and db->hash?
 			MC_CHKERR(rc);
 		}
 		if(!doit){ //not modified
