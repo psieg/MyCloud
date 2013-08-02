@@ -280,7 +280,7 @@ int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16
 			MC_INF("WTF?");
 
 		//For known we need the IV on the server
-		rc = srv_getfile(file->id,0,MC_CRYPT_PADDING,(char*)cctx->iv,NULL,file->hash);
+		rc = srv_getfile(file->id,0,MC_CRYPT_PADDING,(char*)cctx->iv,NULL,file->hash,false);
 		MC_CHKERR(rc);
 		//cctx->hasiv = true; //has old iv but that is not good for a new upload...
 				
@@ -325,7 +325,7 @@ int crypt_initresume_down(mc_crypt_ctx *cctx, mc_file *file){
 			cctx->evp = EVP_CIPHER_CTX_new();
 			
 			if(!cctx->hasiv){
-				rc = srv_getfile(file->id,0,MC_CRYPT_PADDING,(char*)cctx->iv,NULL,file->hash);
+				rc = srv_getfile(file->id,0,MC_CRYPT_OFFSET,(char*)cctx->iv,NULL,file->hash,false);
 				MC_CHKERR(rc);
 				cctx->hasiv = true;
 			}
@@ -527,7 +527,7 @@ int crypt_initresume_up(mc_crypt_ctx *cctx, mc_file *file, int64 *offset){
 		//if(!file->is_dir){//resume only on files
 			SetBuf(&cctx->pbuf,MC_SENDBLOCKSIZE);
 			if(!cctx->hasiv){
-				rc = srv_getfile(file->id,0,MC_CRYPT_PADDING,(char*)cctx->iv,NULL,file->hash);
+				rc = srv_getfile(file->id,0,MC_CRYPT_OFFSET,(char*)cctx->iv,NULL,file->hash,false);
 				MC_CHKERR(rc);
 				cctx->hasiv = true;
 			}
