@@ -267,6 +267,9 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 			if(!db){
 				rc = db_insert_file(srv);
 				MC_CHKERR(rc);
+			} else {
+				rc = db_update_file(srv);
+				MC_CHKERR(rc);
 			}
 		}
 	}

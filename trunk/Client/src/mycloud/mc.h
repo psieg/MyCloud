@@ -13,7 +13,7 @@
 #include <errno.h>
 using namespace std;
 
-#define MC_VERSION_PLAIN	"0.2.6"
+#define MC_VERSION_PLAIN	"0.2.7"
 #ifdef _DEBUG
 #	define MC_VERSION			MC_VERSION_PLAIN##" (debug)"
 #else
