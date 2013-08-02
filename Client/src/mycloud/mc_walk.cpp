@@ -494,6 +494,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				MC_CHKERR(rc);
 
 			} else if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
+				srv->status = MC_FILESTAT_INCOMPLETE_UP_ME;
 				rc = db_insert_file(srv);
 				MC_CHKERR(rc);
 
@@ -552,7 +553,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				} else { //srv->status == MC_FILESTAT_DELETED
 					return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW); 
 				}
-			} else { //db->status == MC_FILESTAT_INCOMPLETE_UP
+			} else { //db->status == MC_FILESTAT_INCOMPLETE_UP or MC_FILESTAT_INCOMPLETE_UP_ME
 				if(srv->status == MC_FILESTAT_COMPLETE){
 					//Someone else finished the upload
 					db->status = MC_FILESTAT_COMPLETE;
