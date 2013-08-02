@@ -85,26 +85,6 @@ function handle_getoffset($ibuf,$uid){
 	
 }
 
-function handle_getpreview($ibuf,$uid){
-	global $mysqli;
-	$id = unpack_getpreview($ibuf);
-	$q = $mysqli->query("SELECT id,is_dir,name,parent,size,status FROM mc_files WHERE id = ".$id." AND uid = ".$uid);
-	if(!$q) return pack_interror($mysqli->error);
-	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
-	$res = $q->fetch_row();
-	if($res[1]) return pack_code(MC_SRVSTAT_BADQRY); // A directory can't have a preview
-	//if($res[5] != MC_FILESTAT_INCOMPLETE_UP) return pack_code(MC_SRVSTAT_BADQRY); //Preview only relevant for incomplete files
-	
-	$filedata = filedata($res[0],$res[2],$res[3]);
-	$fdesc = fopen($filedata[0],"rb");
-	if(!$fdesc) return pack_interror("Failed to open file");
-	$buf = fread($fdesc,16);
-	fclose($fdesc);
-
-	return pack_filepreview($buf);
-
-}
-
 function handle_putfile($ibuf,$uid){
 	global $mysqli;
 	$qry = unpack_putfile($ibuf);

@@ -43,10 +43,6 @@ function unpack_getoffset($fdesc){
 	return unpack("l1id",fread($fdesc,4))['id'];
 }
 
-function unpack_getpreview($fdesc){
-	return unpack("l1id",fread($fdesc,4))['id'];
-}
-
 function unpack_putfile($fdesc){
 	$result = array();
 	$data = unpack("l1id/l1len",fread($fdesc,8));
@@ -170,10 +166,6 @@ function pack_fileid($fid){
 
 function pack_offset($offset){
 	return pack("l1L2",MC_SRVSTAT_OFFSET,$offset&0xFFFFFFFF,$offset>>32);
-}
-
-function pack_filepreview($buf){
-	return pack("l1",MC_SRVSTAT_FILEPREVIEW).$buf;
 }
 
 function pack_filemeta($file){
