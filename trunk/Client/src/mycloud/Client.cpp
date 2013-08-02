@@ -126,7 +126,7 @@ int runmc()
 									init_sync_ctx(&context,&*dbsyncsit,&filter);
 									if(memcmp(dbsyncsit->hash,srvsyncsit->hash,16) == 0){
 										MC_INFL(dbsyncsit->name << " has not been updated on server, walking locally");
-										rc = walk_nochange(&context,"",-dbsyncsit->id,hash);
+										wrc = walk_nochange(&context,"",-dbsyncsit->id,hash);
 										MC_INFL("Sync completed (Code " << wrc << ")");
 										rc = db_select_sync(&*dbsyncsit);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
