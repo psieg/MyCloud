@@ -26,8 +26,8 @@ int _srv_timecheck();
 int _srv_listsyncs(list<mc_sync> *l);
 int _srv_listfilters(list<mc_filter> *l, int sid);
 int _srv_listdir(list<mc_file> *l, int parent);
-int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16]);
-int _srv_getfile(int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16]); 
+int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], bool withprogress = true);
+int _srv_getfile(int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16], bool withprogress = true); 
 int _srv_getoffset(int id, int64 *offset);
 int _srv_getpreview(int id, unsigned char buf[32]);
 int _srv_putfile(mc_file *file, int64 blocksize, FILE *fdesc);
@@ -538,10 +538,10 @@ int _srv_listdir(list<mc_file> *l, int parent){
 	return 0;
 }
 
-int _srv_getfile_actual(int id, int64 offset, int64 blocksize, unsigned char hash[16], int64 *write){
+int _srv_getfile_actual(int id, int64 offset, int64 blocksize, unsigned char hash[16], int64 *write, bool withprogress){
 	int rc;
 	pack_getfile(&ibuf,authtoken,id,offset,blocksize,hash);
-	rc = srv_perform(MC_SRVSTAT_FILE,true);
+	rc = srv_perform(MC_SRVSTAT_FILE,withprogress);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_FILE); }
 	MC_CHKERR(rc);
@@ -553,15 +553,15 @@ int _srv_getfile_actual(int id, int64 offset, int64 blocksize, unsigned char has
 	return 0;
 }
 
-SAFEFUNC6(srv_getfile,int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], \
-		 id,offset,blocksize,fdesc,byteswritten,hash)
-int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16]){
+SAFEFUNC7(srv_getfile,int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], bool withprogress, \
+		 id,offset,blocksize,fdesc,byteswritten,hash,withprogress)
+int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], bool withprogress){
 	MC_DBGL("Getting file " << id << " at offset " << offset);
 	int rc;
 	int64 write,written;
 	int64 foffset = 0;
 
-	rc = _srv_getfile_actual(id,offset,blocksize,hash,&write);
+	rc = _srv_getfile_actual(id,offset,blocksize,hash,&write,withprogress);
 	MC_CHKERR(rc);
 
 	if(write){
@@ -574,14 +574,14 @@ int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byte
 	return 0;
 }
 
-SAFEFUNC6(srv_getfile,int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16], \
-		 id,offset,blocksize,buf,byteswritten,hash)
-int _srv_getfile(int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16]){
+SAFEFUNC7(srv_getfile,int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16], bool withprogress, \
+		 id,offset,blocksize,buf,byteswritten,hash,withprogress)
+int _srv_getfile(int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16], bool withprogress){
 	MC_DBGL("Getting file " << id << " at offset " << offset);
 	int rc;
 	int64 write;
 
-	rc = _srv_getfile_actual(id,offset,blocksize,hash,&write);
+	rc = _srv_getfile_actual(id,offset,blocksize,hash,&write,withprogress);
 	MC_CHKERR(rc);
 	
 	if(write){
