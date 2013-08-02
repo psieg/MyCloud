@@ -178,7 +178,10 @@ int QtWatcher::changeTimeout(){
 		if(s == dbsyncsit->path.c_str()){ //it's a sync itself
 			MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
 			rc = walk_nochange(&context,"",-dbsyncsit->id,dbsyncsit->hash);
-			MC_CHKERR(rc);
+			if(rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+			else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
+			else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
+			dbsyncsit->lastsync = time(NULL); //TODO: not always a full sync!
 			rc = db_update_sync(&*dbsyncsit);
 			MC_CHKERR(rc);
 			MC_NOTIFYEND(MC_NT_SYNC);
