@@ -276,6 +276,8 @@ int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16
 	if(cctx->ctx->sync->crypted){
 		int rc;
 		MC_DBGL("Calculating CryptMD5 of file " << fpath);
+		if(file->id == 0)
+			MC_INF("WTF?");
 
 		//For known we need the IV on the server
 		rc = srv_getfile(file->id,0,MC_CRYPT_PADDING,(char*)cctx->iv,NULL,file->hash);
