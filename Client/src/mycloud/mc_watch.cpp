@@ -12,7 +12,7 @@ QtWatcher::QtWatcher(const QStringList &paths, list<mc_sync_db> *syncs, const QS
 	connect(this,SIGNAL(_startLocalWatch()),this,SLOT(__startLocalWatch()));
 	watcher = new QFileSystemWatcher(paths);
 	connect(watcher,SIGNAL(directoryChanged(const QString &)),this,SLOT(directoryChanged(const QString &)));
-	//connect(watcher,SIGNAL(fileChanged(const QString &)),this,SLOT(directoryChanged(const QString &))); //TODO: implement for file
+	connect(watcher,SIGNAL(fileChanged(const QString &)),this,SLOT(fileChanged(const QString &)));
 	watchsyncs = syncs;
 	QString _url = "https://";
 	_url.append(url);
@@ -95,13 +95,33 @@ void QtWatcher::directoryChanged(const QString &path){
 				MC_INF("FileSystemWatcher deletion bug?, canceling");
 				delete watcher;
 				watcher = NULL;
-				//MC_DBG("Changing " << qPrintable(path) << " to " << qPrintable(path.section("/",0,-3)));
-				//changepaths.replace(changepaths.indexOf(path),path.section("/",0,-3));
 				loop.quit();
 			}
 		}
 		evttimer.start();
-		//string t = qPrintable(path);
+	} else {
+		MC_DBG("Ignoring FS change");
+	}
+}
+void QtWatcher::fileChanged(const QString &path){
+	QString dirpath;
+	if(watchfs){
+		MC_DBG(qPrintable(path) << " has changed");
+		dirpath = path.mid(0,path.lastIndexOf("/")+1); //Just add the dir, we don't want to walk files
+		crypt_seed(time(NULL) % path.length()*137347);
+		if(!changepaths.contains(dirpath)){
+			changepaths.append(dirpath);
+			repeatcounter = 0;
+		} else {
+			repeatcounter++;
+			if(repeatcounter > 50){
+				MC_INF("FileSystemWatcher deletion bug?, canceling");
+				delete watcher;
+				watcher = NULL;
+				loop.quit();
+			}
+		}
+		evttimer.start();
 	} else {
 		MC_DBG("Ignoring FS change");
 	}
@@ -110,6 +130,7 @@ void QtWatcher::directoryChanged(const QString &path){
 int QtWatcher::changeTimeout(){
 	int rc,i,lastsyncid;
 	mc_sync_ctx context;
+	list<mc_sync_db> newsyncs;
 	list<mc_sync_db>::iterator dbsyncsit,dbsyncsend;
 	stopRemoteWatch();
 	stopLocalWatch();
@@ -132,8 +153,11 @@ int QtWatcher::changeTimeout(){
 		for(i=0;i<changepaths.length();i++) if(changepaths[i].startsWith(s)) { changepaths.removeAt(i); i--; }
 		//find sync
 		watchsyncs->clear();
-		rc = db_list_sync(watchsyncs);
+		rc = db_list_sync(&newsyncs);
 		MC_CHKERR(rc);
+		for(mc_sync_db& s : newsyncs){
+			if(s.status != MC_SYNCSTAT_DISABLED) watchsyncs->push_back(s);
+		}
 		dbsyncsit = watchsyncs->begin();
 		dbsyncsend = watchsyncs->end();
 		for(;dbsyncsit != dbsyncsend; ++dbsyncsit){
@@ -219,6 +243,7 @@ int QtWatcher::changeTimeout(){
 
 int QtWatcher::remoteChange(int status){
 	int rc,id;
+
 	if(!status){
 		rc = srv_notifychange_process(&netobuf,&id);
 		if(rc == MC_ERR_NOCHANGE){ startRemoteWatch(); return 0; }
@@ -227,16 +252,19 @@ int QtWatcher::remoteChange(int status){
 			restarttimer.start();
 			return 0;
 		}
-		//MC_DBG("Remote change, walking");
 		MC_INF("Remote change detected");
+		mc_sync_ctx context;
+		list<mc_sync_db> newsyncs;
+		list<mc_sync_db>::iterator dbsyncsit,dbsyncsend;
 		//id changed
 		stopLocalWatch();
 		//find sync
 		watchsyncs->clear();
-		rc = db_list_sync(watchsyncs);
+		rc = db_list_sync(&newsyncs);
 		MC_CHKERR(rc);
-		mc_sync_ctx context;
-		list<mc_sync_db>::iterator dbsyncsit,dbsyncsend;
+		for(mc_sync_db& s : newsyncs){
+			if(s.status != MC_SYNCSTAT_DISABLED) watchsyncs->push_back(s);
+		}
 		dbsyncsit = watchsyncs->begin();
 		dbsyncsend = watchsyncs->end();
 		for(;dbsyncsit != dbsyncsend; ++dbsyncsit){
@@ -289,7 +317,6 @@ int add_dir(string path, int id, QStringList *l, int rdepth){
 	l->append(path.c_str());
 	if(rdepth <= MC_MAXRDEPTH){
 		list<mc_file> files;
-		list<mc_file>::iterator filesit,filesend;
 		rc = db_list_file_parent(&files,id);
 		MC_CHKERR(rc);
 		for(mc_file& f : files){
@@ -298,7 +325,7 @@ int add_dir(string path, int id, QStringList *l, int rdepth){
 				rc = add_dir(fpath,f.id,l,rdepth+1);
 				MC_CHKERR(rc);
 			} else if(f.status != MC_FILESTAT_DELETED){
-				//fpath.assign(path).append(filesit->name);
+				//fpath.assign(path).append(f.name);
 				//MC_DBGL("Adding " << fpath << " to watchlist");
 				//l->append(fpath.c_str());
 			}

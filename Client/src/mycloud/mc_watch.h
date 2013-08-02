@@ -29,6 +29,7 @@ private slots:
 	void stopLocalWatch();
 	void stopRemoteWatch();
 	void directoryChanged(const QString &path);
+	void fileChanged(const QString &path);
 	int changeTimeout();
 	int remoteChange(int status);
 signals:
