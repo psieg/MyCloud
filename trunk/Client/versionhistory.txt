@@ -21,5 +21,7 @@
 
 0.2.7
 * max timediff is now 10 (timediff almost never is an issue and 90% annoying)
+* complete functions call up/download when the file has been modified (rather than looping errors)
 * fix for incorrect file state after completed resume
+* fix for incorrect sync state after one failed sync
 * refactoring + protocol update
