@@ -440,9 +440,8 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 	else newdb->status = MC_FILESTAT_INCOMPLETE_UP;
 
 	if(!modified){ // File not modified
-			newdb->mtime = fs->mtime;
-			newdb->ctime = fs->ctime;
 			newdb->status = MC_FILESTAT_COMPLETE;
+			memcpy(newdb->hash,srv->hash,16);
 			
 			rc = db_insert_file(newdb);
 			MC_CHKERR(rc);
@@ -452,6 +451,8 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 			
 	} else {			
 		if(fs->is_dir){
+			memset(newdb->hash,'\0',16);
+
 			rc = crypt_putfile(&cctx,path,newdb,0,NULL);
 			MC_CHKERR(rc);
 						
@@ -701,7 +702,6 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 			MC_INF("Uploading new file: " << printname(fs));
 			rpath.append(fs->name);
 			fpath.append(rpath);
-			mc_file newdb;
 
 			rc = upload_new(ctx, path, fpath, rpath, fs, &newdb, srv, parent, recursive, extcctx, &rrc);
 			MC_CHKERR(rc);
@@ -754,8 +754,7 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 
 	//While this sometimes overwrites legit changes, generally it undoes unwanted mtime changes from
 	//things we did within the directory
-	if((db && db->is_dir && db->status != MC_FILESTAT_DELETED) || 
-		(!db && srv && srv->status != MC_FILESTAT_DELETED)){
+	if(db && db->is_dir && db->status != MC_FILESTAT_DELETED){
 		rc = fs_touch(fpath,db->mtime,db->ctime);
 		MC_CHKERR(rc);
 	}
