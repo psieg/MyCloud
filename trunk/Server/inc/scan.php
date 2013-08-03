@@ -26,6 +26,7 @@ function rscan2($uid,$parentid,$path){
 					}
 					$q2 = $mysqli->query("UPDATE mc_files SET hash = '".esc($h)."' WHERE id = ".$d[0]);
 					if(!$q2){ echo "Error: ".$mysqli->error; break; }
+					echo "hash: ".$path.'/'.$d[1]."\n";
 				}
 			}
 		}		
