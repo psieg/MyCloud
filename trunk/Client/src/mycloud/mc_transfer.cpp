@@ -306,8 +306,8 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 
 	if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 		MC_INF("Not downloading file " << srv->id << ": " << printname(srv) << ", file is not complete");
-		if(db) rc = db_insert_file(srv);
-		else rc = db_update_file(srv);
+		if(db) rc = db_update_file(srv);
+		else rc = db_insert_file(srv);
 		MC_CHKERR(rc);
 		if(db) crypt_filestring(ctx,db,hashstr); //We use db to have a hash mismatch -> no fullsync (see #3)
 		else crypt_filestring(ctx,srv,hashstr);  //Currently: we want to have a hash match, as there is nothing to do for us atm

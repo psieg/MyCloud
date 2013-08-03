@@ -510,7 +510,9 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 		if(fs == NULL){
 			if(srv->is_dir != db->is_dir)
 				return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
-			if(srv->status != MC_FILESTAT_DELETED)
+			if(db->status == MC_FILESTAT_INCOMPLETE_UP){
+				return download(ctx,path,fs,db,srv,hashstr);
+			} else if(srv->status != MC_FILESTAT_DELETED)
 				return upload(ctx,path,fs,db,srv,hashstr);
 			else if(db->status != MC_FILESTAT_DELETED)
 				return download(ctx,path,fs,db,srv,hashstr);
@@ -698,10 +700,9 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 				if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 				++indbit;
 			} else if(onsrvit->name == indbit->name){
-				// File has been deleted
-				if(onsrvit->mtime == indbit->mtime){
+				// File has been deleted or is incomplete up
+				if(onsrvit->mtime == indbit->mtime){ //on incomplete up timestamps match
 					rc = verifyandcomplete(ctx,path,NULL,&*indbit,&*onsrvit,&hashstr);
-					//rc = upload(ctx,path,NULL,&*indbit,&*onsrvit,&hashstr);
 					if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 				} else if(onsrvit->mtime > indbit->mtime){
 					rc = download(ctx,path,NULL,&*indbit,&*onsrvit,&hashstr);
@@ -898,7 +899,7 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 			if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 			++onfsit;
 		} else if((onfsit == onfsend) || onfsit->name > indbit->name){
-			// File has been deleted
+			// File has been deleted or is incomplete up
 			rc = verifyandcomplete(ctx,path,NULL,&*indbit,&*indbit,&hashstr);
 			if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 			++indbit;
