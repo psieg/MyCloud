@@ -834,7 +834,10 @@ int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_fi
 	rc = crypt_initresume_up(&cctx,db,&sent);
 	MC_CHKERR(rc);
 	
-	if(sent > db->size) MC_ERR_MSG(MC_ERR_VERIFY,"File on server bigger than original: " << sent << "/" << db->size);
+	if(sent > db->size){
+		MC_INF("File changed on disk, restarting upload");
+		return upload(ctx, path, fs, db, srv, hashstr);
+	}
 
 	MC_DBG("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL,fpath);
@@ -842,13 +845,21 @@ int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_fi
 	if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not read the file");
 
 	fseek(fdesc,0,SEEK_END);
-	if(ftell(fdesc) != db->size) MC_ERR_MSG_FD(MC_ERR_VERIFY,fdesc,"File size has changed");
+	if(ftell(fdesc) != db->size){
+		MC_INF("File changed on disk, restarting upload");
+		fclose(fdesc);
+		return upload(ctx, path, fs, db, srv, hashstr);
+	}
 	
 	rc = crypt_resumetopos_up(&cctx,db,sent,fdesc);
 	MC_CHKERR_FD(rc,fdesc);
 	//fseek(fdesc,sent,SEEK_SET);
 
-	if(ftell(fdesc) != sent) MC_ERR_MSG_FD(MC_ERR_VERIFY,fdesc,"Couldn't seek to offset, file must have changed");
+	if(ftell(fdesc) != sent){
+		MC_INF("File changed on disk, restarting upload");
+		fclose(fdesc);
+		return upload(ctx, path, fs, db, srv, hashstr);
+	}
 
 	while(sent < db->size){
 		MC_NOTIFYPROGRESS(sent,db->size);
@@ -909,7 +920,11 @@ int complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_
 	rc = crypt_resumetopos_down(&cctx,srv,offset,fdesc);
 	MC_CHKERR_FD(rc,fdesc);
 
-	if(offset > srv->size) MC_ERR_MSG_FD(MC_ERR_VERIFY,fdesc,"File on disk bigger than original: " << offset << "/" << srv->size);
+	if(offset > srv->size){
+		MC_INF("File changed on disk, restarting download");
+		fclose(fdesc);
+		return download(ctx, path, fs, db, srv, hashstr);
+	}
 	while(offset < srv->size){
 		MC_NOTIFYPROGRESS(offset,srv->size);
 		MC_CHECKTERMINATING_FD(fdesc);

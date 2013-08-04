@@ -107,7 +107,7 @@ int crypt_translate_fromsrv(mc_sync_ctx *ctx, const string& path, mc_file *f){
 		init_crypt_ctx(&cctx,ctx);
 		memcpy(cctx.iv,buf.data(),MC_CRYPTNAME_OFFSET);
 		if(memcmp(cctx.iv,MC_CRYPTNAME_IDENTIFIER,MC_CRYPTNAME_IDOFFSET) != 0){
-				MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized cryptoname format");
+				MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized cryptoname format: " << f->cryptname);
 		};
 		MC_CHKERR(crypt_nameiv(&cctx,path)); //the IV is not part of the string as it is implicit
 		
