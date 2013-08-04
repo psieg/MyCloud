@@ -306,11 +306,7 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 
 	if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 		MC_INF("Not downloading file " << srv->id << ": " << printname(srv) << ", file is not complete");
-		if(db) rc = db_update_file(srv);
-		else rc = db_insert_file(srv);
-		MC_CHKERR(rc);
 		if(db) crypt_filestring(ctx,db,hashstr); //We use db to have a hash mismatch -> no fullsync (see #3)
-		else crypt_filestring(ctx,srv,hashstr);  //Currently: we want to have a hash match, as there is nothing to do for us atm
 		return MC_ERR_INCOMPLETE_SKIP;
 		//TODO: Partial download?
 
@@ -444,7 +440,7 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 	newdb->is_dir = fs->is_dir;
 	newdb->parent = parent;
 	if(fs->is_dir) newdb->status = MC_FILESTAT_COMPLETE;
-	else newdb->status = MC_FILESTAT_INCOMPLETE_UP_ME;
+	else newdb->status = MC_FILESTAT_INCOMPLETE_UP;
 
 	if(!modified){ // File not modified
 			newdb->status = MC_FILESTAT_COMPLETE;
@@ -589,7 +585,8 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				db->mtime = fs->mtime;
 				db->ctime = fs->ctime;
 				db->size = fs->size;
-				db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
+				db->status = MC_FILESTAT_INCOMPLETE_UP;
+
 							
 				rc = crypt_filemd5_new(&cctx,db->hash,fpath,db->size);
 				MC_CHKERR(rc);	
@@ -625,13 +622,12 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				if(empty){
 					rc = srv_delfile(db);
 					MC_CHKERR(rc);
-
-					db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
-					
+							
+					db->status = MC_FILESTAT_INCOMPLETE_UP;
 					rc = crypt_filemd5_new(&cctx,db->hash,fpath,db->size);
 					MC_CHKERR(rc);	
 					//db->mtime = time(NULL);
-					
+
 					rc = db_update_file(db);
 					MC_CHKERR(rc);
 
@@ -656,7 +652,7 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 		db->ctime = fs->ctime;
 		db->mtime = fs->mtime;
 		db->size = fs->size;
-		db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
+		db->status = MC_FILESTAT_INCOMPLETE_UP;
 		memcpy(db->hash,hash,16);
 
 
