@@ -166,6 +166,7 @@ void crypt_filestring(mc_sync_ctx *ctx, mc_file *f, string *s){
 	s->append((const char*)&f->size,sizeof(int64));
 	if(ctx->sync->crypted && !f->is_dir) f->size -= MC_CRYPT_SIZEOVERHEAD;
 	s->append((const char*)&f->is_dir,sizeof(char));
+	s->append((const char*)&f->status,sizeof(int));
 	s->append((const char*)&f->hash,sizeof(unsigned char)*16);
 }
 
