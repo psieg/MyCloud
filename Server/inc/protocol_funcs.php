@@ -119,8 +119,8 @@ function pack_exists($id){
 
 function pack_authed($token,$timestamp,$basedate){
 	return pack("l1",MC_SRVSTAT_AUTHED).$token
-		.pack("L2",$timestamp&0xFFFFFFFF,$timestamp>>32)
-		.pack("L2",$basedate&0xFFFFFFFF,$basedate>>32)
+		.pack("L2",$timestamp&0xFFFFFFFF,($timestamp&0xFFFFFFFF00000000)>>32)
+		.pack("L2",$basedate&0xFFFFFFFF,($basedate&0xFFFFFFFF00000000)>>32)
 		.pack("l1",MC_SERVER_PROTOCOL_VERSION);
 }
 
@@ -146,9 +146,9 @@ function pack_dirlist($list){
 	$r = pack("l1",MC_SRVSTAT_DIRLIST);
 	foreach($list as $file){
 		$r .= pack("l2",$file[0],strlen($file[1])).$file[1].
-			pack("L2",$file[2]&0xFFFFFFFF,$file[2]>>32).
-			pack("L2",$file[3]&0xFFFFFFFF,$file[3]>>32).
-			pack("L2",$file[4]&0xFFFFFFFF,$file[4]>>32).
+			pack("L2",$file[2]&0xFFFFFFFF,($file[2]&0xFFFFFFFF00000000)>>32).
+			pack("L2",$file[3]&0xFFFFFFFF,($file[3]&0xFFFFFFFF00000000)>>32).
+			pack("L2",$file[4]&0xFFFFFFFF,($file[4]&0xFFFFFFFF00000000)>>32).
 			pack("Cll",$file[5],$file[6],$file[7]).
 			$file[8];
 		//print(bin2hex($r));
@@ -157,7 +157,7 @@ function pack_dirlist($list){
 }
 
 function pack_file($blocksize,$buf){
-	return pack("l1L2",MC_SRVSTAT_FILE,$blocksize&0xFFFFFFFF,$blocksize>>32).$buf;
+	return pack("l1L2",MC_SRVSTAT_FILE,$blocksize&0xFFFFFFFF,($blocksize&0xFFFFFFFF00000000)>>32).$buf;
 }
 
 function pack_fileid($fid){
@@ -165,14 +165,14 @@ function pack_fileid($fid){
 }
 
 function pack_offset($offset){
-	return pack("l1L2",MC_SRVSTAT_OFFSET,$offset&0xFFFFFFFF,$offset>>32);
+	return pack("l1L2",MC_SRVSTAT_OFFSET,$offset&0xFFFFFFFF,($offset&0xFFFFFFFF00000000)>>32);
 }
 
 function pack_filemeta($file){
 	$r = pack("l3",MC_SRVSTAT_FILEMETA,$file[0],strlen($file[1])).$file[1].
-			pack("L2",$file[2]&0xFFFFFFFF,$file[2]>>32).
-			pack("L2",$file[3]&0xFFFFFFFF,$file[3]>>32).
-			pack("L2",$file[4]&0xFFFFFFFF,$file[4]>>32).
+			pack("L2",$file[2]&0xFFFFFFFF,($file[2]&0xFFFFFFFF00000000)>>32).
+			pack("L2",$file[3]&0xFFFFFFFF,($file[3]&0xFFFFFFFF00000000)>>32).
+			pack("L2",$file[4]&0xFFFFFFFF,($file[4]&0xFFFFFFFF00000000)>>32).
 			pack("Cll",$file[5],$file[6],$file[7]).
 			$file[8];
 	return $r;
