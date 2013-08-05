@@ -49,9 +49,9 @@ function directoryHash($fid){
 	$str = "";
 	while($r = $q->fetch_row()){
 		$str .= pack("l1",$r[0]).$r[1].
-			//pack("L2",$r[2]&0xFFFFFFFF,$r[2]>>32). //ctime is not an important / deciding criteria
-			pack("L2",$r[3]&0xFFFFFFFF,$r[3]>>32).
-			pack("L2",$r[4]&0xFFFFFFFF,$r[4]>>32).
+			//pack("L2",$r[2]&0xFFFFFFFF,($r[2]&0xFFFFFFFF00000000)>>32). //ctime is not an important / deciding criteria
+			pack("L2",$r[3]&0xFFFFFFFF,($r[3]&0xFFFFFFFF00000000)>>32).
+			pack("L2",$r[4]&0xFFFFFFFF,($r[4]&0xFFFFFFFF00000000)>>32).
 			pack("C1",$r[5]).
 			$r[6];
 	}
