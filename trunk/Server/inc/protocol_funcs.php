@@ -151,7 +151,6 @@ function pack_dirlist($list){
 			pack("L2",$file[4]&0xFFFFFFFF,($file[4]&0xFFFFFFFF00000000)>>32).
 			pack("Cll",$file[5],$file[6],$file[7]).
 			$file[8];
-		//print(bin2hex($r));
 	}
 	return $r;
 }
