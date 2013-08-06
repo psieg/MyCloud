@@ -696,7 +696,16 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 	fpath.assign(ctx->sync->path);
 	rpath.assign(path);
 
-
+	if(fs && ((db && fs->mtime < db->mtime) || (srv && fs->mtime < srv->mtime))){
+		//Upload means we want this to be persistent, so it has to be newer (#24)
+		MC_DBG("Touching for persistency");
+		string tpath;
+		tpath.assign(fpath).append(path).append(fs->name);
+		fs->mtime = time(NULL);
+		rc = fs_touch(tpath,fs->mtime);
+		MC_CHKERR(rc);
+	}
+	
 	if(db == NULL){
 		if(fs == NULL){
 			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"if db is NULL, fs and parent must be set");
@@ -705,6 +714,7 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 			MC_INF("Uploading new file: " << printname(fs));
 			rpath.append(fs->name);
 			fpath.append(rpath);
+
 
 			rc = upload_new(ctx, path, fpath, rpath, fs, &newdb, srv, parent, recursive, extcctx, &rrc);
 			MC_CHKERR(rc);
@@ -747,7 +757,7 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 			MC_INF("Uploading file " << db->id << ": " << printname(db));
 			rpath.append(db->name);
 			fpath.append(rpath);
-
+			
 			rc = upload_normal(ctx, path, fpath, rpath, fs, db, srv, recursive, extcctx, &rrc);
 			MC_CHKERR(rc);
 
