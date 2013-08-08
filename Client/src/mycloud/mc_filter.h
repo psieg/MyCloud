@@ -6,8 +6,6 @@
 #include <regex>
 
 // Functions for filtering directory listings, so we can ignore files
-/* get all filter rules that apply to sync	*/
-int get_filters(list<mc_filter> *filter, int sid);
 /* update filter lists for sync from server	*/
 int update_filters(int sid);
 

@@ -8,12 +8,19 @@ qtSyncDialog::qtSyncDialog(QWidget *parent, int editID)
 	//std::list<mc_sync_db> sl;
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+	ui.tableWidget->setColumnWidth(0,23);
+	ui.tableWidget->setColumnWidth(1,23);
+	ui.tableWidget->setColumnWidth(2,100);
+	ui.tableWidget->setColumnWidth(3,250);
 	myparent = parent;
 	syncID = editID;
+	int * di = &dbindex;
 	dbindex = -1;
 	performer = NULL;
 	icon = QIcon(":/Resources/icon.png");
 	lock = QIcon(":/Resources/lock.png");
+	file = QIcon(":/Resources/file.png");
+	directory = QIcon(":/Resources/directory.png");
 	loadcompleted = false;
 }
 
@@ -232,18 +239,66 @@ void qtSyncDialog::on_nameBox_currentIndexChanged(int index){
 
 void qtSyncDialog::filldbdata(){
 	int i;
+	int rc;
 	int sid = srvsynclist[ui.nameBox->currentIndex()].id;
+	std::list<mc_filter> fl;
 	if(loadcompleted){
 		i = 0;
 		for(mc_sync_db s : dbsynclist){
 			if(s.id == sid){
+				dbindex = i;
+				//Path, Key
 				ui.pathEdit->setText(s.path.c_str());
 				if(s.crypted){
 					ui.keyEdit->setText(QByteArray((const char*)s.cryptkey,32).toHex());
 				} else {
 					ui.keyEdit->setText("");
 				}
-				dbindex = i;
+				//Filters
+				if(s.filterversion != srvsynclist[ui.nameBox->currentIndex()].filterversion){
+					rc = update_filters(s.id); //refresh when necessary, might block ui but happens rarely enough(?)
+					if(rc) return;
+				}
+				rc = db_list_filter_sid(&fl,s.id);
+				if(rc) return;
+				filterlist.assign(fl.begin(),fl.end());
+				ui.tableWidget->clearContents();
+				ui.tableWidget->setRowCount(0);
+				for(mc_filter f : filterlist){
+					ui.tableWidget->insertRow(ui.tableWidget->rowCount());
+					if(f.files) ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,0,new QTableWidgetItem(file,""));
+					if(f.directories) ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,1,new QTableWidgetItem(directory,""));
+					switch(f.type){
+						case MC_FILTERT_MATCH_NAME:
+							ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Name")));
+							break;
+						case MC_FILTERT_MATCH_EXTENSION:
+							ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Extension")));
+							break;
+						case MC_FILTERT_MATCH_FULLNAME:
+							ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Full Name")));
+							break;
+						case MC_FILTERT_MATCH_PATH:
+							ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Path")));
+							break;
+						case MC_FILTERT_REGEX_NAME:
+							ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Name (regex)")));
+							break;
+						case MC_FILTERT_REGEX_EXTENSION:
+							ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Extension (regex)")));
+							break;
+						case MC_FILTERT_REGEX_FULLNAME:
+							ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Full Name (regex)")));
+							break;
+						case MC_FILTERT_REGEX_PATH:
+							ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Path (regex)")));
+							break;
+						default:
+							ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Unrecognized")));
+					}
+					
+					ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(f.rule.c_str()));
+				}
 				return;
 			}
 			i++;

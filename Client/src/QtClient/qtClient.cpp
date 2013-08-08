@@ -36,17 +36,9 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	connect(this,SIGNAL(_notifySubProgress(double,double)),this,SLOT(__notifySubProgress(double,double)),Qt::QueuedConnection);
 
 	connect(ui.tableWidget,SIGNAL(itemSelectionChanged()),this,SLOT(tableUpdate()));
+	connect(ui.tableWidget,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
 
 	//list syncs
-	ui.tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    ui.tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
-    ui.tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
-	//ui.tableHeaderWidget->setColumnWidth(0,40);
-	ui.tableHeaderWidget->setColumnWidth(0,100);
-	ui.tableHeaderWidget->setColumnWidth(1,180);
-	ui.tableHeaderWidget->setColumnWidth(2,110);
-	ui.tableHeaderWidget->setColumnWidth(3,139);
-	ui.tableHeaderWidget->setColumnWidth(4,40);
 	//ui.tableWidget->setColumnWidth(0,40);
 	ui.tableWidget->setColumnWidth(0,100);
 	ui.tableWidget->setColumnWidth(1,180);

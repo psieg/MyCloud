@@ -141,7 +141,7 @@ int QtWatcher::changeTimeout(){
 	changepaths.sort();
 	//changepaths is never empty if this was triggered
 	list<mc_filter> generalfilter,filter;
-	rc = get_filters(&generalfilter,0);
+	rc = db_list_filter_sid(&generalfilter,0);
 	MC_CHKERR(rc);
 
 	// we can assume srv is still open and authed
@@ -168,7 +168,7 @@ int QtWatcher::changeTimeout(){
 		//update filters
 		if(lastsyncid != dbsyncsit->id){
 			filter.assign(generalfilter.begin(),generalfilter.end());
-			rc = get_filters(&filter,dbsyncsit->id);
+			rc = db_list_filter_sid(&filter,dbsyncsit->id);
 			MC_CHKERR(rc);
 			lastsyncid = dbsyncsit->id;
 		}
@@ -276,11 +276,11 @@ int QtWatcher::remoteChange(int status){
 		if(dbsyncsit == dbsyncsend) MC_ERR_MSG(MC_ERR_SERVER,"Remote Change Notify for non-watched sync");
 		//Filters
 		list<mc_filter> generalfilter,filter;
-		rc = get_filters(&generalfilter,0);
+		rc = db_list_filter_sid(&generalfilter,0);
 		MC_CHKERR(rc);
 
 		filter.assign(generalfilter.begin(),generalfilter.end());
-		rc = get_filters(&filter,dbsyncsit->id);
+		rc = db_list_filter_sid(&filter,dbsyncsit->id);
 		MC_CHKERR(rc);
 
 		//Run

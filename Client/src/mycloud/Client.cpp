@@ -66,7 +66,7 @@ int runmc()
 							list<mc_filter> generalfilter,filter;
 							//rc = update_filters(0);
 							//if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
-							rc = get_filters(&generalfilter,0);
+							rc = db_list_filter_sid(&generalfilter,0);
 							if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 
 							//Get list of syncs and compare to local
@@ -108,7 +108,7 @@ int runmc()
 										rc = update_filters(0);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 										generalfilter.clear();
-										rc = get_filters(&generalfilter,0);
+										rc = db_list_filter_sid(&generalfilter,0);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 										rc = update_filters(dbsyncsit->id);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
@@ -117,7 +117,7 @@ int runmc()
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 									}
 									filter.assign(generalfilter.begin(),generalfilter.end());
-									rc = get_filters(&filter,dbsyncsit->id);
+									rc = db_list_filter_sid(&filter,dbsyncsit->id);
 									if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 									dbsyncsit->status = MC_SYNCSTAT_RUNNING;
 									rc = db_update_sync(&*dbsyncsit);

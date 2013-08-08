@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/">
+    <file>Resources/file.png</file>
+    <file>Resources/directory.png</file>
     <file>Resources/status_unknown.png</file>
     <file>Resources/add.png</file>
     <file>Resources/remove.png</file>
