@@ -1,13 +1,20 @@
 #include "qtSyncDialog.h"
 #include "qtClient.h"
 
-qtSyncDialog::qtSyncDialog(QWidget *parent)
+qtSyncDialog::qtSyncDialog(QWidget *parent, int editID)
 	: QDialog(parent)
 {
+	int rc;	
+	//std::list<mc_sync_db> sl;
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 	myparent = parent;
+	syncID = editID;
+	dbindex = -1;
 	performer = NULL;
+	icon = QIcon(":/Resources/icon.png");
+	lock = QIcon(":/Resources/lock.png");
+	loadcompleted = false;
 }
 
 qtSyncDialog::~qtSyncDialog()
@@ -21,7 +28,7 @@ void qtSyncDialog::showEvent(QShowEvent *event){
 
 
 	rc = db_select_status(&s);
-	if(rc) return;
+	if(rc) QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
 	
 	if(s.url == ""){		
 		QMessageBox b(myparent);
@@ -41,7 +48,7 @@ void qtSyncDialog::showEvent(QShowEvent *event){
 		SetBuf(&netibuf);
 		SetBuf(&netobuf);
 	}
-	
+		
 	connect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
 	srv_auth_async(&netibuf,&netobuf,performer,s.uname,s.passwd,&authtime);
 	
@@ -68,7 +75,8 @@ void qtSyncDialog::authed(int rc){
 
 void qtSyncDialog::listReceived(int rc){
 	std::list<mc_sync> list;
-	std::vector<mc_sync>::iterator lit,lend;
+	std::list<mc_sync_db> sl;
+	int i;
 	if(rc) {
 		QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
 		return;
@@ -81,20 +89,33 @@ void qtSyncDialog::listReceived(int rc){
 	}
 
 	if(list.size() > 0){
-		l = vector<mc_sync>(list.begin(),list.end());
-		lit = l.begin();
-		lend = l.end();
-
-		while(lit != lend){
-			if(lit->crypted)
-				ui.nameBox->addItem(QString(lit->name.c_str())+tr(" (encrypted)"));
+		//add to ComboBox
+		i = 0;
+		srvsynclist = vector<mc_sync>(list.begin(),list.end());
+		for(mc_sync s : srvsynclist){
+			if(s.crypted)
+				ui.nameBox->addItem(lock,QString(s.name.c_str())+tr(" (encrypted)"));
 			else
-				ui.nameBox->addItem(QString(lit->name.c_str()));
-			++lit;
+				ui.nameBox->addItem(icon,QString(s.name.c_str()));
+			if(s.id == syncID){
+				//Select the one to edit
+				ui.nameBox->setCurrentIndex(i);
+			}
+			i++;
 		}
 		ui.fetchLabel->setVisible(false);
 		ui.nameBox->setEnabled(true);
 		ui.okButton->setEnabled(true);
+
+		//populate db list		
+		rc = db_list_sync(&sl);
+		if(rc) QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
+		dbsynclist.assign(sl.begin(),sl.end());
+
+		//find matching db sync
+		loadcompleted = true;
+		filldbdata();
+
 	} else {
 		QMessageBox b(myparent);
 		b.setText(tr("No Sync available on server"));
@@ -112,30 +133,33 @@ void qtSyncDialog::listReceived(int rc){
 void qtSyncDialog::accept(){
 	int rc;
 	int maxprio=0;
-	std::list<mc_sync_db> sl;
-	std::list<mc_sync_db>::iterator slit,slend;
 	QByteArray ckey;
+	mc_sync_db *worksync;
+	mc_sync_db newsync;
 
-	rc = db_list_sync(&sl);
-	if(rc) reject();
+	if(dbindex == -1){ //new sync
 
-	slit = sl.begin();
-	slend = sl.end();
-	while(slit != slend){
-		if(slit->priority > maxprio) maxprio = slit->priority;
-		++slit;
+		for (mc_sync_db s : dbsynclist){
+			if(s.priority > maxprio) maxprio = s.priority;
+		}
+
+		newsync.priority = maxprio+1;
+		newsync.filterversion = 0;
+		memset(newsync.hash,0,16);
+		newsync.lastsync = 0;
+		newsync.id = srvsynclist[ui.nameBox->currentIndex()].id;
+		newsync.name = srvsynclist[ui.nameBox->currentIndex()].name;
+
+		worksync = &newsync;
+
+	} else {
+		worksync = &dbsynclist[dbindex];
 	}
+	worksync->path = qPrintable(ui.pathEdit->text().replace("\\","/"));
+	if(worksync->path[worksync->path.length()-1] != '/') worksync->path.append("/");
+	worksync->crypted = srvsynclist[ui.nameBox->currentIndex()].crypted;
 
-	mc_sync_db s;
-	s.filterversion = 0;
-	memset(s.hash,0,16);
-	s.lastsync = 0;
-	s.id = l[ui.nameBox->currentIndex()].id;
-	s.priority = maxprio+1;
-	s.name = l[ui.nameBox->currentIndex()].name;
-	s.path = qPrintable(ui.pathEdit->text().replace("\\","/").append("/"));
-	s.crypted = l[ui.nameBox->currentIndex()].crypted;
-	if(s.crypted){
+	if(worksync->crypted){
 		if(ui.keyEdit->text() != ""){
 			QRegExp hexMatcher("^[0-9A-F]{64}$", Qt::CaseInsensitive);
 			if (hexMatcher.exactMatch(ui.keyEdit->text())){
@@ -173,11 +197,17 @@ void qtSyncDialog::accept(){
 				return;
 			}
 		}
-		memcpy(s.cryptkey,ckey.constData(),32);
-	} else memset(s.cryptkey,0,32);
-	s.status = MC_SYNCSTAT_UNKOWN;
-	rc = db_insert_sync(&s);
-	if(rc) reject();
+		memcpy(worksync->cryptkey,ckey.constData(),32);
+	} else memset(worksync->cryptkey,0,32);
+
+	if(dbindex == -1){
+		newsync.status = MC_SYNCSTAT_UNKOWN;
+		rc = db_insert_sync(&newsync);
+		if(rc) reject();
+	} else {
+		rc = db_update_sync(worksync);
+		if(rc) reject();
+	}
 	QDialog::accept();
 }
 
@@ -196,5 +226,28 @@ void qtSyncDialog::on_browseButton_clicked(){
 }
 
 void qtSyncDialog::on_nameBox_currentIndexChanged(int index){
-	ui.keyEdit->setEnabled(l[index].crypted);
+	ui.keyEdit->setEnabled(srvsynclist[index].crypted);
+	filldbdata();
+}
+
+void qtSyncDialog::filldbdata(){
+	int i;
+	int sid = srvsynclist[ui.nameBox->currentIndex()].id;
+	if(loadcompleted){
+		i = 0;
+		for(mc_sync_db s : dbsynclist){
+			if(s.id == sid){
+				ui.pathEdit->setText(s.path.c_str());
+				if(s.crypted){
+					ui.keyEdit->setText(QByteArray((const char*)s.cryptkey,32).toHex());
+				} else {
+					ui.keyEdit->setText("");
+				}
+				dbindex = i;
+				return;
+			}
+			i++;
+		}
+		dbindex = -1; // = there is no matching db entry
+	}
 }

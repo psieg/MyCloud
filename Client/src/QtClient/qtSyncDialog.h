@@ -14,7 +14,7 @@ class qtSyncDialog : public QDialog
 	Q_OBJECT
 
 public:
-	qtSyncDialog(QWidget *parent = 0);
+	qtSyncDialog(QWidget *parent = 0, int editID = -1);
 	~qtSyncDialog();
 
 public slots:
@@ -31,12 +31,19 @@ protected:
 	void showEvent(QShowEvent *event);
 
 private:
+	void filldbdata();
+
 	Ui::qtSyncDialog ui;
 	QWidget *myparent;
-	std::vector<mc_sync> l;
+	int syncID;
+	std::vector<mc_sync> srvsynclist;
+	std::vector<mc_sync_db> dbsynclist;
 	QtNetworkPerformer *performer;
 	mc_buf netibuf,netobuf;
 	int64 authtime;
+	QIcon icon,lock;
+	int dbindex;
+	bool loadcompleted;
 };
 
 #endif // QTSYNCDIALOG_H
