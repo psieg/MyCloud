@@ -104,7 +104,9 @@ private:
 	QMenu *trayIconMenu;
 	QAction *quitAction, *showAction;
 	QTimer *delayTimer;
-	QIcon icon,icon_conn,icon_sync,icon_ul,icon_dl,icon_cf,icon_err,icon_ok,status_sync,status_err,status_done,status_ok,tool_add,tool_remove,lock;
+	QIcon icon,icon_conn,icon_sync,icon_ul,icon_dl,icon_cf,icon_err,icon_ok;
+	QIcon status_sync,status_err,status_done,status_ok,status_new,status_disabled,status_unknown;
+	QIcon lock,enable,disable;
 #ifdef MC_IONOTIFY
 	QIcon act_nofs,act_fs,act_nodb,act_db,act_nosrv,act_srv;
 #endif

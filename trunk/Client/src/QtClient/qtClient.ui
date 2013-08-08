@@ -64,7 +64,7 @@
         </property>
         <property name="icon">
          <iconset resource="qtClient.qrc">
-          <normaloff>:/Resources/tool_add.png</normaloff>:/Resources/tool_add.png</iconset>
+          <normaloff>:/Resources/add.png</normaloff>:/Resources/add.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -87,7 +87,7 @@
         </property>
         <property name="icon">
          <iconset resource="qtClient.qrc">
-          <normaloff>:/Resources/tool_remove.png</normaloff>:/Resources/tool_remove.png</iconset>
+          <normaloff>:/Resources/remove.png</normaloff>:/Resources/remove.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -156,7 +156,7 @@
         </property>
         <property name="icon">
          <iconset resource="qtClient.qrc">
-          <normaloff>:/Resources/icon_cf.png</normaloff>:/Resources/icon_cf.png</iconset>
+          <normaloff>:/Resources/edit.png</normaloff>:/Resources/edit.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -179,7 +179,7 @@
         </property>
         <property name="icon">
          <iconset resource="qtClient.qrc">
-          <normaloff>:/Resources/icon_err.png</normaloff>:/Resources/icon_err.png</iconset>
+          <normaloff>:/Resources/disable.png</normaloff>:/Resources/disable.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -225,7 +225,7 @@
         </property>
         <property name="icon">
          <iconset resource="qtClient.qrc">
-          <normaloff>:/Resources/tool_settings.png</normaloff>:/Resources/tool_settings.png</iconset>
+          <normaloff>:/Resources/settings.png</normaloff>:/Resources/settings.png</iconset>
         </property>
         <property name="iconSize">
          <size>
