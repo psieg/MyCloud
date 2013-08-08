@@ -38,10 +38,11 @@ private:
 	int syncID;
 	std::vector<mc_sync> srvsynclist;
 	std::vector<mc_sync_db> dbsynclist;
+	std::vector<mc_filter> filterlist;
 	QtNetworkPerformer *performer;
 	mc_buf netibuf,netobuf;
 	int64 authtime;
-	QIcon icon,lock;
+	QIcon icon,lock,file,directory;
 	int dbindex;
 	bool loadcompleted;
 };
