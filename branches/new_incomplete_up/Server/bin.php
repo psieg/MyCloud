@@ -52,7 +52,6 @@ if($ready){
 		case MC_SRVQRY_LISTDIR:
 		case MC_SRVQRY_GETFILE:
 		case MC_SRVQRY_GETOFFSET:
-		case MC_SRVQRY_GETPREVIEW:
 		case MC_SRVQRY_PUTFILE:
 		case MC_SRVQRY_ADDFILE:
 		case MC_SRVQRY_PATCHFILE:
@@ -84,9 +83,6 @@ if($ready){
 							break;
 						case MC_SRVQRY_GETOFFSET:
 							$res = handle_getoffset($ibuf,$uid);
-							break;
-						case MC_SRVQRY_GETPREVIEW:
-							$res = handle_getpreview($ibuf,$uid);
 							break;
 						case MC_SRVQRY_PUTFILE:
 							$res = handle_putfile($ibuf,$uid);
