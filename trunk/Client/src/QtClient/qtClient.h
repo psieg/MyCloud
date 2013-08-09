@@ -84,8 +84,8 @@ private slots:
 	void on_editButton_clicked();
 	void on_settingsButton_clicked();
 	void on_disableButton_clicked();
+	void on_tableWidget_itemSelectionChanged();
 	void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
-	void tableUpdate();
 	void newVersion(QString newver);
 	
 private:
