@@ -6,6 +6,7 @@
 #include <Qtwidgets/QFileDialog>
 #include <QtGui/QShowEvent>
 #include "ui_qtSyncDialog.h"
+#include "qtFilterDialog.h"
 #include "mc_db.h"
 #include "mc_srv.h"
 
@@ -24,6 +25,11 @@ public slots:
 private slots:
 	void on_browseButton_clicked();
 	void on_nameBox_currentIndexChanged(int);
+	void on_addButton_clicked();
+	void on_removeButton_clicked();
+	void on_editButton_clicked();
+	void on_tableWidget_itemSelectionChanged();
+
 	void authed(int);
 	void listReceived(int);
 
@@ -32,6 +38,7 @@ protected:
 
 private:
 	void filldbdata();
+	void listFilters();
 
 	Ui::qtSyncDialog ui;
 	QWidget *myparent;

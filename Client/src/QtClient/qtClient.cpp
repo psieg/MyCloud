@@ -35,7 +35,6 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	connect(this,SIGNAL(_notifyProgress(int,int)),this,SLOT(__notifyProgress(int,int)),Qt::QueuedConnection);
 	connect(this,SIGNAL(_notifySubProgress(double,double)),this,SLOT(__notifySubProgress(double,double)),Qt::QueuedConnection);
 
-	connect(ui.tableWidget,SIGNAL(itemSelectionChanged()),this,SLOT(tableUpdate()));
 	connect(ui.tableWidget,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
 
 	//list syncs
@@ -450,18 +449,10 @@ void QtClient::on_pushButton2_clicked(){
 }
 
 void QtClient::on_addButton_clicked(){
-	ui.addButton->setEnabled(false);
-	this->setCursor(Qt::WaitCursor);
-	//setStatus(tr("Retrieving sync list"),"",icon,false);
-	//MC_NOTIFYIOSTART(MC_NT_SRV);					// Ended by dialog
-	QApplication::processEvents();
-
 	qtSyncDialog d(this);	
 	d.exec();
 
-	this->setCursor(Qt::ArrowCursor);
 	listSyncs();
-	ui.addButton->setEnabled(true);
 }
 
 void QtClient::on_removeButton_clicked(){
@@ -571,30 +562,10 @@ void QtClient::on_downButton_clicked(){
 }
 
 void QtClient::on_editButton_clicked(){
-	int rc;
 	int index = ui.tableWidget->selectedItems().at(0)->row();
 	qtSyncDialog d(this,synclist[index].id);
 	d.exec();
 	listSyncs();
-	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.tableWidget->columnCount()-1),true);
-}
-
-void QtClient::on_disableButton_clicked(){
-	int rc;
-	int index = ui.tableWidget->selectedItems().at(0)->row();
-	int tmp = synclist[index].priority;
-	if(synclist[index].status == MC_SYNCSTAT_DISABLED)
-		synclist[index].status = MC_SYNCSTAT_UNKOWN;
-	else
-		synclist[index].status = MC_SYNCSTAT_DISABLED;
-	ui.tableWidget->setEnabled(false);
-	MC_NOTIFYIOSTART(MC_NT_DB);
-	QApplication::processEvents();
-	rc = db_update_sync(&synclist[index]);
-	if(rc) return;
-	listSyncs();
-	MC_NOTIFYIOEND(MC_NT_DB);
-	ui.tableWidget->setEnabled(true);
 	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.tableWidget->columnCount()-1),true);
 }
 
@@ -616,6 +587,46 @@ void QtClient::on_settingsButton_clicked(){
 				}
 			}
 		}
+	}
+}
+
+void QtClient::on_disableButton_clicked(){
+	int rc;
+	int index = ui.tableWidget->selectedItems().at(0)->row();
+	int tmp = synclist[index].priority;
+	if(synclist[index].status == MC_SYNCSTAT_DISABLED)
+		synclist[index].status = MC_SYNCSTAT_UNKOWN;
+	else
+		synclist[index].status = MC_SYNCSTAT_DISABLED;
+	ui.tableWidget->setEnabled(false);
+	MC_NOTIFYIOSTART(MC_NT_DB);
+	QApplication::processEvents();
+	rc = db_update_sync(&synclist[index]);
+	if(rc) return;
+	listSyncs();
+	MC_NOTIFYIOEND(MC_NT_DB);
+	ui.tableWidget->setEnabled(true);
+	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.tableWidget->columnCount()-1),true);
+}
+
+void QtClient::on_tableWidget_itemSelectionChanged(){
+	if(ui.tableWidget->selectedItems().length() == 0){
+		ui.removeButton->setEnabled(false);
+		ui.upButton->setEnabled(false);
+		ui.downButton->setEnabled(false);
+		ui.editButton->setEnabled(false);
+		ui.disableButton->setEnabled(false);
+	} else {
+		ui.removeButton->setEnabled(true);
+		int r = ui.tableWidget->selectedItems().at(0)->row();
+		if(r > 0) ui.upButton->setEnabled(true);
+		else ui.upButton->setEnabled(false);
+		if(r < ui.tableWidget->rowCount()-1) ui.downButton->setEnabled(true);
+		else ui.downButton->setEnabled(false);
+		ui.disableButton->setEnabled(true);
+		ui.editButton->setEnabled(true);
+		if(synclist[r].status == MC_SYNCSTAT_DISABLED) ui.disableButton->setIcon(enable);
+		else ui.disableButton->setIcon(disable);
 	}
 }
 
@@ -641,27 +652,6 @@ void QtClient::newVersion(QString newver){
 	ui.updateButton->setText("new Version " + newver + " available!");
 	ui.updateButton->setVisible(true);
 	connect(ui.updateButton,SIGNAL(clicked()),&updateChecker,SLOT(getUpdate()));
-}
-
-void QtClient::tableUpdate(){
-	if(ui.tableWidget->selectedItems().length() == 0){
-		ui.removeButton->setEnabled(false);
-		ui.upButton->setEnabled(false);
-		ui.downButton->setEnabled(false);
-		ui.editButton->setEnabled(false);
-		ui.disableButton->setEnabled(false);
-	} else {
-		ui.removeButton->setEnabled(true);
-		int r = ui.tableWidget->selectedItems().at(0)->row();
-		if(r > 0) ui.upButton->setEnabled(true);
-		else ui.upButton->setEnabled(false);
-		if(r < ui.tableWidget->rowCount()-1) ui.downButton->setEnabled(true);
-		else ui.downButton->setEnabled(false);
-		ui.disableButton->setEnabled(true);
-		ui.editButton->setEnabled(true);
-		if(synclist[ui.tableWidget->selectedItems().at(0)->row()].status == MC_SYNCSTAT_DISABLED) ui.disableButton->setIcon(enable);
-		else ui.disableButton->setIcon(disable);
-	}
 }
 
 int QtClient::listSyncs(){
