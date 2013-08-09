@@ -1,7 +1,5 @@
 <?php
 define('MC_VERSION', "0.1.0");
-define('MC_SERVER_PROTOCOL_VERSION',5);
-define('MC_MIN_CLIENT_PROTOCOL_VERSION',5);
 
 define('MC_SYNCSTAT_READY',0);
 define('MC_SYNCSTAT_RUNNING',1); // Not used on server

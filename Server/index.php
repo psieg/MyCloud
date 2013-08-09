@@ -1,5 +1,6 @@
 <?php
 include 'inc/const.php';
+include 'inc/protocol.php';
 include 'config.php';
 
 
