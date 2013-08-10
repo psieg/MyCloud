@@ -18,6 +18,7 @@ define('MC_FILTERT_REGEX_EXTENSION',11);
 define('MC_FILTERT_REGEX_FULLNAME',12);
 define('MC_FILTERT_REGEX_PATH',13);
 
-define('MC_FID_NONE',-1);
-define('MC_SID_NONE',-1);
+define('MC_SYNCID_NONE',-1);
+define('MC_FILTERID_NONE',-1);
+define('MC_FILEID_NONE',-1);
 ?>
