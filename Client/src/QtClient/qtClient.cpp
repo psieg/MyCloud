@@ -488,7 +488,6 @@ void QtClient::on_removeButton_clicked(){
 			this->setCursor(Qt::WaitCursor);
 			ui.tableWidget->setEnabled(false);
 			setStatus(tr("Deleting sync"),"",icon_sync);
-			MC_NOTIFYIOSTART(MC_NT_DB);
 			QApplication::processEvents();
 
 			std::list<mc_file> l;
@@ -516,7 +515,6 @@ void QtClient::on_removeButton_clicked(){
 			listSyncs();
 
 			if(!rc) setStatus(tr("idle"),"",icon);
-			MC_NOTIFYIOEND(MC_NT_DB);
 			this->setCursor(Qt::ArrowCursor);
 			ui.tableWidget->setEnabled(true);
 		}
@@ -530,33 +528,29 @@ void QtClient::on_upButton_clicked(){
 	synclist[index].priority = synclist[index-1].priority;
 	synclist[index-1].priority = tmp;
 	ui.tableWidget->setEnabled(false);
-	MC_NOTIFYIOSTART(MC_NT_DB);
 	QApplication::processEvents();
 	rc = db_update_sync(&synclist[index]);
 	if(rc) return;
 	rc = db_update_sync(&synclist[index-1]);
 	if(rc) return;
 	listSyncs();
-	MC_NOTIFYIOEND(MC_NT_DB);
 	ui.tableWidget->setEnabled(true);
 	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index-1,0,index-1,ui.tableWidget->columnCount()-1),true);
 }
 
 void QtClient::on_downButton_clicked(){
 	int rc;
-	int index = ui.tableWidget->selectedItems().at(0)->row();
+	const int index = ui.tableWidget->selectedItems().at(0)->row();
 	int tmp = synclist[index].priority;
 	synclist[index].priority = synclist[index+1].priority;
 	synclist[index+1].priority = tmp;
 	ui.tableWidget->setEnabled(false);
-	MC_NOTIFYIOSTART(MC_NT_DB);
 	QApplication::processEvents();
 	rc = db_update_sync(&synclist[index]);
 	if(rc) return;
 	rc = db_update_sync(&synclist[index+1]);
 	if(rc) return;
 	listSyncs();
-	MC_NOTIFYIOEND(MC_NT_DB);
 	ui.tableWidget->setEnabled(true);
 	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index+1,0,index+1,ui.tableWidget->columnCount()-1),true);
 }
@@ -599,12 +593,10 @@ void QtClient::on_disableButton_clicked(){
 	else
 		synclist[index].status = MC_SYNCSTAT_DISABLED;
 	ui.tableWidget->setEnabled(false);
-	MC_NOTIFYIOSTART(MC_NT_DB);
 	QApplication::processEvents();
 	rc = db_update_sync(&synclist[index]);
 	if(rc) return;
 	listSyncs();
-	MC_NOTIFYIOEND(MC_NT_DB);
 	ui.tableWidget->setEnabled(true);
 	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.tableWidget->columnCount()-1),true);
 }

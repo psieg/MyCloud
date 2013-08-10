@@ -1,17 +1,15 @@
 #include "mc_filter.h"
 
 /* update filter lists for sync from server	*/
-int update_filters(int sid){
-	list<mc_filter> l;
+int update_filters(int sid, list<mc_filter> *l){
+	;
 	int rc;
 	MC_DBG("Updating filter lists for sid: " << sid);
 	//clear all
 	rc = db_delete_filter_sid(sid);
 	MC_CHKERR(rc);
 	//load new
-	rc = srv_listfilters(&l,sid);
-	MC_CHKERR(rc);
-	for(mc_filter& f : l){
+	for(mc_filter& f : *l){
 		rc = db_insert_filter(&f);
 		MC_CHKERR(rc);
 	}

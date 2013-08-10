@@ -11,7 +11,10 @@ qtSyncDialog::qtSyncDialog(QWidget *parent, int editID)
 	ui.tableWidget->setColumnWidth(0,23);
 	ui.tableWidget->setColumnWidth(1,23);
 	ui.tableWidget->setColumnWidth(2,100);
-	ui.tableWidget->setColumnWidth(3,250);
+	ui.tableWidget->setColumnWidth(3,230);
+	ui.fetchFilterLabel->setVisible(false);
+	ui.needSubscribeLabel->setVisible(false);
+	ui.sendLabel->setVisible(false);
 	connect(ui.tableWidget,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
 	myparent = parent;
 	syncID = editID;
@@ -64,35 +67,36 @@ void qtSyncDialog::showEvent(QShowEvent *event){
 
 void qtSyncDialog::authed(int rc){
 	int64 dummy;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
 	if(rc){
-		QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
+		reject();
 		return;
-	} else {
-		disconnect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
-		rc = srv_auth_process(&netobuf,&authtime,&dummy);
-		if(rc){
-			QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
-			return;
-		}
-		connect(performer,SIGNAL(finished(int)),this,SLOT(listReceived(int)));
-		srv_listsyncs_async(&netibuf,&netobuf,performer);
 	}
+
+	rc = srv_auth_process(&netobuf,&authtime,&dummy);
+	if(rc){
+		reject();
+		return;
+	}
+	connect(performer,SIGNAL(finished(int)),this,SLOT(syncListReceived(int)));
+	srv_listsyncs_async(&netibuf,&netobuf,performer);
 	
 }
 
-void qtSyncDialog::listReceived(int rc){
+void qtSyncDialog::syncListReceived(int rc){
 	std::list<mc_sync> list;
 	std::list<mc_sync_db> sl;
 	int i;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(syncListReceived(int)));
 	if(rc) {
-		QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
+		reject();
 		return;
-	} else {
-		rc = srv_listsyncs_process(&netobuf,&list);
-		if(rc){
-			QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
-			return;
-		}
+	}
+
+	rc = srv_listsyncs_process(&netobuf,&list);
+	if(rc){
+		reject();
+		return;
 	}
 
 	if(list.size() > 0){
@@ -110,19 +114,22 @@ void qtSyncDialog::listReceived(int rc){
 			}
 			i++;
 		}
-		ui.fetchLabel->setVisible(false);
-		ui.nameBox->setEnabled(true);
-		ui.okButton->setEnabled(true);
 
 		//populate db list		
 		rc = db_list_sync(&sl);
-		if(rc) QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
+		if(rc){ 
+			reject();
+			return; 
+		}
 		dbsynclist.assign(sl.begin(),sl.end());
 
 		//find matching db sync
 		loadcompleted = true;
 		filldbdata();
-
+		
+		ui.fetchSyncLabel->setVisible(false);
+		ui.nameBox->setEnabled(true);
+		ui.okButton->setEnabled(true);
 	} else {
 		QMessageBox b(myparent);
 		b.setText(tr("No Sync available on server"));
@@ -131,11 +138,85 @@ void qtSyncDialog::listReceived(int rc){
 		b.setDefaultButton(QMessageBox::Ok);
 		b.setIcon(QMessageBox::Warning);
 		b.exec();
-		QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
+		reject();
 		return;
 	}
 }
 
+void qtSyncDialog::filterListReceived(int rc){
+	std::list<mc_filter> list;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
+	if(rc) {
+		reject();
+		return;
+	}
+
+	rc = srv_listfilters_process(&netobuf,&list);
+	if(rc){
+		reject();
+		return;
+	}
+
+	rc = update_filters(dbsynclist[dbindex].id,&list);
+	if(rc){
+		reject();
+		return;
+	}
+
+	dbsynclist[dbindex].filterversion = srvsynclist[ui.nameBox->currentIndex()].filterversion;
+	rc = db_update_sync(&dbsynclist[dbindex]);
+	if(rc){
+		reject();
+		return;
+	}
+
+	ui.fetchFilterLabel->setVisible(false);
+	ui.tableWidget->setEnabled(true);
+	ui.addButton->setEnabled(true);
+	listFilters();
+}
+
+
+void qtSyncDialog::deleteReceived(int rc){
+	std::list<mc_filter> list;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(deleteReceived(int)));
+	if(rc) {
+		reject();
+		return;
+	}
+
+	rc = srv_delfilter_process(&netobuf);
+	if(rc){
+		reject();
+		return;
+	}
+
+	rc = db_delete_filter(deletingfilterid);
+	if(rc){
+		reject();
+		return;
+	}
+
+	//if successful, the server will have increased the filterversion by one
+	rc = db_select_sync(&dbsynclist[dbindex]);
+	if(rc){
+		reject();
+		return;
+	}
+	dbsynclist[dbindex].filterversion += 1;
+	rc = db_update_sync(&dbsynclist[dbindex]);
+	if(rc){
+		reject();
+		return;
+	}
+
+	ui.sendLabel->setVisible(false);
+	ui.tableWidget->setEnabled(true);
+	ui.addButton->setEnabled(true);
+	ui.removeButton->setEnabled(true);
+	ui.editButton->setEnabled(true);
+	listFilters();
+}
 
 void qtSyncDialog::accept(){
 	int rc;
@@ -210,10 +291,16 @@ void qtSyncDialog::accept(){
 	if(dbindex == -1){
 		newsync.status = MC_SYNCSTAT_UNKOWN;
 		rc = db_insert_sync(&newsync);
-		if(rc) reject();
+		if(rc){
+			reject();
+			return;
+		}
 	} else {
 		rc = db_update_sync(worksync);
-		if(rc) reject();
+		if(rc){
+			reject();
+			return;
+		}
 	}
 	QDialog::accept();
 }
@@ -240,30 +327,43 @@ void qtSyncDialog::on_nameBox_currentIndexChanged(int index){
 
 void qtSyncDialog::on_addButton_clicked(){
 	int rc;
-	if(dbindex == -1){
-		//insert sync first?
-	}
-	qtFilterDialog d(this,performer);
-
+	qtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id);
 	d.exec();
 
-	//refresh filterversion
+	//filterversion updated
 	rc = db_select_sync(&dbsynclist[dbindex]);
-	if(rc) return;
+	if(rc){
+		reject();
+		return;
+	}
+
 	listFilters();
 }
 
 void qtSyncDialog::on_removeButton_clicked(){
+	const int index = ui.tableWidget->selectedItems().at(0)->row();
+	ui.tableWidget->setEnabled(false);
+	ui.addButton->setEnabled(false);
+	ui.removeButton->setEnabled(false);
+	ui.editButton->setEnabled(false);
+	ui.sendLabel->setVisible(true);
+	deletingfilterid = filterlist[index].id;
+	bool ok = connect(performer,SIGNAL(finished(int)),this,SLOT(deleteReceived(int)));
+	srv_delfilter_async(&netibuf,&netobuf,performer,&filterlist[index]);
 }
 
 void qtSyncDialog::on_editButton_clicked(){
 	int rc;
-	int index = ui.tableWidget->selectedItems().at(0)->row();
-	qtFilterDialog d(this,performer,filterlist[index].id);
+	const int index = ui.tableWidget->selectedItems().at(0)->row();
+	qtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id,filterlist[index].id);
 	d.exec();
-
+	
+	//filterversion updated
 	rc = db_select_sync(&dbsynclist[dbindex]);
-	if(rc) return;
+	if(rc){
+		reject();
+		return;
+	}
 	listFilters();
 	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.tableWidget->columnCount()-1),true);
 }
@@ -283,7 +383,7 @@ void qtSyncDialog::filldbdata(){
 	int rc;
 	int sid = srvsynclist[ui.nameBox->currentIndex()].id;
 	if(loadcompleted){
-		i = 0;
+		i = 0;		
 		for(mc_sync_db s : dbsynclist){
 			if(s.id == sid){
 				dbindex = i;
@@ -295,24 +395,44 @@ void qtSyncDialog::filldbdata(){
 					ui.keyEdit->setText("");
 				}
 				//Filters
+				ui.tableWidget->setEnabled(true);
+				ui.addButton->setEnabled(true);
+				ui.needSubscribeLabel->setVisible(false);
 				listFilters();
 				return;
 			}
 			i++;
 		}
+		//reach here when no local sync found
 		dbindex = -1; // = there is no matching db entry
+		ui.pathEdit->setText("");
+		ui.keyEdit->setText("");
+		ui.tableWidget->clearContents();
+		ui.tableWidget->setRowCount(0);
+		ui.tableWidget->setEnabled(false);
+		ui.addButton->setEnabled(false);
+		ui.needSubscribeLabel->setVisible(true);
 	}
 }
-
 
 void qtSyncDialog::listFilters(){
 	std::list<mc_filter> fl;
 	int rc;
 	
-	if(dbsynclist[dbindex].filterversion < srvsynclist[ui.nameBox->currentIndex()].filterversion){
-		rc = update_filters(dbsynclist[dbindex].id); //refresh when necessary, might block ui but happens rarely enough(?)
-		if(rc) return;
+	if(dbsynclist[dbindex].filterversion < srvsynclist[ui.nameBox->currentIndex()].filterversion){		
+		ui.tableWidget->setEnabled(false);
+		ui.addButton->setEnabled(false);
+		ui.fetchFilterLabel->setVisible(true);
+		connect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
+		srv_listfilters_async(&netibuf,&netobuf,performer,dbsynclist[dbindex].id);
+	} else {
+		listFilters_actual();
 	}
+}
+
+void qtSyncDialog::listFilters_actual(){
+	std::list<mc_filter> fl;
+	int rc;
 	rc = db_list_filter_sid(&fl,dbsynclist[dbindex].id);
 	if(rc) return;
 	filterlist.assign(fl.begin(),fl.end());

@@ -7,7 +7,7 @@
 
 // Functions for filtering directory listings, so we can ignore files
 /* update filter lists for sync from server	*/
-int update_filters(int sid);
+int update_filters(int sid, list<mc_filter> *l);
 
 /* match the full path against all filters, returns wether hit	*/
 bool match_full(const string& path, mc_file *file, list<mc_filter> *filter);
