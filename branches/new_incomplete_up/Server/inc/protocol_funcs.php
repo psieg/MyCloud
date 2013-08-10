@@ -48,7 +48,7 @@ function unpack_putfile($fdesc){
 	$data = unpack("l1id/l1len",fread($fdesc,8));
 	$result['id'] = $data['id'];
 	$result['name'] = fread($fdesc,$data['len']);
-	$data = unpack("L2ctime/L2mtime/L2size/l1is_dir/l1parent",fread($fdesc,32));
+	$data = unpack("L2ctime/L2mtime/L2size/C1is_dir/l1parent",fread($fdesc,29));
 	$result['ctime'] = $data['ctime1'] + ($data['ctime2'] << 32);
 	$result['mtime'] = $data['mtime1'] + ($data['mtime2'] << 32);
 	$result['size'] = $data['size1'] + ($data['size2'] << 32);
