@@ -24,6 +24,71 @@ function handle_listfilters($ibuf,$uid){
 	return pack_filterlist($l);
 }
 
+function handle_putfilter($ibuf,$uid){
+	global $mysqli;
+	$qry = unpack_putfilter($ibuf);
+	if($qry['id'] == MC_FILTERID_NONE){ //new
+		//sync must exist and be owned by user, unless 0 which means all my syncs
+		if($qry['sid'] != 0){
+			$q = $mysqli->query("SELECT uid FROM mc_syncs WHERE id = ".$qry['sid']." AND uid = ".$uid);
+			if(!$q) return pack_interror($mysqli->error);
+			if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
+		}
+		
+		//insert into table
+		$q = $mysqli->query("INSERT INTO mc_filters (uid,sid,files,directories,type,rule) VALUES ".
+			"(".$uid.", ".$qry['sid'].", ".($qry['files']?1:0).", ".($qry['directories']?1:0).", ".$qry['type'].", ".esc($qry['rule']).")");
+		if(!$q) return pack_interror($mysqli->error);
+		$fid = $mysqli->insert_id;
+	} else { //update
+		//check old filter
+		$q = $mysqli->query("SELECT id,sid FROM mc_filters WHERE id = ".$qry['id']." AND uid = ".$uid);
+		if(!$q) return pack_interror($mysqli->error);
+		if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
+		$res = $q->fetch_row();
+		if($res[1] != $qry['sid']) return pack_code(MC_SRVSTAT_BADQRY); //not allowed to switch to another sync
+
+		//update table, uid,sid can't change
+		$q = $mysqli->query("UPDATE mc_filters SET files = ".($qry['files']?1:0).", directories = ".($qry['directories']?1:0).", ".
+			"type = ".$qry['type'].", rule = ".esc($qry['rule'])." WHERE id = ".$qry['id']." AND uid = ".$uid);
+		if(!$q) return pack_interror($mysqli->error);
+		$fid = $res[0];
+	}
+	//update filterversion
+	if($qry['sid'] == 0){ //update all my syncs
+		$q = $mysqli->query("UPDATE mc_syncs SET filterversion = filterversion + 1 WHERE uid = ".$uid);
+	} else { //update the sync
+		$q = $mysqli->query("UPDATE mc_syncs SET filterversion = filterversion + 1 WHERE id = ".$qry['sid']." AND uid = ".$uid);
+	}
+	if(!$q) return pack_interror($mysqli->error);
+
+	return pack_filterid($fid);
+}
+
+function handle_delfilter($ibuf,$uid){
+	global $mysqli;
+
+	//check old filter
+	$q = $mysqli->query("SELECT id,sid FROM mc_filters WHERE id = ".$qry['id']." AND uid = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
+	$res = $q->fetch_row();
+
+	//delete filter
+	$q = $mysqli->query("DELETE FROM mc_filters WHERE id = ".$qry['id']." AND uid = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+
+	//update filterversion
+	if($res[1] == 0){ //update all my syncs
+		$q = $mysqli->query("UPDATE mc_syncs SET filterversion = filterversion + 1 WHERE uid = ".$uid);
+	} else { //update the sync
+		$q = $mysqli->query("UPDATE mc_syncs SET filterversion = filterversion + 1 WHERE id = ".$res[1]." AND uid = ".$uid);
+	}
+	if(!$q) return pack_interror($mysqli->error);
+
+	return pack_code(MC_SRVSTAT_OK);
+}
+
 function handle_listdir($ibuf,$uid){
 	global $mysqli;
 	$parent = unpack_listdir($ibuf);
@@ -88,7 +153,7 @@ function handle_putfile($ibuf,$uid){
 	global $mysqli;
 	$qry = unpack_putfile($ibuf);
 	
-	if($qry['id'] == MC_FID_NONE){ //New file
+	if($qry['id'] == MC_FILEID_NONE){ //New file
 		if($qry['is_dir']) $qry['hash'] = "\xd4\x1d\x8c\xd9\x8f\x00\xb2\x04\xe9\x80\x09\x98\xec\xf8\x42\x7e"; //empty md5
 		//Verify parent
 		if($qry['parent'] < 0){

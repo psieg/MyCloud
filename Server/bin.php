@@ -46,9 +46,10 @@ if($ready){
 			break;
 		case MC_SRVQRY_LISTSYNCS:
 		case MC_SRVQRY_CREATESYNC:
-		case MC_SRVQRY_UPDATESYNC:
-		case MC_SRVQRY_DELETESYNC:
+		case MC_SRVQRY_DELSYNC:
 		case MC_SRVQRY_LISTFILTERS:
+		case MC_SRVQRY_PUTFILTER:
+		case MC_SRVQRY_DELFILTER:
 		case MC_SRVQRY_LISTDIR:
 		case MC_SRVQRY_GETFILE:
 		case MC_SRVQRY_GETOFFSET:
@@ -74,6 +75,12 @@ if($ready){
 							break;
 						case MC_SRVQRY_LISTFILTERS:
 							$res = handle_listfilters($ibuf,$uid);
+							break;
+						case MC_SRVQRY_PUTFILTER:
+							$res = handle_putfilter($ibuf,$uid);
+							break;
+						case MC_SRVQRY_DELFILTER:
+							$res = handle_delfilter($ibuf,$uid);
 							break;
 						case MC_SRVQRY_LISTDIR:
 							$res = handle_listdir($ibuf,$uid);

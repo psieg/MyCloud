@@ -26,6 +26,22 @@ function unpack_listfilters($fdesc){
 
 }
 
+function unpack_putfilter($fdesc){
+	$result = array();
+	$data = unpack("l1id/l1sid/C1files/C1directories/l1type/l1len",fread($fdesc,18));
+	$result['id'] = $data['id'];
+	$result['sid'] = $data['sid'];
+	$result['files'] = ($data['files'] != 0);
+	$result['directories'] = ($data['directories'] != 0);
+	$result['type'] = $data['type'];
+	$result['rule'] = fread($fdesc,$data['len']);
+	return $result;
+}
+
+function unpack_delfilter($fdesc){
+	return unpack("l1id",fread($fdesc,4))['id'];
+}
+
 function unpack_listdir($fdesc){
 	return unpack("l1id",fread($fdesc,4))['id'];
 }
@@ -140,6 +156,10 @@ function pack_filterlist($list){
 		$r .= pack("l2C2l2",$filter[0],$filter[1],$filter[2],$filter[3],$filter[4],strlen($filter[5])).$filter[5];
 	}
 	return $r;
+}
+
+function pack_filterid($fid){
+	return pack("l2",MC_SRVSTAT_FILTERID,$fid);
 }
 
 function pack_dirlist($list){
