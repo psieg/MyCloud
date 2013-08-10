@@ -29,13 +29,20 @@ int QtConflictDialog::exec(std::string *fullPath, std::string *descLocal, std::s
 	switch(defaultValue){
 		case 1:
 			ui.uploadButton->setDefault(true);
+			ui.uploadButton->setFocus();
 			break;
 		case 2:
 			ui.downloadButton->setDefault(true);
+			ui.downloadButton->setFocus();
 			break;
 		default:
-			if(manualSolvePossible) ui.keepButton->setDefault(true);
-			else ui.skipButton->setDefault(true);
+			if(manualSolvePossible){
+				ui.keepButton->setDefault(true);
+				ui.keepButton->setFocus();
+			} else {
+				ui.skipButton->setDefault(true);
+				ui.skipButton->setFocus();
+			}
 	}
 	return QDialog::exec();
 }
