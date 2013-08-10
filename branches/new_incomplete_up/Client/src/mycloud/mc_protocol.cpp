@@ -87,7 +87,7 @@ void pack_getoffset(mc_buf *buf, unsigned char authtoken[16], int id){
 void pack_putfile(mc_buf *buf, unsigned char authtoken[16], mc_file *file, int64 blocksize){
 	int num = MC_SRVQRY_PUTFILE;
 	unsigned int index = 0;
-	size_t bufsize = 5*sizeof(int)+4*sizeof(int64)+2*16+file->name.length();
+	const size_t bufsize = 4*sizeof(int)+4*sizeof(int64)+sizeof(char)+2*16+file->name.length();
 	MatchBuf(buf,bufsize);
 
 	memcpy(&buf->mem[index],&num,sizeof(int));
@@ -108,9 +108,8 @@ void pack_putfile(mc_buf *buf, unsigned char authtoken[16], mc_file *file, int64
 	index += sizeof(int64);
 	memcpy(&buf->mem[index],&file->size,sizeof(int64));
 	index += sizeof(int64);
-	num = file->is_dir != 0;
-	memcpy(&buf->mem[index],&num,sizeof(int));
-	index += sizeof(int);
+	memcpy(&buf->mem[index],&file->is_dir,sizeof(char));
+	index += sizeof(char);
 	memcpy(&buf->mem[index],&file->parent,sizeof(int));
 	index += sizeof(int);
 	memcpy(&buf->mem[index],&file->hash,16);
