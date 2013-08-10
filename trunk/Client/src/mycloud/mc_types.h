@@ -73,8 +73,9 @@ enum MC_NOTIFYTYPE : int {
 #define MC_IS_CRITICAL_ERR(rc)		(rc && (rc == MC_ERR_TERMINATING || rc == MC_ERR_NETWORK || rc == MC_ERR_LOGIN || rc == MC_ERR_BADQRY || rc == MC_ERR_PROTOCOL || rc == MC_ERR_CRYPTO || rc == MC_ERR_CRYPTOALERT))
 
 
-#define MC_FID_NONE -1
-#define MC_SID_NONE -1
+#define MC_SYNCID_NONE -1
+#define MC_FILTERID_NONE -1
+#define MC_FILEID_NONE -1
 
 /* used by db */
 /* These structs defines the format of all tables used, each struct represents one row of the specific table 

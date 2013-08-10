@@ -102,15 +102,22 @@ int runmc()
 									MC_CHKERR(rc);
 								} else {
 									if(dbsyncsit->filterversion < srvsyncsit->filterversion){
+										list<mc_filter> fl;
 										//updates of sid-0-filters count as update to all syncs
 										//this will cause multiple download but hopefully happens rarely enough
 										//and is better than adding a fake-sync-0
-										rc = update_filters(0);
+										rc = srv_listfilters(&fl,0);
+										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										rc = update_filters(0,&fl);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 										generalfilter.clear();
 										rc = db_list_filter_sid(&generalfilter,0);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
-										rc = update_filters(dbsyncsit->id);
+
+										fl.clear();
+										rc = srv_listfilters(&fl,dbsyncsit->id);
+										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										rc = update_filters(dbsyncsit->id,&fl);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 										dbsyncsit->filterversion = srvsyncsit->filterversion;
 										rc = db_update_sync(&*dbsyncsit);

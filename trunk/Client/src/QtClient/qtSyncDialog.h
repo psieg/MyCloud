@@ -31,7 +31,9 @@ private slots:
 	void on_tableWidget_itemSelectionChanged();
 
 	void authed(int);
-	void listReceived(int);
+	void syncListReceived(int);
+	void filterListReceived(int);
+	void deleteReceived(int);
 
 protected:
 	void showEvent(QShowEvent *event);
@@ -39,6 +41,7 @@ protected:
 private:
 	void filldbdata();
 	void listFilters();
+	void listFilters_actual();
 
 	Ui::qtSyncDialog ui;
 	QWidget *myparent;
@@ -52,6 +55,7 @@ private:
 	QIcon icon,lock,file,directory;
 	int dbindex;
 	bool loadcompleted;
+	int deletingfilterid;
 };
 
 #endif // QTSYNCDIALOG_H

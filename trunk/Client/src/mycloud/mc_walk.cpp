@@ -52,12 +52,12 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(fs->name);
 		ostringstream local,server;
-		local << "Name: " << fs->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+		local << "Name: " << shortname(fs->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(fs->is_dir) local << "Directory\n";
 		else local << "Size: " << BytesToSize(fs->size) << "\n";
 		local << "Last Modification: " << TimeToString(fs->mtime) << "\n";
 		if(db) local << "Last Synchronization: " << TimeToString(db->mtime);
-		server << "Name: " << srv->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+		server << "Name: " << shortname(srv->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(srv->status == MC_FILESTAT_DELETED) server << "deleted\n";
 		if(srv->is_dir) server << "Directory\n";
 		else server << "Size: " << BytesToSize(srv->size) << "\n";
@@ -186,7 +186,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 		p.assign(ctx->sync->path).append(path).append(srv->name);
 		ostringstream local,server;
 		if(db){
-			local << "Name: " << db->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+			local << "Name: " << shortname(db->name,MC_QTCONFLICTMAXLEN) << "\n";
 			local << "deleted\n";
 			if(db->is_dir) local << "Directory\n";
 			else local << "Size: " << BytesToSize(db->size) << "\n";
@@ -194,7 +194,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 		} else {
 			local << "File never seen on local filesystem\nParent directory is deleted";
 		}
-		server << "Name: " << srv->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+		server << "Name: " << shortname(srv->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(srv->status == MC_FILESTAT_DELETED) server << "deleted\n";
 		if(srv->is_dir) server << "Directory\n";
 		else server << "Size: " << BytesToSize(srv->size) << "\n";
@@ -339,12 +339,12 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(fs->name);
 		ostringstream local,server;
-		local << "Name: " << fs->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+		local << "Name: " << shortname(fs->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(fs->is_dir) local << "Directory\n";
 		else local << "Size: " << BytesToSize(fs->size) << "\n";
 		local << "Last Modification: " << TimeToString(fs->mtime);
 		if(srv){
-			server << "Name: " << srv->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+			server << "Name: " << shortname(srv->name,MC_QTCONFLICTMAXLEN) << "\n";
 			if(srv->status == MC_FILESTAT_DELETED) server << "deleted\n";
 			if(srv->is_dir) server << "Directory\n";
 			else server << "Size: " << BytesToSize(srv->size) << "\n";

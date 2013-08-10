@@ -126,7 +126,7 @@
     </rect>
    </property>
   </widget>
-  <widget class="QLabel" name="fetchLabel">
+  <widget class="QLabel" name="fetchSyncLabel">
    <property name="enabled">
     <bool>true</bool>
    </property>
@@ -188,6 +188,9 @@
    </property>
   </widget>
   <widget class="QTableWidget" name="tableWidget">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -243,7 +246,7 @@
   </widget>
   <widget class="QToolButton" name="addButton">
    <property name="enabled">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="geometry">
     <rect>
@@ -348,6 +351,51 @@
    </property>
    <property name="autoRaise">
     <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="fetchFilterLabel">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>210</y>
+     <width>401</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;i&gt;updating Filters...&lt;/i&gt;</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="needSubscribeLabel">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>210</y>
+     <width>401</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>you have to subscribe to the sync to edit filters</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="sendLabel">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>140</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>&lt;i&gt;sending request...&lt;/i&gt;</string>
    </property>
   </widget>
  </widget>

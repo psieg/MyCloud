@@ -91,6 +91,15 @@ string printname(mc_file_fs *f){
 	return s;
 }
 
+/* truncate and add ... where necessary */
+string shortname(const string& s, int len){
+	if(s.length()+3 > len){
+		return s.substr(0,len-3).append("...");
+	} else {
+		return s;
+	}
+}
+
 
 string TimeToString(int64 time){
 	string ret;

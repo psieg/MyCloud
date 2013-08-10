@@ -17,7 +17,6 @@
 #include "mc_util.h"
 #include "mc_db.h"
 #include "mc_transfer.h"
-#include "mc_workerthread.h"
 
 
 class QtClient : public QMainWindow

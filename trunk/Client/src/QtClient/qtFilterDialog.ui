@@ -164,6 +164,9 @@
    </property>
   </widget>
   <widget class="QToolButton" name="browseButton">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>520</x>
@@ -187,6 +190,24 @@
    </property>
    <property name="text">
     <string>&lt;u&gt;Path&lt;/u&gt;: documents/list.txt | &lt;u&gt;Name&lt;/u&gt;: list | &lt;u&gt;Extension&lt;/u&gt;: txt | &lt;u&gt;Full Name&lt;/u&gt;: list.txt</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="sendLabel">
+   <property name="geometry">
+    <rect>
+     <x>380</x>
+     <y>60</y>
+     <width>91</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <italic>true</italic>
+    </font>
+   </property>
+   <property name="text">
+    <string>sending request...</string>
    </property>
   </widget>
  </widget>

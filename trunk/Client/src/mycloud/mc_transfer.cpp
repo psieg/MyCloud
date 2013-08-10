@@ -427,7 +427,7 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 	MC_CHKERR(rc);
 
 	if(srv == NULL){
-		newdb->id = MC_FID_NONE;
+		newdb->id = MC_FILEID_NONE;
 		//cryptname will be generated
 	} else {
 		newdb->id = srv->id;
@@ -647,7 +647,7 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 	} else { // srv == NULL
 		rc = db_delete_file(db->id); //old ID is most likely void, let server generate new
 		MC_CHKERR(rc);
-		db->id = MC_FID_NONE;
+		db->id = MC_FILEID_NONE;
 		db->name = fs->name;
 		db->ctime = fs->ctime;
 		db->mtime = fs->mtime;
