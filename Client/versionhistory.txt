@@ -26,9 +26,9 @@
 * fix for incorrect sync state after one failed sync
 * refactoring + protocol update
 
-0.2.7
+0.2.8
 + Added Application Icon for QtClient binary
 + Syncs can be edited (change local path, cryptokey)
-+ User Interface to view filters
++ User Interface to view and edit filters
 * resume functions restart up/download on verification failure (=file change)
 * mtime set to current time when replacing a deleted file (#24)
