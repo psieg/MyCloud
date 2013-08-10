@@ -82,7 +82,7 @@ int runmc()
 							if(dbsyncs.size() == 0){
 								MC_ERR_MSG(MC_ERR_NOT_CONFIGURED,"No syncs configured");
 							}
-							MC_INF("Beginning run");
+							MC_INFL("Beginning run");
 
 							dbsyncs.sort(compare_mc_sync_db_prio);
 
@@ -134,33 +134,22 @@ int runmc()
 									if(memcmp(dbsyncsit->hash,srvsyncsit->hash,16) == 0){
 										MC_INFL(dbsyncsit->name << " has not been updated on server, walking locally");
 										wrc = walk_nochange(&context,"",-dbsyncsit->id,hash);
-										MC_INFL("Sync completed (Code " << wrc << ")");
-										rc = db_select_sync(&*dbsyncsit);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
-										memcpy(dbsyncsit->hash,hash,16);
-										if(wrc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
-										else if (MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
-										else if(memcmp(dbsyncsit->hash,srvsyncsit->hash,16) == 0) dbsyncsit->status = MC_SYNCSTAT_SYNCED;
-										else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
-										dbsyncsit->lastsync = time(NULL);
-										rc = db_update_sync(&*dbsyncsit);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										//MC_INFL("Sync completed (Code " << wrc << ")");
 									} else {
-										//MC_INF(dbsyncsit->name << " has been updated on server, walking");
+										MC_INF(dbsyncsit->name << " has been updated on server, walking");
 										wrc = walk(&context,"",-dbsyncsit->id,hash);
 										//MC_INF("Sync completed (Code " << wrc << ")");
-										rc = db_select_sync(&*dbsyncsit);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }	
-										memcpy(dbsyncsit->hash,hash,16);
-										if(wrc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
-										else if (MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
-										else if(memcmp(dbsyncsit->hash,srvsyncsit->hash,16) == 0) dbsyncsit->status = MC_SYNCSTAT_SYNCED;
-										else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
-										dbsyncsit->lastsync = time(NULL);
-										rc = db_update_sync(&*dbsyncsit);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
-
 									}
+									rc = db_select_sync(&*dbsyncsit);
+									if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+									memcpy(dbsyncsit->hash,hash,16);
+									if(wrc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+									else if (MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
+									else if(memcmp(dbsyncsit->hash,srvsyncsit->hash,16) == 0) dbsyncsit->status = MC_SYNCSTAT_SYNCED;
+									else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
+									dbsyncsit->lastsync = time(NULL);
+									rc = db_update_sync(&*dbsyncsit);
+									if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 									if(wrc == MC_ERR_CRYPTOALERT) 
 										throw MC_ERR_CRYPTOALERT;
 									MC_NOTIFYEND(MC_NT_SYNC);
@@ -172,11 +161,12 @@ int runmc()
 							//Check for sync
 							rc = fullsync(&dbsyncs);
 							if(!rc){
-								MC_INF("Run completed, fully synced");
+								MC_INFL("Run completed, fully synced");
 								MC_NOTIFYSTART(MC_NT_FULLSYNC,TimeToString(time(NULL)));
 							} else if(rc == MC_ERR_NOTFULLYSYNCED){
-								MC_INF("Run completed");
+								MC_INFL("Run completed, not synced, running again");
 								MC_NOTIFYEND(MC_NT_SYNC); //Trigger ListSyncs
+								continue;
 							} else if(rc == MC_ERR_NETWORK){
 								MC_NOTIFYSTART(MC_NT_ERROR, "Network Error");						
 								if(status.watchmode > 0)

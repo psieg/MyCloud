@@ -634,7 +634,7 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	string fpath = ctx->sync->path;
 	if(path.size()) path.append("/");
 	fpath.append(path);
-	MC_INFL("Walking directory " << id << ": " << path);
+	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
 	//if(id == 2698)
@@ -883,7 +883,7 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	string fpath = ctx->sync->path;
 	if(path.size()) path.append("/");
 	fpath.append(path);
-	MC_INFL("Walking directory " << id << ": " << path);
+	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
 	//if(id == 2698)
@@ -984,7 +984,7 @@ int walk_nolocal(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	list<string>::iterator hashesit,hashesend;
 	MC_CONFLICTACTION outerconflictact = ctx->dirconflictact; //must be saved in case upper layers used it...
 	if(path.size()) path.append("/");
-	MC_INFL("Walking directory " << id << ": " << path);
+	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
 
@@ -1087,7 +1087,7 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	string fpath = ctx->sync->path;
 	if(path.size()) path.append("/");
 	fpath.append(path);
-	MC_INFL("Walking directory " << id << ": " << path);
+	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
 

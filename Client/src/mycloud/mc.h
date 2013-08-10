@@ -73,10 +73,10 @@ using namespace std;
 #endif
 #ifdef MC_INFOLOW
 #	ifdef MC_LOGFILE
-#		define MC_INFL(msg)				{ /*std::cout << "L  " << msg << std::endl;*/	\
+#		define MC_INFL(msg)				{ std::cout << "L  " << msg << std::endl;	\
 											mc_logfile << "L  " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;	}
 #	else
-#		define MC_INFL(msg)				{ /*std::cout << "L  " << msg << std::endl;*/ }
+#		define MC_INFL(msg)				{ std::cout << "L  " << msg << std::endl; }
 #	endif
 #else
 #	define MC_INFL(msg)					{}

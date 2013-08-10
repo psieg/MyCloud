@@ -36,6 +36,26 @@ void qtFilterDialog::showEvent(QShowEvent *event){
 }
 
 void qtFilterDialog::accept(){
+	if(!ui.filesBox->isChecked() && !ui.directoriesBox->isChecked()){
+		QMessageBox b(myparent);
+		b.setText("No match type set");
+		b.setInformativeText("Please choose wether the filter should match files, directories or both.");
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Warning);
+		b.exec();
+		return;
+	}
+	if(ui.valueEdit->text().length() == 0){
+		QMessageBox b(myparent);
+		b.setText("No value set");
+		b.setInformativeText("Please set a value to match against.");
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Warning);
+		b.exec();
+		return;
+	}
 	filter.files = ui.filesBox->isChecked();
 	filter.directories = ui.directoriesBox->isChecked();
 	filter.type = indexToType(ui.typeBox->currentIndex());
@@ -95,16 +115,26 @@ void qtFilterDialog::replyReceived(int rc){
 
 
 void qtFilterDialog::on_typeBox_currentIndexChanged(int index){
-	//ui.browseButton->setEnabled(indexToType(index) == MC_FILTERT_MATCH_PATH);
+	ui.browseButton->setEnabled(indexToType(index) == MC_FILTERT_MATCH_PATH);
 }
 
 void qtFilterDialog::on_browseButton_clicked(){
+	mc_sync_db s;
 	QFileDialog d(this);
-	//d.setFileMode(QFileDialog::Directory);
-	//d.setNameFilter(tr("Directories"));
-	//d.setOption(QFileDialog::ShowDirsOnly,true);
+	int rc;
+
+	s.id = filter.sid;
+	rc = db_select_sync(&s);
+	if(rc) {
+		reject();
+		return;
+	}
+	if(!ui.filesBox->isChecked() && ui.directoriesBox->isChecked()) d.setFileMode(QFileDialog::Directory);
+	d.setDirectory(s.path.c_str());
 	if(d.exec()){
-		ui.valueEdit->setText(d.selectedFiles()[0]);
+		QString tmp = d.selectedFiles()[0];
+		if(tmp.mid(0,s.path.length()) == s.path.c_str()) tmp = tmp.mid(s.path.length());
+		ui.valueEdit->setText(tmp);
 	};
 }
 

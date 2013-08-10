@@ -233,10 +233,10 @@ int QtWatcher::changeTimeout(){
 	//Check for sync
 	rc = fullsync();
 	if(!rc){
-		MC_INF("Update completed, cloud is fully synced");
+		//MC_INFL("Update completed, cloud is fully synced");
 		MC_NOTIFYSTART(MC_NT_FULLSYNC,TimeToString(time(NULL)));
 	} else if(rc == MC_ERR_NOTFULLYSYNCED){
-		MC_INF("Update completed");
+		//MC_INFL("Update completed");
 	} else return rc;
 	startRemoteWatch();
 	startLocalWatch();
@@ -300,10 +300,10 @@ int QtWatcher::remoteChange(int status){
 		//Check for sync
 		rc = fullsync();
 		if(!rc){
-			MC_INF("Update completed, cloud is fully synced");
+			//MC_INFL("Update completed, cloud is fully synced");
 			MC_NOTIFYSTART(MC_NT_FULLSYNC,TimeToString(time(NULL)));
 		} else if(rc == MC_ERR_NOTFULLYSYNCED){
-			MC_INF("Update completed");
+			//MC_INFL("Update completed");
 		} else return rc;
 		startLocalWatch();
 		startRemoteWatch();
@@ -344,7 +344,7 @@ int enter_watchmode(int timeout){
 	mc_status status;
 	int rdepth;
 	int rc;
-	MC_INF("Entering Watchmode for " << timeout << " secs");
+	MC_INFL("Entering Watchmode for " << timeout << " secs");
 	
 	rc = db_select_status(&status);
 	MC_CHKERR(rc);
