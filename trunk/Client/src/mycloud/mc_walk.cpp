@@ -528,18 +528,28 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				return upload(ctx,path,fs,db,srv,hashstr);
 			else if(db->status != MC_FILESTAT_DELETED)
 				return download(ctx,path,fs,db,srv,hashstr);
-			else if(db->size == srv->size && memcmp(db->hash,srv->hash,16) == 0)
-				{}//Nothing to do
-			else
+			else if(db->size == srv->size && memcmp(db->hash,srv->hash,16) == 0){
+				if(db->mtime ==  srv->mtime)
+					{} //Nothing to do
+				else if(db->mtime > srv->mtime)
+					return upload(ctx,path,fs,db,srv,hashstr);
+				else //db->mtime < srv->mtime
+					return download(ctx,path,fs,db,srv,hashstr);
+			} else
 				return conflicted_nolocal(ctx,path,db,srv,hashstr);
 		} else {
 			if((fs->is_dir != srv->is_dir) || (srv->is_dir != db->is_dir))
 				return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
 			if(db->status == MC_FILESTAT_COMPLETE){
 				if(srv->status == MC_FILESTAT_COMPLETE){
-					if(db->size == srv->size && srv->size == fs->size && memcmp(db->hash,srv->hash,16) == 0)
-						{}//Nothing to do
-					else
+					if(db->size == srv->size && srv->size == fs->size && memcmp(db->hash,srv->hash,16) == 0){
+						if(fs->mtime == db->mtime && db->mtime ==  srv->mtime)
+							{} //Nothing to do
+						else if(fs->mtime > db->mtime || db->mtime > srv->mtime)
+							return upload(ctx,path,fs,db,srv,hashstr);
+						else //fs->mtime < db->mtime || db->mtime < srv->mtime
+							return download(ctx,path,fs,db,srv,hashstr);
+					} else
 						return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
 				} else if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 					//Shouldn't actually happen: The file was complete but is incomplete now, although its the same file?
@@ -609,7 +619,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 		}
 	}
 
-	crypt_filestring(ctx,srv,hashstr);
+	crypt_filestring(ctx,db,hashstr);
 
 	if(terminating) return MC_ERR_TERMINATING;
 	else return 0;
