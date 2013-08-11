@@ -27,9 +27,11 @@
 * refactoring + protocol update
 
 0.2.8
-+ Added Application Icon for QtClient binary
++ Added Application Icon and Details for QtClient binary (windows)
 + Syncs can be edited (change local path, cryptokey)
 + User Interface to view and edit filters
 + Filters are encrypted for encrypted syncs
 * resume functions restart up/download on verification failure (=file change)
 * mtime set to current time when replacing a deleted file (#24)
+* new hashing includes file state
+* fixed loop when a remote file is incomlete_up

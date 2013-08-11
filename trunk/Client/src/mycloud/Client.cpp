@@ -203,15 +203,7 @@ int runmc()
 								MC_NOTIFYSTART(MC_NT_ERROR,"Protocol Error");
 								break;
 							case MC_ERR_CRYPTOALERT:
-								cerr << "Crypt Verify Fail. Aborting." << endl;
-								srv_close();
-								cerr << "Server can't be trusted. Disabling all Syncs." << endl;
-								db_execstr(string("UPDATE syncs SET status = ") + to_string(MC_SYNCSTAT_DISABLED));
-								cerr << "Changing server url to force manual interaction." << endl;
-								db_execstr("UPDATE status SET url = 'UNTRUSTED: ' || url");
-								MC_NOTIFYEND(MC_NT_SYNC); //Trigger ListSyncs
-								MC_NOTIFYSTART(MC_NT_ERROR,"Crypt Verify Fail: Server can't be trusted");
-								return MC_ERR_CRYPTOALERT;
+								return cryptopanic();
 							default:
 								cerr << "Internal error: " << i << " Aborting." << endl;
 								MC_NOTIFYSTART(MC_NT_ERROR,"Internal error");

@@ -179,6 +179,7 @@ int QtWatcher::changeTimeout(){
 			MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
 			rc = walk_nochange(&context,"",-dbsyncsit->id,dbsyncsit->hash);
 			if(rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+			else if(rc == MC_ERR_CRYPTOALERT) return cryptopanic();
 			else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
 			else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
 			dbsyncsit->lastsync = time(NULL); //TODO: not always a full sync!
@@ -209,6 +210,7 @@ int QtWatcher::changeTimeout(){
 			MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
 			rc = walk_nochange(&context,qPrintable(sp),f.id,f.hash);
 			if(rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+			else if(rc == MC_ERR_CRYPTOALERT) return cryptopanic();
 			else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
 			else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
 			dbsyncsit->lastsync = time(NULL); //TODO: not always a full sync!
@@ -288,6 +290,7 @@ int QtWatcher::remoteChange(int status){
 		MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
 		rc = walk(&context,"",-dbsyncsit->id,dbsyncsit->hash);
 		if(rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+		else if(rc == MC_ERR_CRYPTOALERT) return cryptopanic();
 		else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
 		else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
 		dbsyncsit->lastsync = time(NULL);
