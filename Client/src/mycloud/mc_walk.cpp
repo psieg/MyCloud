@@ -730,7 +730,6 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 				// File has been deleted or is incomplete up
 				if(onsrvit->mtime == indbit->mtime){ //on incomplete up timestamps match
 					rc = verifyandcomplete(ctx,path,NULL,&*indbit,&*onsrvit,&hashstr);
-					//rc = upload(ctx,path,NULL,&*indbit,&*onsrvit,&hashstr);
 					if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 				} else if(onsrvit->mtime > indbit->mtime){
 					rc = download(ctx,path,NULL,&*indbit,&*onsrvit,&hashstr);
