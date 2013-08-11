@@ -107,10 +107,11 @@ enum MC_SYNCSTATUS : int {
 };
 
 enum MC_FILESTATUS : int {
-	MC_FILESTAT_COMPLETE		= 0,
-	MC_FILESTAT_DELETED			= 1,
-	MC_FILESTAT_INCOMPLETE_UP	= 2,	// for files only
-	MC_FILESTAT_INCOMPLETE_DOWN	= 3		// for files only
+	MC_FILESTAT_COMPLETE			= 0,
+	MC_FILESTAT_DELETED				= 1,
+	MC_FILESTAT_INCOMPLETE_UP		= 2,	// for files only: in progress of being uploaded
+	MC_FILESTAT_INCOMPLETE_UP_ME	= 3,	// for files only: in progress of being uploaded by me
+	MC_FILESTAT_INCOMPLETE_DOWN		= 4,
 };
 
 enum MC_FILTERTYPE : int {

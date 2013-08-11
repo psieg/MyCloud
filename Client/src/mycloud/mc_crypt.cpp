@@ -186,10 +186,8 @@ int crypt_filelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *
 
 void crypt_filestring(mc_sync_ctx *ctx, mc_file *f, string *s){
 	s->append((const char*)&f->id,sizeof(int));
-	if(ctx->sync->crypted) {
-		if(f->cryptname != "") s->append(f->cryptname); 
-		else MC_WRN("Empty cryptname string"); //TODO: Remove when crypt is running
-	} else s->append(f->name);
+	if(ctx->sync->crypted) s->append(f->cryptname); 
+	else s->append(f->name);
 	//s->append((const char*)&f->ctime,sizeof(int64)); //not a deciding/important criteria
 	s->append((const char*)&f->mtime,sizeof(int64));
 	if(ctx->sync->crypted && !f->is_dir) f->size += MC_CRYPT_SIZEOVERHEAD;
