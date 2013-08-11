@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QtClientClass</class>
- <widget class="QMainWindow" name="QtClientClass">
+ <class>QtClient</class>
+ <widget class="QMainWindow" name="QtClient">
   <property name="enabled">
    <bool>true</bool>
   </property>
@@ -20,7 +20,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>QtClient</string>
+   <string>MyCloud Client</string>
   </property>
   <property name="windowIcon">
    <iconset resource="qtClient.qrc">
@@ -257,7 +257,7 @@
          <number>9</number>
         </property>
         <item>
-         <widget class="QTableWidget" name="tableWidget">
+         <widget class="QTableWidget" name="syncTable">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>

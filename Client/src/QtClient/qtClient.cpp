@@ -35,15 +35,15 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	connect(this,SIGNAL(_notifyProgress(int,int)),this,SLOT(__notifyProgress(int,int)),Qt::QueuedConnection);
 	connect(this,SIGNAL(_notifySubProgress(double,double)),this,SLOT(__notifySubProgress(double,double)),Qt::QueuedConnection);
 
-	connect(ui.tableWidget,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
+	connect(ui.syncTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
 
 	//list syncs
-	//ui.tableWidget->setColumnWidth(0,40);
-	ui.tableWidget->setColumnWidth(0,100);
-	ui.tableWidget->setColumnWidth(1,180);
-	ui.tableWidget->setColumnWidth(2,110);
-	ui.tableWidget->setColumnWidth(3,139);
-	ui.tableWidget->setColumnWidth(4,40);
+	//ui.syncTable->setColumnWidth(0,40);
+	ui.syncTable->setColumnWidth(0,100);
+	ui.syncTable->setColumnWidth(1,180);
+	ui.syncTable->setColumnWidth(2,110);
+	ui.syncTable->setColumnWidth(3,139);
+	ui.syncTable->setColumnWidth(4,40);
 
 	//ui.splitter->setStretchFactor(0,2);
 	//ui.splitter->setStretchFactor(1,3);
@@ -457,7 +457,7 @@ void QtClient::on_addButton_clicked(){
 
 void QtClient::on_removeButton_clicked(){
 	int rc;
-	int sid = synclist[ui.tableWidget->selectedItems().at(0)->row()].id;
+	int sid = synclist[ui.syncTable->selectedItems().at(0)->row()].id;
 	bool cando = true;
 	QMessageBox b(this);
 	b.setText("This will delete the local state information");
@@ -486,7 +486,7 @@ void QtClient::on_removeButton_clicked(){
 		}
 		if(cando){	
 			this->setCursor(Qt::WaitCursor);
-			ui.tableWidget->setEnabled(false);
+			ui.syncTable->setEnabled(false);
 			setStatus(tr("Deleting sync"),"",icon_sync);
 			QApplication::processEvents();
 
@@ -516,51 +516,51 @@ void QtClient::on_removeButton_clicked(){
 
 			if(!rc) setStatus(tr("idle"),"",icon);
 			this->setCursor(Qt::ArrowCursor);
-			ui.tableWidget->setEnabled(true);
+			ui.syncTable->setEnabled(true);
 		}
 	}
 }
 
 void QtClient::on_upButton_clicked(){
 	int rc;
-	int index = ui.tableWidget->selectedItems().at(0)->row();
+	int index = ui.syncTable->selectedItems().at(0)->row();
 	int tmp = synclist[index].priority;
 	synclist[index].priority = synclist[index-1].priority;
 	synclist[index-1].priority = tmp;
-	ui.tableWidget->setEnabled(false);
+	ui.syncTable->setEnabled(false);
 	QApplication::processEvents();
 	rc = db_update_sync(&synclist[index]);
 	if(rc) return;
 	rc = db_update_sync(&synclist[index-1]);
 	if(rc) return;
 	listSyncs();
-	ui.tableWidget->setEnabled(true);
-	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index-1,0,index-1,ui.tableWidget->columnCount()-1),true);
+	ui.syncTable->setEnabled(true);
+	ui.syncTable->setRangeSelected(QTableWidgetSelectionRange(index-1,0,index-1,ui.syncTable->columnCount()-1),true);
 }
 
 void QtClient::on_downButton_clicked(){
 	int rc;
-	const int index = ui.tableWidget->selectedItems().at(0)->row();
+	const int index = ui.syncTable->selectedItems().at(0)->row();
 	int tmp = synclist[index].priority;
 	synclist[index].priority = synclist[index+1].priority;
 	synclist[index+1].priority = tmp;
-	ui.tableWidget->setEnabled(false);
+	ui.syncTable->setEnabled(false);
 	QApplication::processEvents();
 	rc = db_update_sync(&synclist[index]);
 	if(rc) return;
 	rc = db_update_sync(&synclist[index+1]);
 	if(rc) return;
 	listSyncs();
-	ui.tableWidget->setEnabled(true);
-	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index+1,0,index+1,ui.tableWidget->columnCount()-1),true);
+	ui.syncTable->setEnabled(true);
+	ui.syncTable->setRangeSelected(QTableWidgetSelectionRange(index+1,0,index+1,ui.syncTable->columnCount()-1),true);
 }
 
 void QtClient::on_editButton_clicked(){
-	int index = ui.tableWidget->selectedItems().at(0)->row();
+	int index = ui.syncTable->selectedItems().at(0)->row();
 	qtSyncDialog d(this,synclist[index].id);
 	d.exec();
 	listSyncs();
-	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.tableWidget->columnCount()-1),true);
+	ui.syncTable->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.syncTable->columnCount()-1),true);
 }
 
 void QtClient::on_settingsButton_clicked(){
@@ -586,23 +586,23 @@ void QtClient::on_settingsButton_clicked(){
 
 void QtClient::on_disableButton_clicked(){
 	int rc;
-	int index = ui.tableWidget->selectedItems().at(0)->row();
+	int index = ui.syncTable->selectedItems().at(0)->row();
 	int tmp = synclist[index].priority;
 	if(synclist[index].status == MC_SYNCSTAT_DISABLED)
 		synclist[index].status = MC_SYNCSTAT_UNKOWN;
 	else
 		synclist[index].status = MC_SYNCSTAT_DISABLED;
-	ui.tableWidget->setEnabled(false);
+	ui.syncTable->setEnabled(false);
 	QApplication::processEvents();
 	rc = db_update_sync(&synclist[index]);
 	if(rc) return;
 	listSyncs();
-	ui.tableWidget->setEnabled(true);
-	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.tableWidget->columnCount()-1),true);
+	ui.syncTable->setEnabled(true);
+	ui.syncTable->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.syncTable->columnCount()-1),true);
 }
 
-void QtClient::on_tableWidget_itemSelectionChanged(){
-	if(ui.tableWidget->selectedItems().length() == 0){
+void QtClient::on_syncTable_itemSelectionChanged(){
+	if(ui.syncTable->selectedItems().length() == 0){
 		ui.removeButton->setEnabled(false);
 		ui.upButton->setEnabled(false);
 		ui.downButton->setEnabled(false);
@@ -610,10 +610,10 @@ void QtClient::on_tableWidget_itemSelectionChanged(){
 		ui.disableButton->setEnabled(false);
 	} else {
 		ui.removeButton->setEnabled(true);
-		int r = ui.tableWidget->selectedItems().at(0)->row();
+		int r = ui.syncTable->selectedItems().at(0)->row();
 		if(r > 0) ui.upButton->setEnabled(true);
 		else ui.upButton->setEnabled(false);
-		if(r < ui.tableWidget->rowCount()-1) ui.downButton->setEnabled(true);
+		if(r < ui.syncTable->rowCount()-1) ui.downButton->setEnabled(true);
 		else ui.downButton->setEnabled(false);
 		ui.disableButton->setEnabled(true);
 		ui.editButton->setEnabled(true);
@@ -661,48 +661,48 @@ int QtClient::listSyncs(){
 	lit = synclist.begin();
 	lend = synclist.end();
 
-	ui.tableWidget->clearContents();
-	ui.tableWidget->setRowCount(0);
+	ui.syncTable->clearContents();
+	ui.syncTable->setRowCount(0);
 	while(lit != lend){
-		ui.tableWidget->insertRow(ui.tableWidget->rowCount());
+		ui.syncTable->insertRow(ui.syncTable->rowCount());
 		if(lit->crypted)
-			ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,0,new QTableWidgetItem(lock,QString(lit->name.c_str())));
+			ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(lock,QString(lit->name.c_str())));
 		else
-			ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,0,new QTableWidgetItem(icon,QString(lit->name.c_str())));
-		ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,1,new QTableWidgetItem(QString(lit->path.c_str())));
-		ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(QString(TimeToString(lit->lastsync).c_str())));
+			ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(icon,QString(lit->name.c_str())));
+		ui.syncTable->setItem(ui.syncTable->rowCount()-1,1,new QTableWidgetItem(QString(lit->path.c_str())));
+		ui.syncTable->setItem(ui.syncTable->rowCount()-1,2,new QTableWidgetItem(QString(TimeToString(lit->lastsync).c_str())));
 		switch(lit->status){
 			case MC_SYNCSTAT_UNKOWN:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_new,tr("Unknown / Waiting")));
+				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_new,tr("Unknown / Waiting")));
 				break;
 			case MC_SYNCSTAT_RUNNING:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_sync,tr("Sync running")));
+				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_sync,tr("Sync running")));
 				break;
 			case MC_SYNCSTAT_COMPLETED:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_done,tr("Last Sync completed")));
+				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_done,tr("Last Sync completed")));
 				break;
 			case MC_SYNCSTAT_SYNCED:
 				if(time(NULL) - lit->lastsync < 300)
-					ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_ok,tr("Last Sync successful")));
+					ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_ok,tr("Last Sync successful")));
 				else
-					ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_done,tr("Last Sync successful")));
+					ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_done,tr("Last Sync successful")));
 				break;
 			case MC_SYNCSTAT_UNAVAILABLE:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_err,tr("Not available")));
+				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_err,tr("Not available")));
 				break;
 			case MC_SYNCSTAT_FAILED:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_err,tr("Last Sync failed")));
+				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_err,tr("Last Sync failed")));
 				break;
 			case MC_SYNCSTAT_ABORTED:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_err,tr("Last Sync aborted")));
+				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_err,tr("Last Sync aborted")));
 				break;
 			case MC_SYNCSTAT_DISABLED:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_disabled,tr("disabled")));
+				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_disabled,tr("disabled")));
 				break;
 			default:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(status_unknown,tr("Unkown Status")));
+				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_unknown,tr("Unkown Status")));
 		}
-		//ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,4,new QTableWidgetItem(/*icon,*/QString::number(lit->priority)));
+		//ui.syncTable->setItem(ui.syncTable->rowCount()-1,4,new QTableWidgetItem(/*icon,*/QString::number(lit->priority)));
 		++lit;
 	}
 	return 0;

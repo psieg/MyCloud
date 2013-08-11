@@ -83,13 +83,13 @@ private slots:
 	void on_editButton_clicked();
 	void on_settingsButton_clicked();
 	void on_disableButton_clicked();
-	void on_tableWidget_itemSelectionChanged();
+	void on_syncTable_itemSelectionChanged();
 	void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 	void newVersion(QString newver);
 	
 private:
 	static QtClient *_instance;
-	Ui::QtClientClass ui;
+	Ui::QtClient ui;
 	QtWorkerThread worker;
 	QtUpdateChecker updateChecker;
 	QtConflictDialog *conflictDialog;
