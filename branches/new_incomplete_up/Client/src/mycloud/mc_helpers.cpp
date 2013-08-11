@@ -1,4 +1,7 @@
 #include "mc_helpers.h"
+#ifdef MC_QTCLIENT
+#	include "qtClient.h"7
+#endif
 
 /* cascade up the tree and recalc hashes from db */
 int directoryHash(mc_sync_ctx *ctx, int id, unsigned char hash[16]){
@@ -105,4 +108,17 @@ int fullsync(list<mc_sync_db> *dbsyncs){
 	}
 	if(fullsync) return 0;
 	else return MC_ERR_NOTFULLYSYNCED;
+}
+
+/* panic action when decryption failed */
+int cryptopanic(){
+	cerr << "Crypt Verify Fail. Aborting." << endl;
+	srv_close();
+	cerr << "Server can't be trusted. Disabling all Syncs." << endl;
+	db_execstr(string("UPDATE syncs SET status = ") + to_string(MC_SYNCSTAT_DISABLED));
+	cerr << "Changing server url to force manual interaction." << endl;
+	db_execstr("UPDATE status SET url = 'UNTRUSTED: ' || url");
+	MC_NOTIFYEND(MC_NT_SYNC); //Trigger ListSyncs
+	MC_NOTIFYSTART(MC_NT_ERROR,"Crypt Verify Fail: Server can't be trusted");
+	return MC_ERR_CRYPTOALERT;
 }

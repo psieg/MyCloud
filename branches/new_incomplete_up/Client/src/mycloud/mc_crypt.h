@@ -32,12 +32,18 @@ void crypt_seed(const string& data);
 void crypt_seed(int64 data);
 
 // Translate Metadata to/from cryptformat
+// Encrypts rule, can't be used locally this way!
+int crypt_filter_tosrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f);
+// Translates rule
+int crypt_filter_fromsrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f); //TODO: private because implicit?
+// Translate a filter listing in-place
+int crypt_filterlist_fromsrv(mc_sync_ctx *ctx, const string& syncname, list<mc_filter> *l);
 // Does not translate size
-int crypt_translate_tosrv(mc_sync_ctx *ctx, const string& path, mc_file *f); //TODO: private because implicit?
+int crypt_file_tosrv(mc_sync_ctx *ctx, const string& path, mc_file *f);
 // Also translates size, as locally only the unencrypted size counts, or sizetranslate is used
-int crypt_translate_fromsrv(mc_sync_ctx *ctx, const string& path, mc_file *f);
+int crypt_file_fromsrv(mc_sync_ctx *ctx, const string& path, mc_file *f); //TODO: private because implicit?
 // Translate a directory listing in-place
-int crypt_translatelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *l);
+int crypt_filelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *l);
 
 
 // Filestring differs because of the size translation

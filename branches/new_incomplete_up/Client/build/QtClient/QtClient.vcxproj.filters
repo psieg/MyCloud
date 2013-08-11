@@ -74,6 +74,18 @@
     <CustomBuild Include="..\..\src\mycloud\mc_watch.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtFilterDialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtFilterDialog.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtGeneralFilterDialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtGeneralFilterDialog.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\sqlite-amalgamation\sqlite3.h">
@@ -118,6 +130,9 @@
     <ClInclude Include="..\..\src\mycloud\mc_walk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\mc_version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GeneratedFiles\Debug\moc_qtClient.cpp">
@@ -155,9 +170,6 @@
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_mc_watch.cpp">
       <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_qtClient.cpp">
-      <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_qtUpdateChecker.cpp">
       <Filter>Generated Files\Debug</Filter>
@@ -231,73 +243,34 @@
     <ClCompile Include="..\..\src\sqlite-amalgamation\sqlite3.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\QtClient\qtFilterDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_qtFilterDialog.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_qtFilterDialog.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QtClient\qtGeneralFilterDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_qtGeneralFilterDialog.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_qtGeneralFilterDialog.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\qrc_qtClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\src\QtClient\Resources\act_db.png">
+    <ResourceCompile Include="..\..\src\QtClient\resource.rc">
       <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\act_fs.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\act_nodb.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\act_nofs.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\act_nosrv.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\act_srv.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\down.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\icon.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\icon_cf.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\icon_conn.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\icon_dl.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\icon_err.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\icon_ok.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\icon_sync.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\icon_ul.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\status_err.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\status_ok.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\status_sync.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\tool_add.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\tool_remove.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\tool_settings.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\src\QtClient\Resources\up.png">
-      <Filter>Resource Files</Filter>
-    </Image>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\src\QtClient\Resources\icon.ico" />
   </ItemGroup>
 </Project>

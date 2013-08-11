@@ -32,7 +32,7 @@ void pack_auth(mc_buf *buf, string user, string passwd){
 }
 
 void pack_listsyncs(mc_buf *buf, unsigned char authtoken[16]){
-	int num = MC_SRVQRY_LISTSYNCS;
+	const int num = MC_SRVQRY_LISTSYNCS;
 	MatchBuf(buf,sizeof(int)+16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
@@ -40,7 +40,7 @@ void pack_listsyncs(mc_buf *buf, unsigned char authtoken[16]){
 }
 
 void pack_listfilters(mc_buf *buf, unsigned char authtoken[16], int syncid){
-	int num = MC_SRVQRY_LISTFILTERS;
+	const int num = MC_SRVQRY_LISTFILTERS;
 	MatchBuf(buf,2*sizeof(int)+16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
@@ -49,8 +49,46 @@ void pack_listfilters(mc_buf *buf, unsigned char authtoken[16], int syncid){
 	buf->used = 2*sizeof(int)+16;
 }
 
+void pack_putfilter(mc_buf *buf, unsigned char authtoken[16], mc_filter *filter){
+	int num = MC_SRVQRY_PUTFILTER;
+	unsigned int index = 0;
+	const size_t bufsize = 5*sizeof(int)+2*sizeof(char)+16+filter->rule.length();
+	MatchBuf(buf,bufsize);
+
+	memcpy(&buf->mem[index],&num,sizeof(int));
+	index += sizeof(int);
+	memcpy(&buf->mem[index],authtoken,16);
+	index += 16;
+	
+	memcpy(&buf->mem[index],&filter->id,sizeof(int));
+	index += sizeof(int);
+	memcpy(&buf->mem[index],&filter->sid,sizeof(int));
+	index += sizeof(int);
+	memcpy(&buf->mem[index],&filter->files,sizeof(char));
+	index += sizeof(char);
+	memcpy(&buf->mem[index],&filter->directories,sizeof(char));
+	index += sizeof(char);
+	memcpy(&buf->mem[index],&filter->type,sizeof(int));
+	index += sizeof(int);
+	num = filter->rule.length();
+	memcpy(&buf->mem[index],&num,sizeof(int));
+	index += sizeof(int);
+	memcpy(&buf->mem[index],filter->rule.c_str(),num);
+	index += num;
+	buf->used = bufsize;
+}
+void pack_delfilter(mc_buf *buf, unsigned char authtoken[16], int id){
+	const int num = MC_SRVQRY_DELFILTER;
+	MatchBuf(buf,2*sizeof(int)+16);
+	memcpy(&buf->mem[0],&num,sizeof(int));
+	memcpy(&buf->mem[sizeof(int)],authtoken,16);
+
+	memcpy(&buf->mem[sizeof(int)+16],&id,sizeof(int));
+	buf->used = 2*sizeof(int)+16;
+}
+
 void pack_listdir(mc_buf *buf, unsigned char authtoken[16], int parent){
-	int num = MC_SRVQRY_LISTDIR;
+	const int num = MC_SRVQRY_LISTDIR;
 	MatchBuf(buf,2*sizeof(int)+16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
@@ -61,7 +99,7 @@ void pack_listdir(mc_buf *buf, unsigned char authtoken[16], int parent){
 
 
 void pack_getfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 offset, int64 blocksize, unsigned char hash[16]){
-	int num = MC_SRVQRY_GETFILE;
+	const int num = MC_SRVQRY_GETFILE;
 	MatchBuf(buf,2*sizeof(int)+2*sizeof(int64)+2*16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
@@ -74,7 +112,7 @@ void pack_getfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 offset
 }
 
 void pack_getoffset(mc_buf *buf, unsigned char authtoken[16], int id){
-	int num = MC_SRVQRY_GETOFFSET;
+	const int num = MC_SRVQRY_GETOFFSET;
 	MatchBuf(buf,sizeof(int)+sizeof(int64)+16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
@@ -122,7 +160,7 @@ void pack_putfile(mc_buf *buf, unsigned char authtoken[16], mc_file *file, int64
 
 //Note the caller has to append the filedata (size blocksize) itself to the buffer
 void pack_addfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 offset, int64 blocksize, unsigned char hash[16]){
-	int num = MC_SRVQRY_ADDFILE;
+	const int num = MC_SRVQRY_ADDFILE;
 	MatchBuf(buf,2*sizeof(int)+2*sizeof(int64)+2*16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
@@ -138,7 +176,7 @@ void pack_addfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 offset
 void pack_patchfile(mc_buf *buf, unsigned char authtoken[16], mc_file *file){
 	int num = MC_SRVQRY_PATCHFILE;
 	unsigned int index = 0;
-	size_t bufsize = 4*sizeof(int)+2*sizeof(int64)+16+file->name.length();
+	const size_t bufsize = 4*sizeof(int)+2*sizeof(int64)+16+file->name.length();
 	MatchBuf(buf,bufsize);
 
 	memcpy(&buf->mem[index],&num,sizeof(int));
@@ -164,7 +202,7 @@ void pack_patchfile(mc_buf *buf, unsigned char authtoken[16], mc_file *file){
 }
 
 void pack_delfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 mtime){
-	int num = MC_SRVQRY_DELFILE;
+	const int num = MC_SRVQRY_DELFILE;
 	MatchBuf(buf,2*sizeof(int)+sizeof(int64)+16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
@@ -175,7 +213,7 @@ void pack_delfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 mtime)
 }
 
 void pack_getmeta(mc_buf *buf, unsigned char authtoken[16], int id){
-	int num = MC_SRVQRY_GETMETA;
+	const int num = MC_SRVQRY_GETMETA;
 	MatchBuf(buf,sizeof(int)+sizeof(int64)+16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
@@ -186,7 +224,7 @@ void pack_getmeta(mc_buf *buf, unsigned char authtoken[16], int id){
 
 
 void pack_purgefile(mc_buf *buf, unsigned char authtoken[16], int id){
-	int num = MC_SRVQRY_PURGEFILE;
+	const int num = MC_SRVQRY_PURGEFILE;
 	MatchBuf(buf,sizeof(int)+sizeof(int64)+16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
@@ -196,23 +234,19 @@ void pack_purgefile(mc_buf *buf, unsigned char authtoken[16], int id){
 }
 
 void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db> *l){
-	list<mc_sync_db>::iterator lit,lend;
 	int index = 0;
-	int num = MC_SRVQRY_NOTIYCHANGE;
+	const int num = MC_SRVQRY_NOTIYCHANGE;
 	MatchBuf(buf,sizeof(int)+16+l->size()*(sizeof(int)+16));
 	memcpy(&buf->mem[index],&num,sizeof(int));
 	index += sizeof(int);
 	memcpy(&buf->mem[index],authtoken,16);
 	index += 16;
 
-	lit = l->begin();
-	lend = l->end();
-	while(lit!=lend){
-		memcpy(&buf->mem[index],&lit->id,sizeof(int));
+	for(mc_sync_db& s : *l){
+		memcpy(&buf->mem[index],&s.id,sizeof(int));
 		index += sizeof(int);
-		memcpy(&buf->mem[index],&lit->hash,16);
+		memcpy(&buf->mem[index],&s.hash,16);
 		index += 16;
-		++lit;
 	}
 	buf->used = sizeof(int)+16+l->size()*(sizeof(int)+16);
 }
@@ -286,6 +320,14 @@ void unpack_filterlist(mc_buf *buf, list<mc_filter> *l){
 		throw MC_ERR_PROTOCOL;
 	}
 
+}
+
+void unpack_filterid(mc_buf *buf, int *id){
+	try {
+		memcpy(id,&buf->mem[sizeof(int)],sizeof(int));
+	} catch (...) {
+		throw MC_ERR_PROTOCOL;
+	}
 }
 
 void unpack_dirlist(mc_buf *buf, list<mc_file> *l){

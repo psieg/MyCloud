@@ -35,6 +35,8 @@ int strmd5(unsigned char hash[16], const string& str);
 string printname(mc_file *f);
 string printname(mc_file_fs *f);
 
+/* crop and add ... where necessary */
+string shortname(const string& s, int len);
 
 string TimeToString(int64 time);
 //negative precision indicates dynamic (up to 2)

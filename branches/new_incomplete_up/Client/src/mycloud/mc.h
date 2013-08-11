@@ -1,5 +1,6 @@
 #ifndef MC_H
 #define MC_H
+#include "mc_version.h"
 //For portability we dont use _s fuctions
 #ifdef _MSC_VER
 #define _CRT_SECURE_NO_WARNINGS
@@ -13,12 +14,6 @@
 #include <errno.h>
 using namespace std;
 
-#define MC_VERSION_PLAIN	"0.2.7"
-#ifdef _DEBUG
-#	define MC_VERSION			MC_VERSION_PLAIN##" (debug)"
-#else
-#	define MC_VERSION			MC_VERSION_PLAIN
-#endif
 #define MC_WATCHMODE
 
 #if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)
@@ -73,10 +68,10 @@ using namespace std;
 #endif
 #ifdef MC_INFOLOW
 #	ifdef MC_LOGFILE
-#		define MC_INFL(msg)				{ /*std::cout << "L  " << msg << std::endl;*/	\
+#		define MC_INFL(msg)				{ std::cout << "L  " << msg << std::endl;	\
 											mc_logfile << "L  " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;	}
 #	else
-#		define MC_INFL(msg)				{ /*std::cout << "L  " << msg << std::endl;*/ }
+#		define MC_INFL(msg)				{ std::cout << "L  " << msg << std::endl; }
 #	endif
 #else
 #	define MC_INFL(msg)					{}

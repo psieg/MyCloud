@@ -17,7 +17,6 @@
 #include "mc_util.h"
 #include "mc_db.h"
 #include "mc_transfer.h"
-#include "mc_workerthread.h"
 
 
 class QtClient : public QMainWindow
@@ -84,13 +83,13 @@ private slots:
 	void on_editButton_clicked();
 	void on_settingsButton_clicked();
 	void on_disableButton_clicked();
+	void on_syncTable_itemSelectionChanged();
 	void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
-	void tableUpdate();
 	void newVersion(QString newver);
 	
 private:
 	static QtClient *_instance;
-	Ui::QtClientClass ui;
+	Ui::QtClient ui;
 	QtWorkerThread worker;
 	QtUpdateChecker updateChecker;
 	QtConflictDialog *conflictDialog;
@@ -104,7 +103,9 @@ private:
 	QMenu *trayIconMenu;
 	QAction *quitAction, *showAction;
 	QTimer *delayTimer;
-	QIcon icon,icon_conn,icon_sync,icon_ul,icon_dl,icon_cf,icon_err,icon_ok,status_sync,status_err,status_done,status_ok,tool_add,tool_remove,lock;
+	QIcon icon,icon_conn,icon_sync,icon_ul,icon_dl,icon_cf,icon_err,icon_ok;
+	QIcon status_sync,status_err,status_done,status_ok,status_new,status_disabled,status_unknown;
+	QIcon lock,enable,disable;
 #ifdef MC_IONOTIFY
 	QIcon act_nofs,act_fs,act_nodb,act_db,act_nosrv,act_srv;
 #endif

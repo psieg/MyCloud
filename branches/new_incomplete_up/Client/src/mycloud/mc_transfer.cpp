@@ -306,11 +306,7 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 
 	if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 		MC_INF("Not downloading file " << srv->id << ": " << printname(srv) << ", file is not complete");
-		if(db) rc = db_update_file(srv);
-		else rc = db_insert_file(srv);
-		MC_CHKERR(rc);
 		if(db) crypt_filestring(ctx,db,hashstr); //We use db to have a hash mismatch -> no fullsync (see #3)
-		else crypt_filestring(ctx,srv,hashstr);  //Currently: we want to have a hash match, as there is nothing to do for us atm
 		return MC_ERR_INCOMPLETE_SKIP;
 		//TODO: Partial download?
 
@@ -431,7 +427,7 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 	MC_CHKERR(rc);
 
 	if(srv == NULL){
-		newdb->id = MC_FID_NONE;
+		newdb->id = MC_FILEID_NONE;
 		//cryptname will be generated
 	} else {
 		newdb->id = srv->id;
@@ -444,7 +440,7 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 	newdb->is_dir = fs->is_dir;
 	newdb->parent = parent;
 	if(fs->is_dir) newdb->status = MC_FILESTAT_COMPLETE;
-	else newdb->status = MC_FILESTAT_INCOMPLETE_UP_ME;
+	else newdb->status = MC_FILESTAT_INCOMPLETE_UP;
 
 	if(!modified){ // File not modified
 			newdb->status = MC_FILESTAT_COMPLETE;
@@ -589,7 +585,8 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				db->mtime = fs->mtime;
 				db->ctime = fs->ctime;
 				db->size = fs->size;
-				db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
+				db->status = MC_FILESTAT_INCOMPLETE_UP;
+
 							
 				rc = crypt_filemd5_new(&cctx,db->hash,fpath,db->size);
 				MC_CHKERR(rc);	
@@ -625,13 +622,12 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				if(empty){
 					rc = srv_delfile(db);
 					MC_CHKERR(rc);
-
-					db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
-					
+							
+					db->status = MC_FILESTAT_INCOMPLETE_UP;
 					rc = crypt_filemd5_new(&cctx,db->hash,fpath,db->size);
 					MC_CHKERR(rc);	
 					//db->mtime = time(NULL);
-					
+
 					rc = db_update_file(db);
 					MC_CHKERR(rc);
 
@@ -651,12 +647,12 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 	} else { // srv == NULL
 		rc = db_delete_file(db->id); //old ID is most likely void, let server generate new
 		MC_CHKERR(rc);
-		db->id = MC_FID_NONE;
+		db->id = MC_FILEID_NONE;
 		db->name = fs->name;
 		db->ctime = fs->ctime;
 		db->mtime = fs->mtime;
 		db->size = fs->size;
-		db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
+		db->status = MC_FILESTAT_INCOMPLETE_UP;
 		memcpy(db->hash,hash,16);
 
 
@@ -700,7 +696,16 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 	fpath.assign(ctx->sync->path);
 	rpath.assign(path);
 
-
+	if(fs && ((db && fs->mtime < db->mtime) || (srv && fs->mtime < srv->mtime))){
+		//Upload means we want this to be persistent, so it has to be newer (#24)
+		MC_DBG("Touching for persistency");
+		string tpath;
+		tpath.assign(fpath).append(path).append(fs->name);
+		fs->mtime = time(NULL);
+		rc = fs_touch(tpath,fs->mtime);
+		MC_CHKERR(rc);
+	}
+	
 	if(db == NULL){
 		if(fs == NULL){
 			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"if db is NULL, fs and parent must be set");
@@ -709,6 +714,7 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 			MC_INF("Uploading new file: " << printname(fs));
 			rpath.append(fs->name);
 			fpath.append(rpath);
+
 
 			rc = upload_new(ctx, path, fpath, rpath, fs, &newdb, srv, parent, recursive, extcctx, &rrc);
 			MC_CHKERR(rc);
@@ -751,7 +757,7 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 			MC_INF("Uploading file " << db->id << ": " << printname(db));
 			rpath.append(db->name);
 			fpath.append(rpath);
-
+			
 			rc = upload_normal(ctx, path, fpath, rpath, fs, db, srv, recursive, extcctx, &rrc);
 			MC_CHKERR(rc);
 

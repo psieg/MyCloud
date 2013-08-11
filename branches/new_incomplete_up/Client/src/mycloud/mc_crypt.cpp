@@ -6,8 +6,8 @@
 #endif
 #include "openssl/rand.h"
 
-//Helper function for generating name IVs
-int crypt_nameiv(mc_crypt_ctx *cctx, const string& path){
+//Helper function for generating IVs from string (parent path or sync name)
+int crypt_striv(mc_crypt_ctx *cctx, const string& path){
 	unsigned char h[16];
 	int rc = strmd5(h,path);
 	MC_CHKERR(rc);
@@ -54,101 +54,131 @@ void crypt_seed(int64 data){
 	RAND_add(&data,sizeof(int64),sizeof(int64));
 }
 
+int crypt_encryptstring(mc_sync_ctx *ctx, const string& ivstr, const string& data, string *out){
+	mc_crypt_ctx cctx;
+	QByteArray buf;
+	int rc, written;
+	buf = QByteArray(data.length()+MC_CRYPTNAME_SIZEOVERHEAD,'\0');
 
-//Fields that cannot be mapped: id,parent,(ctime),mtime,is_dir,status
-//Hash is not mapped because it must be encrypted locally too for encrypted syncs
-//Fields that are to be mapped: name, size (crypt needs a few bytes more)
+	init_crypt_ctx(&cctx,ctx);
+	MC_CHKERR(crypt_striv(&cctx,ivstr));
+	memcpy(cctx.iv,MC_CRYPTNAME_IDENTIFIER,strlen(MC_CRYPTNAME_IDENTIFIER));
+	memcpy(buf.data(),cctx.iv,MC_CRYPTNAME_OFFSET);
 
-int crypt_translate_tosrv(mc_sync_ctx *ctx, const string& path, mc_file *f){
+	cctx.evp = EVP_CIPHER_CTX_new();
+
+	rc = EVP_EncryptInit_ex(cctx.evp,EVP_aes_256_gcm(),NULL,cctx.ctx->sync->cryptkey,cctx.iv+MC_CRYPTNAME_IDOFFSET);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptInit failed");
+			
+	rc = EVP_EncryptUpdate(cctx.evp, (unsigned char*)buf.data()+MC_CRYPTNAME_OFFSET, &written, (unsigned char*)data.c_str(), data.length());
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptUpdate failed");
+
+	rc = EVP_EncryptFinal_ex(cctx.evp, NULL, &written);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptFinal failed");
+				
+	rc = EVP_CIPHER_CTX_ctrl(cctx.evp, EVP_CTRL_GCM_GET_TAG, MC_CRYPTNAME_PADDING, cctx.tag);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"CipherCTXCtrl failed");
+	memcpy(buf.data()+buf.size()-MC_CRYPTNAME_PADDING,cctx.tag,MC_CRYPTNAME_PADDING);
+
+	EVP_CIPHER_CTX_free(cctx.evp);
+
+	out->assign(buf.toHex());
+	return 0;
+}
+int crypt_decryptstring(mc_sync_ctx *ctx, const string& ivstr, const string& data, string *out){
+	mc_crypt_ctx cctx;
+	QByteArray buf;
+	int rc,written;
+	buf = QByteArray::fromHex(data.c_str());
+
+	init_crypt_ctx(&cctx,ctx);
+	memcpy(cctx.iv,buf.data(),MC_CRYPTNAME_OFFSET);
+	if(memcmp(cctx.iv,MC_CRYPTNAME_IDENTIFIER,MC_CRYPTNAME_IDOFFSET) != 0){
+			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized cryptoname format: " << data);
+	};
+	MC_CHKERR(crypt_striv(&cctx,ivstr)); //the IV is not part of the string as it is implicit
+		
+	cctx.evp = EVP_CIPHER_CTX_new();
+		
+	rc = EVP_DecryptInit_ex(cctx.evp,EVP_aes_256_gcm(),NULL,cctx.ctx->sync->cryptkey,cctx.iv+MC_CRYPTNAME_IDOFFSET);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptInit failed");
+
+	rc = EVP_DecryptUpdate(cctx.evp, (unsigned char*)buf.data()+MC_CRYPTNAME_OFFSET, &written, (unsigned char*)buf.data()+MC_CRYPTNAME_OFFSET, buf.size()-MC_CRYPTNAME_SIZEOVERHEAD);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptUpdate failed");
+
+	memcpy(cctx.tag,buf.data()+buf.size()-MC_CRYPTNAME_PADDING,MC_CRYPTNAME_PADDING);
+	rc = EVP_CIPHER_CTX_ctrl(cctx.evp,EVP_CTRL_GCM_SET_TAG,MC_CRYPTNAME_PADDING,cctx.tag);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"CipherCTXCtrl failed");
+
+	rc = EVP_DecryptFinal_ex(cctx.evp,NULL,&written);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptFinal failed! This means the string was modified or you entered the wrong key.");
+
+	EVP_CIPHER_CTX_free(cctx.evp);
+
+	out->assign(buf.data()+MC_CRYPTNAME_OFFSET,buf.size()-MC_CRYPTNAME_SIZEOVERHEAD);
+	return 0;
+}
+
+int crypt_filter_tosrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f){
 	mc_crypt_ctx cctx;
 	QByteArray buf;
 	int rc,written;
 	if(ctx->sync->crypted){
-		if(f->cryptname == ""){
-			buf = QByteArray(f->name.length()+MC_CRYPTNAME_SIZEOVERHEAD,'\0');
-
-			init_crypt_ctx(&cctx,ctx);
-			MC_CHKERR(crypt_nameiv(&cctx,path));
-			memcpy(cctx.iv,MC_CRYPTNAME_IDENTIFIER,strlen(MC_CRYPTNAME_IDENTIFIER));
-			memcpy(buf.data(),cctx.iv,MC_CRYPTNAME_OFFSET);
-
-			cctx.evp = EVP_CIPHER_CTX_new();
-			MC_DBGL("Encrypting Name at " << path << " with " << MD5BinToHex(cctx.iv));
-
-			rc = EVP_EncryptInit_ex(cctx.evp,EVP_aes_256_gcm(),NULL,cctx.ctx->sync->cryptkey,cctx.iv+MC_CRYPTNAME_IDOFFSET);
-			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptInit failed");
-			
-			rc = EVP_EncryptUpdate(cctx.evp, (unsigned char*)buf.data()+MC_CRYPTNAME_OFFSET, &written, (unsigned char*)f->name.c_str(), f->name.length());
-			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptUpdate failed");
-
-			rc = EVP_EncryptFinal_ex(cctx.evp, NULL, &written);
-			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptFinal failed");
-				
-			rc = EVP_CIPHER_CTX_ctrl(cctx.evp, EVP_CTRL_GCM_GET_TAG, MC_CRYPTNAME_PADDING, cctx.tag);
-			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"CipherCTXCtrl failed");
-			memcpy(buf.data()+buf.size()-MC_CRYPTNAME_PADDING,cctx.tag,MC_CRYPTNAME_PADDING);
-
-			EVP_CIPHER_CTX_free(cctx.evp);
-
-			f->cryptname.assign(buf.toHex());
-		}
-	} else f->cryptname = "";
+		return crypt_encryptstring(ctx,syncname,f->rule,&f->rule);
+	}
 	return 0;	
 }
-int crypt_translate_fromsrv(mc_sync_ctx *ctx, const string& path, mc_file *f){
+int crypt_filter_fromsrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f){
 	mc_crypt_ctx cctx;
 	QByteArray buf;
 	int rc,written;
 	void* data;
 	if(ctx->sync->crypted){
+		return crypt_decryptstring(ctx,syncname,f->rule,&f->rule);
+	}
+	return 0;
+}
+int crypt_filterlist_fromsrv(mc_sync_ctx *ctx, const string& syncname, list<mc_filter> *l){
+	int rc;
+	if(ctx->sync->crypted){
+		for(mc_filter& f : *l){
+			rc = crypt_filter_fromsrv(ctx,syncname,&f);
+			MC_CHKERR(rc);
+		}
+	}
+	return 0;
+}
+
+//Fields that cannot be mapped: id,parent,(ctime),mtime,is_dir,status
+//Hash is not mapped because it must be encrypted locally too for encrypted syncs
+//Fields that are to be mapped: name, size (crypt needs a few bytes more)
+
+int crypt_file_tosrv(mc_sync_ctx *ctx, const string& path, mc_file *f){
+	int rc;
+	if(ctx->sync->crypted){
+		if(f->cryptname == ""){
+			return crypt_encryptstring(ctx,path,f->name,&f->cryptname);
+		}
+	} else f->cryptname = "";
+	return 0;	
+}
+int crypt_file_fromsrv(mc_sync_ctx *ctx, const string& path, mc_file *f){
+	int rc;
+	if(ctx->sync->crypted){
 		f->cryptname = f->name;
-		buf = QByteArray::fromHex(f->cryptname.c_str());
-
-		init_crypt_ctx(&cctx,ctx);
-		memcpy(cctx.iv,buf.data(),MC_CRYPTNAME_OFFSET);
-		if(memcmp(cctx.iv,MC_CRYPTNAME_IDENTIFIER,MC_CRYPTNAME_IDOFFSET) != 0){
-				MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized cryptoname format: " << f->cryptname);
-		};
-		MC_CHKERR(crypt_nameiv(&cctx,path)); //the IV is not part of the string as it is implicit
-		
-		cctx.evp = EVP_CIPHER_CTX_new();
-		MC_DBGL("Decrypting Name " << MD5BinToHex((unsigned char*)buf.data()) << " with " << MD5BinToHex(cctx.iv));
-		
-		rc = EVP_DecryptInit_ex(cctx.evp,EVP_aes_256_gcm(),NULL,cctx.ctx->sync->cryptkey,cctx.iv+MC_CRYPTNAME_IDOFFSET);
-		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptInit failed");
-		data = buf.data();
-		rc = EVP_DecryptUpdate(cctx.evp, (unsigned char*)buf.data()+MC_CRYPTNAME_OFFSET, &written, (unsigned char*)buf.data()+MC_CRYPTNAME_OFFSET, buf.size()-MC_CRYPTNAME_SIZEOVERHEAD);
-		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptUpdate failed");
-
-		memcpy(cctx.tag,buf.data()+buf.size()-MC_CRYPTNAME_PADDING,MC_CRYPTNAME_PADDING);
-		rc = EVP_CIPHER_CTX_ctrl(cctx.evp,EVP_CTRL_GCM_SET_TAG,MC_CRYPTNAME_PADDING,cctx.tag);
-		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"CipherCTXCtrl failed");
-
-		rc = EVP_DecryptFinal_ex(cctx.evp,NULL,&written);
-		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptFinal failed! This means the file was renamed or you entered the wrong key.");
-
-		EVP_CIPHER_CTX_free(cctx.evp);
-
-		f->name.assign(buf.data()+MC_CRYPTNAME_OFFSET,buf.size()-MC_CRYPTNAME_SIZEOVERHEAD);
-
-		//if(f->cryptname.size()<5) 
-		//	MC_ERR_MSG(MC_ERR_SERVER,"Invalid Cryptname: " << f->cryptname);
-		//f->name = f->cryptname.substr(5);
+		rc = crypt_decryptstring(ctx,path,f->cryptname,&f->name);
+		MC_CHKERR(rc);
 
 		if(!f->is_dir) f->size -= MC_CRYPT_SIZEOVERHEAD;
 	}
 	return 0;
 }
-int crypt_translatelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *l){
+int crypt_filelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *l){
 	int rc;
-	list<mc_file>::iterator lit,lend;
 	if(ctx->sync->crypted){
-		lit = l->begin();
-		lend = l->end();
-		while(lit != lend){
-			rc = crypt_translate_fromsrv(ctx,path,&*lit);
+		for(mc_file& f : *l){
+			rc = crypt_file_fromsrv(ctx,path,&f);
 			MC_CHKERR(rc);
-			++lit;
 		}
 	}
 	return 0;
@@ -586,7 +616,7 @@ int crypt_putfile(mc_crypt_ctx *cctx, const string& path, mc_file *file, int64 b
 	string clearname;
 	if(cctx->ctx->sync->crypted){
 		cctx->f = file;
-		crypt_translate_tosrv(cctx->ctx,path,file);
+		crypt_file_tosrv(cctx->ctx,path,file);
 		clearname = file->name;
 		file->name = file->cryptname;
 		if(!file->is_dir){
@@ -686,7 +716,7 @@ int crypt_patchfile(mc_crypt_ctx *cctx, const string& path, mc_file *file){
 	int rc;
 	string clearname;
 	if(cctx->ctx->sync->crypted){
-		crypt_translate_tosrv(cctx->ctx,path,file);
+		crypt_file_tosrv(cctx->ctx,path,file);
 		if(file->is_dir) file->size += MC_CRYPT_SIZEOVERHEAD;
 		clearname = file->name;
 		file->name = file->cryptname;

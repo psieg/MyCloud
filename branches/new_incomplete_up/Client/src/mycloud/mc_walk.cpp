@@ -5,6 +5,21 @@
 #	include "mc_workerthread.h"
 #endif
 
+/* Helper: catches the case when a file was purged but then restored with a new ID 
+*	this case may apply whenever db and srv are known */
+int checkmissedpurge(mc_file *db, mc_file *srv){
+	int rc;
+	if(db->id < srv->id){ //this means the file was purged (which this client missed) and then restored
+		MC_DBG("Missed purge detected");
+		//solution: purge and restore with new id
+		rc = purge(db,NULL);
+		MC_CHKERR(rc);
+		db->id = srv->id;
+		rc = db_insert_file(db);
+		MC_CHKERR(rc);
+	}
+	return 0;
+}
 
 /* These functions choose or ask what to do with files that are not clearly up/down */
 
@@ -52,12 +67,12 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(fs->name);
 		ostringstream local,server;
-		local << "Name: " << fs->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+		local << "Name: " << shortname(fs->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(fs->is_dir) local << "Directory\n";
 		else local << "Size: " << BytesToSize(fs->size) << "\n";
 		local << "Last Modification: " << TimeToString(fs->mtime) << "\n";
 		if(db) local << "Last Synchronization: " << TimeToString(db->mtime);
-		server << "Name: " << srv->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+		server << "Name: " << shortname(srv->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(srv->status == MC_FILESTAT_DELETED) server << "deleted\n";
 		if(srv->is_dir) server << "Directory\n";
 		else server << "Size: " << BytesToSize(srv->size) << "\n";
@@ -186,7 +201,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 		p.assign(ctx->sync->path).append(path).append(srv->name);
 		ostringstream local,server;
 		if(db){
-			local << "Name: " << db->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+			local << "Name: " << shortname(db->name,MC_QTCONFLICTMAXLEN) << "\n";
 			local << "deleted\n";
 			if(db->is_dir) local << "Directory\n";
 			else local << "Size: " << BytesToSize(db->size) << "\n";
@@ -194,7 +209,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 		} else {
 			local << "File never seen on local filesystem\nParent directory is deleted";
 		}
-		server << "Name: " << srv->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+		server << "Name: " << shortname(srv->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(srv->status == MC_FILESTAT_DELETED) server << "deleted\n";
 		if(srv->is_dir) server << "Directory\n";
 		else server << "Size: " << BytesToSize(srv->size) << "\n";
@@ -293,7 +308,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 				while(tit != tend){
 					rc = srv_getmeta(tit->id,&srvdummy);
 					MC_CHKERR(rc);
-					rc = crypt_translate_fromsrv(ctx,path,&srvdummy);
+					rc = crypt_file_fromsrv(ctx,path,&srvdummy);
 					MC_CHKERR(rc);
 					rc = download(ctx,*pit,NULL,&*tit,&srvdummy,hashstr,false);
 					MC_CHKERR(rc);
@@ -339,12 +354,12 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(fs->name);
 		ostringstream local,server;
-		local << "Name: " << fs->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+		local << "Name: " << shortname(fs->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(fs->is_dir) local << "Directory\n";
 		else local << "Size: " << BytesToSize(fs->size) << "\n";
 		local << "Last Modification: " << TimeToString(fs->mtime);
 		if(srv){
-			server << "Name: " << srv->name.substr(0,MC_QTCONFLICTMAXLEN) << "\n";
+			server << "Name: " << shortname(srv->name,MC_QTCONFLICTMAXLEN) << "\n";
 			if(srv->status == MC_FILESTAT_DELETED) server << "deleted\n";
 			if(srv->is_dir) server << "Directory\n";
 			else server << "Size: " << BytesToSize(srv->size) << "\n";
@@ -426,7 +441,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 				//rc = db_select_file_id(&parent);
 				rc = srv_getmeta(parent.id,&parent);
 				MC_CHKERR(rc);
-				rc = crypt_translate_fromsrv(ctx,path,&parent);
+				rc = crypt_file_fromsrv(ctx,path,&parent);
 				MC_CHKERR(rc);
 				p = p.substr(0,p.length()-1);
 				p.assign(p.substr(0,p.find_last_of("/")+1));
@@ -494,7 +509,6 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				MC_CHKERR(rc);
 
 			} else if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
-				srv->status = MC_FILESTAT_INCOMPLETE_UP_ME;
 				rc = db_insert_file(srv);
 				MC_CHKERR(rc);
 
@@ -510,24 +524,32 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 		if(fs == NULL){
 			if(srv->is_dir != db->is_dir)
 				return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
-			if(db->status == MC_FILESTAT_INCOMPLETE_UP){
-				return download(ctx,path,fs,db,srv,hashstr);
-			} else if(srv->status != MC_FILESTAT_DELETED)
+			if(srv->status != MC_FILESTAT_DELETED)
 				return upload(ctx,path,fs,db,srv,hashstr);
 			else if(db->status != MC_FILESTAT_DELETED)
 				return download(ctx,path,fs,db,srv,hashstr);
-			else if(db->size == srv->size && memcmp(db->hash,srv->hash,16) == 0)
-				{}//Nothing to do
-			else
+			else if(db->size == srv->size && memcmp(db->hash,srv->hash,16) == 0){
+				if(db->mtime ==  srv->mtime)
+					{} //Nothing to do
+				else if(db->mtime > srv->mtime)
+					return upload(ctx,path,fs,db,srv,hashstr);
+				else //db->mtime < srv->mtime
+					return download(ctx,path,fs,db,srv,hashstr);
+			} else
 				return conflicted_nolocal(ctx,path,db,srv,hashstr);
 		} else {
 			if((fs->is_dir != srv->is_dir) || (srv->is_dir != db->is_dir))
 				return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
 			if(db->status == MC_FILESTAT_COMPLETE){
 				if(srv->status == MC_FILESTAT_COMPLETE){
-					if(db->size == srv->size && srv->size == fs->size && memcmp(db->hash,srv->hash,16) == 0)
-						{}//Nothing to do
-					else
+					if(db->size == srv->size && srv->size == fs->size && memcmp(db->hash,srv->hash,16) == 0){
+						if(fs->mtime == db->mtime && db->mtime ==  srv->mtime)
+							{} //Nothing to do
+						else if(fs->mtime > db->mtime || db->mtime > srv->mtime)
+							return upload(ctx,path,fs,db,srv,hashstr);
+						else //fs->mtime < db->mtime || db->mtime < srv->mtime
+							return download(ctx,path,fs,db,srv,hashstr);
+					} else
 						return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
 				} else if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 					//Shouldn't actually happen: The file was complete but is incomplete now, although its the same file?
@@ -555,7 +577,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				} else { //srv->status == MC_FILESTAT_DELETED
 					return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW); 
 				}
-			} else { //db->status == MC_FILESTAT_INCOMPLETE_UP or MC_FILESTAT_INCOMPLETE_UP_ME
+			} else { //db->status == MC_FILESTAT_INCOMPLETE_UP
 				if(srv->status == MC_FILESTAT_COMPLETE){
 					//Someone else finished the upload
 					db->status = MC_FILESTAT_COMPLETE;
@@ -622,7 +644,7 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	string fpath = ctx->sync->path;
 	if(path.size()) path.append("/");
 	fpath.append(path);
-	MC_INFL("Walking directory " << id << ": " << path);
+	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
 	//if(id == 2698)
@@ -638,7 +660,7 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	rc  = srv_listdir(&onsrv,id);
 	MC_CHKERR(rc);
 
-	rc = crypt_translatelist_fromsrv(ctx,path,&onsrv);
+	rc = crypt_filelist_fromsrv(ctx,path,&onsrv);
 	MC_CHKERR(rc);
 
 	onfs.sort(compare_mc_file_fs);
@@ -700,9 +722,12 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 				if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 				++indbit;
 			} else if(onsrvit->name == indbit->name){
-				// File has been deleted or is incomplete up
-				if(onsrvit->mtime == indbit->mtime){ //on incomplete up timestamps match
+				rc = checkmissedpurge(&*indbit,&*onsrvit);
+				MC_CHKERR(rc);
+				// File has been deleted
+				if(onsrvit->mtime == indbit->mtime){
 					rc = verifyandcomplete(ctx,path,NULL,&*indbit,&*onsrvit,&hashstr);
+					//rc = upload(ctx,path,NULL,&*indbit,&*onsrvit,&hashstr);
 					if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 				} else if(onsrvit->mtime > indbit->mtime){
 					rc = download(ctx,path,NULL,&*indbit,&*onsrvit,&hashstr);
@@ -730,6 +755,8 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 				++indbit;
 			} else if(onsrvit->name == onfsit->name){
 				// Standard: File known to all, check modified
+				rc = checkmissedpurge(&*indbit,&*onsrvit);
+				MC_CHKERR(rc);
 				if(onfsit->mtime == indbit->mtime){
 					if(indbit->mtime == onsrvit->mtime){
 						rc = verifyandcomplete(ctx,path,&*onfsit,&*indbit,&*onsrvit,&hashstr);
@@ -866,7 +893,7 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	string fpath = ctx->sync->path;
 	if(path.size()) path.append("/");
 	fpath.append(path);
-	MC_INFL("Walking directory " << id << ": " << path);
+	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
 	//if(id == 2698)
@@ -899,16 +926,17 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 			if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 			++onfsit;
 		} else if((onfsit == onfsend) || onfsit->name > indbit->name){
-			// File has been deleted or is incomplete up
+			// File has been deleted
 			rc = verifyandcomplete(ctx,path,NULL,&*indbit,&*indbit,&hashstr);
 			if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 			++indbit;
 		} else if(onfsit->name == indbit->name){
 			// Standard: File known to all, check modified
+			//we don't need to check for restored as db=srv by definition
 			if(indbit->status == MC_FILESTAT_INCOMPLETE_DOWN){
 				rc = srv_getmeta(indbit->id,&srv); //actually just because we need to have srv->status == COMPLETE (or, what shouldn't be INCOMPLETE_UP)
 				MC_CHKERR(rc);
-				rc = crypt_translate_fromsrv(ctx,path,&srv);
+				rc = crypt_file_fromsrv(ctx,path,&srv);
 				MC_CHKERR(rc);
 				rc = verifyandcomplete(ctx,path,&*onfsit,&*indbit,&srv,&hashstr);
 				if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
@@ -966,7 +994,7 @@ int walk_nolocal(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	list<string>::iterator hashesit,hashesend;
 	MC_CONFLICTACTION outerconflictact = ctx->dirconflictact; //must be saved in case upper layers used it...
 	if(path.size()) path.append("/");
-	MC_INFL("Walking directory " << id << ": " << path);
+	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
 
@@ -976,7 +1004,7 @@ int walk_nolocal(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	rc  = srv_listdir(&onsrv,id);
 	MC_CHKERR(rc);
 
-	rc = crypt_translatelist_fromsrv(ctx,path,&onsrv);
+	rc = crypt_filelist_fromsrv(ctx,path,&onsrv);
 	MC_CHKERR(rc);
 
 	indb.sort(compare_mc_file);
@@ -1018,6 +1046,8 @@ int walk_nolocal(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 			}
 			++onsrvit;
 		} else { // indbit->name == onsrvit->name
+			rc = checkmissedpurge(&*indbit,&*onsrvit);
+			MC_CHKERR(rc);
 			if(onsrvit->mtime != indbit->mtime){
 				rc = conflicted_nolocal(ctx,path,&*indbit,&*onsrvit,&hashstr);
 				if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
@@ -1067,7 +1097,7 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	string fpath = ctx->sync->path;
 	if(path.size()) path.append("/");
 	fpath.append(path);
-	MC_INFL("Walking directory " << id << ": " << path);
+	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
 
@@ -1081,7 +1111,7 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	rc  = srv_listdir(&onsrv,id);
 	MC_CHKERR(rc);
 
-	rc = crypt_translatelist_fromsrv(ctx,path,&onsrv);
+	rc = crypt_filelist_fromsrv(ctx,path,&onsrv);
 	MC_CHKERR(rc);
 
 	onfs.sort(compare_mc_file_fs);
@@ -1140,6 +1170,8 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 				if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 				++indbit;
 			} else if(onsrvit->name == indbit->name){
+				rc = checkmissedpurge(&*indbit,&*onsrvit);
+				MC_CHKERR(rc);
 				// File has been deleted
 				if(onsrvit->mtime < indbit->mtime){
 					// Local deletion newer (another thing that shouldn't happen)
@@ -1167,6 +1199,8 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 				++indbit;
 			} else if(onsrvit->name == onfsit->name){
 				// Standard: File known to all, check modified
+				rc = checkmissedpurge(&*indbit,&*onsrvit);
+				MC_CHKERR(rc);
 				if((onfsit->mtime == indbit->mtime) || (indbit->status == MC_FILESTAT_INCOMPLETE_DOWN)){
 					if(onsrvit->mtime < indbit->mtime){
 						// Local newer

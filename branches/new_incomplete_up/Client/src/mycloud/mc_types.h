@@ -73,8 +73,9 @@ enum MC_NOTIFYTYPE : int {
 #define MC_IS_CRITICAL_ERR(rc)		(rc && (rc == MC_ERR_TERMINATING || rc == MC_ERR_NETWORK || rc == MC_ERR_LOGIN || rc == MC_ERR_BADQRY || rc == MC_ERR_PROTOCOL || rc == MC_ERR_CRYPTO || rc == MC_ERR_CRYPTOALERT))
 
 
-#define MC_FID_NONE -1
-#define MC_SID_NONE -1
+#define MC_SYNCID_NONE -1
+#define MC_FILTERID_NONE -1
+#define MC_FILEID_NONE -1
 
 /* used by db */
 /* These structs defines the format of all tables used, each struct represents one row of the specific table 
@@ -106,11 +107,10 @@ enum MC_SYNCSTATUS : int {
 };
 
 enum MC_FILESTATUS : int {
-	MC_FILESTAT_COMPLETE			= 0,
-	MC_FILESTAT_DELETED				= 1,
-	MC_FILESTAT_INCOMPLETE_UP		= 2,	// for files only: in progress of being uploaded
-	MC_FILESTAT_INCOMPLETE_UP_ME	= 3,	// for files only: in progress of being uploaded by me
-	MC_FILESTAT_INCOMPLETE_DOWN		= 4,	// for files only: in progress of being downloaded (must be by me)
+	MC_FILESTAT_COMPLETE		= 0,
+	MC_FILESTAT_DELETED			= 1,
+	MC_FILESTAT_INCOMPLETE_UP	= 2,	// for files only
+	MC_FILESTAT_INCOMPLETE_DOWN	= 3		// for files only
 };
 
 enum MC_FILTERTYPE : int {

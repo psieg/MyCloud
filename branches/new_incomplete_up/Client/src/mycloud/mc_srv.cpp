@@ -524,6 +524,53 @@ int _srv_listfilters(list<mc_filter> *l, int sid){
 	return 0;
 }
 
+
+int srv_listfilters_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int sid){
+	MC_DBGL("Fetching filter list for sid: " << sid << " (async)");
+	srv_mutex.lock();
+	pack_listfilters(ibuf,authtoken,sid);
+	srv_mutex.unlock();
+
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_listfilters_process(mc_buf *obuf, list<mc_filter> *l){
+	int rc;
+	rc = srv_eval(MC_SRVSTAT_FILTERLIST,-1,obuf);
+	MC_CHKERR(rc);
+
+	unpack_filterlist(obuf,l);
+	return 0;
+}
+
+//We don't need these synchronous
+int srv_putfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_filter *filter){
+	MC_DBGL("Putting filter " << filter->id << ": " << filter->rule << "(async)");
+	srv_mutex.lock();
+	pack_putfilter(ibuf,authtoken,filter);
+	srv_mutex.unlock();
+
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_putfilter_process(mc_buf *obuf, int *id){
+	int rc;
+	rc = srv_eval(MC_SRVSTAT_FILTERID,-1,obuf);
+	MC_CHKERR(rc);
+
+	unpack_filterid(obuf,id);
+	return 0;
+}
+int srv_delfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_filter *filter){
+	MC_DBGL("Deleting filter " << filter->id << ": " << filter->rule << " (async)");
+	srv_mutex.lock();
+	pack_delfilter(ibuf,authtoken,filter->id);
+	srv_mutex.unlock();
+
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_delfilter_process(mc_buf *obuf){
+	return srv_eval(MC_SRVSTAT_OK,-1,obuf);
+}
+
 SAFEFUNC2(srv_listdir,list<mc_file> *l, int parent,l,parent)
 int _srv_listdir(list<mc_file> *l, int parent){
 	MC_DBGL("Fetching dir list for parent: " << parent);
@@ -630,7 +677,7 @@ int _srv_putfile(mc_file *file, int64 blocksize, FILE *fdesc){
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_FILEID,true); }
 	MC_CHKERR(rc);
 	
-	if(file->id == MC_FID_NONE){
+	if(file->id == MC_FILEID_NONE){
 		unpack_fileid(&obuf,&file->id);
 	}
 	return 0;
@@ -657,7 +704,7 @@ int _srv_putfile(mc_file *file, int64 blocksize, char *buf){
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_FILEID,true); }
 	MC_CHKERR(rc);
 	
-	if(file->id == MC_FID_NONE){
+	if(file->id == MC_FILEID_NONE){
 		unpack_fileid(&obuf,&file->id);
 	}
 	return 0;

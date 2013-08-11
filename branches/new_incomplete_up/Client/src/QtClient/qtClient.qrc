@@ -1,12 +1,20 @@
 <RCC>
     <qresource prefix="/">
+        <file>Resources/file.png</file>
+        <file>Resources/directory.png</file>
+        <file>Resources/status_unknown.png</file>
+        <file>Resources/add.png</file>
+        <file>Resources/remove.png</file>
         <file>Resources/down.png</file>
         <file>Resources/up.png</file>
         <file>Resources/icon_sync.png</file>
-        <file>Resources/tool_add.png</file>
-        <file>Resources/tool_remove.png</file>
-        <file>Resources/tool_settings.png</file>
         <file>Resources/icon.png</file>
+        <file>Resources/disable.png</file>
+        <file>Resources/edit.png</file>
+        <file>Resources/enable.png</file>
+        <file>Resources/settings.png</file>
+        <file>Resources/status_disabled.png</file>
+        <file>Resources/status_new.png</file>
         <file>Resources/icon_cf.png</file>
         <file>Resources/icon_dl.png</file>
         <file>Resources/icon_err.png</file>

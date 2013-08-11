@@ -1,27 +1,15 @@
 #include "mc_filter.h"
 
-
-/* get all filter rules that apply to sync	*/
-int get_filters(list<mc_filter> *filter, int sid){
-	regex var;
-	int rc;
-	MC_DBG("Creating filters for sid: " << sid);
-	rc = db_list_filter_sid(filter,sid);
-	MC_CHKERR(rc);
-	return 0;
-}
 /* update filter lists for sync from server	*/
-int update_filters(int sid){
-	list<mc_filter> l;
+int update_filters(int sid, list<mc_filter> *l){
+	;
 	int rc;
 	MC_DBG("Updating filter lists for sid: " << sid);
 	//clear all
 	rc = db_delete_filter_sid(sid);
 	MC_CHKERR(rc);
 	//load new
-	rc = srv_listfilters(&l,sid);
-	MC_CHKERR(rc);
-	for(mc_filter& f : l){
+	for(mc_filter& f : *l){
 		rc = db_insert_filter(&f);
 		MC_CHKERR(rc);
 	}

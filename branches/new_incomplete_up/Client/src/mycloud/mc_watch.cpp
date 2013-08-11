@@ -141,7 +141,7 @@ int QtWatcher::changeTimeout(){
 	changepaths.sort();
 	//changepaths is never empty if this was triggered
 	list<mc_filter> generalfilter,filter;
-	rc = get_filters(&generalfilter,0);
+	rc = db_list_filter_sid(&generalfilter,0);
 	MC_CHKERR(rc);
 
 	// we can assume srv is still open and authed
@@ -168,7 +168,7 @@ int QtWatcher::changeTimeout(){
 		//update filters
 		if(lastsyncid != dbsyncsit->id){
 			filter.assign(generalfilter.begin(),generalfilter.end());
-			rc = get_filters(&filter,dbsyncsit->id);
+			rc = db_list_filter_sid(&filter,dbsyncsit->id);
 			MC_CHKERR(rc);
 			lastsyncid = dbsyncsit->id;
 		}
@@ -179,6 +179,7 @@ int QtWatcher::changeTimeout(){
 			MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
 			rc = walk_nochange(&context,"",-dbsyncsit->id,dbsyncsit->hash);
 			if(rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+			else if(rc == MC_ERR_CRYPTOALERT) return cryptopanic();
 			else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
 			else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
 			dbsyncsit->lastsync = time(NULL); //TODO: not always a full sync!
@@ -209,6 +210,7 @@ int QtWatcher::changeTimeout(){
 			MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
 			rc = walk_nochange(&context,qPrintable(sp),f.id,f.hash);
 			if(rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+			else if(rc == MC_ERR_CRYPTOALERT) return cryptopanic();
 			else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
 			else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
 			dbsyncsit->lastsync = time(NULL); //TODO: not always a full sync!
@@ -233,10 +235,10 @@ int QtWatcher::changeTimeout(){
 	//Check for sync
 	rc = fullsync();
 	if(!rc){
-		MC_INF("Update completed, cloud is fully synced");
+		//MC_INFL("Update completed, cloud is fully synced");
 		MC_NOTIFYSTART(MC_NT_FULLSYNC,TimeToString(time(NULL)));
 	} else if(rc == MC_ERR_NOTFULLYSYNCED){
-		MC_INF("Update completed");
+		//MC_INFL("Update completed");
 	} else return rc;
 	startRemoteWatch();
 	startLocalWatch();
@@ -276,11 +278,11 @@ int QtWatcher::remoteChange(int status){
 		if(dbsyncsit == dbsyncsend) MC_ERR_MSG(MC_ERR_SERVER,"Remote Change Notify for non-watched sync");
 		//Filters
 		list<mc_filter> generalfilter,filter;
-		rc = get_filters(&generalfilter,0);
+		rc = db_list_filter_sid(&generalfilter,0);
 		MC_CHKERR(rc);
 
 		filter.assign(generalfilter.begin(),generalfilter.end());
-		rc = get_filters(&filter,dbsyncsit->id);
+		rc = db_list_filter_sid(&filter,dbsyncsit->id);
 		MC_CHKERR(rc);
 
 		//Run
@@ -288,6 +290,7 @@ int QtWatcher::remoteChange(int status){
 		MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
 		rc = walk(&context,"",-dbsyncsit->id,dbsyncsit->hash);
 		if(rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+		else if(rc == MC_ERR_CRYPTOALERT) return cryptopanic();
 		else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
 		else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
 		dbsyncsit->lastsync = time(NULL);
@@ -300,10 +303,10 @@ int QtWatcher::remoteChange(int status){
 		//Check for sync
 		rc = fullsync();
 		if(!rc){
-			MC_INF("Update completed, cloud is fully synced");
+			//MC_INFL("Update completed, cloud is fully synced");
 			MC_NOTIFYSTART(MC_NT_FULLSYNC,TimeToString(time(NULL)));
 		} else if(rc == MC_ERR_NOTFULLYSYNCED){
-			MC_INF("Update completed");
+			//MC_INFL("Update completed");
 		} else return rc;
 		startLocalWatch();
 		startRemoteWatch();
@@ -344,7 +347,7 @@ int enter_watchmode(int timeout){
 	mc_status status;
 	int rdepth;
 	int rc;
-	MC_INF("Entering Watchmode for " << timeout << " secs");
+	MC_INFL("Entering Watchmode for " << timeout << " secs");
 	
 	rc = db_select_status(&status);
 	MC_CHKERR(rc);
