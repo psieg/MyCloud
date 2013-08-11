@@ -35,3 +35,6 @@
 * mtime set to current time when replacing a deleted file (#24)
 * new hashing includes file state
 * fixed loop when a remote file is incomlete_up
+
+0.2.9
+* Autoresolve conflicts between deleted files
