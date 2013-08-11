@@ -9,6 +9,7 @@
 #include "mc_db.h"
 #include "mc_srv.h"
 #include "mc_types.h"
+#include "mc_crypt.h"
 
 class qtFilterDialog : public QDialog
 {
@@ -41,6 +42,7 @@ private:
 	mc_buf *netibuf,*netobuf;
 	int64 authtime;
 	mc_filter filter;
+	mc_sync_db sync;
 
 };
 

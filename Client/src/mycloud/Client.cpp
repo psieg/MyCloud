@@ -101,6 +101,7 @@ int runmc()
 									rc = db_update_sync(&*dbsyncsit);
 									MC_CHKERR(rc);
 								} else {
+									init_sync_ctx(&context,&*dbsyncsit,&filter);
 									if(dbsyncsit->filterversion < srvsyncsit->filterversion){
 										list<mc_filter> fl;
 										//updates of sid-0-filters count as update to all syncs
@@ -108,6 +109,7 @@ int runmc()
 										//and is better than adding a fake-sync-0
 										rc = srv_listfilters(&fl,0);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										//general filters are not encrypted
 										rc = update_filters(0,&fl);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 										generalfilter.clear();
@@ -116,6 +118,8 @@ int runmc()
 
 										fl.clear();
 										rc = srv_listfilters(&fl,dbsyncsit->id);
+										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										rc = crypt_filterlist_fromsrv(&context,dbsyncsit->name,&fl);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 										rc = update_filters(dbsyncsit->id,&fl);
 										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
@@ -130,7 +134,6 @@ int runmc()
 									rc = db_update_sync(&*dbsyncsit);
 									if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 									MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
-									init_sync_ctx(&context,&*dbsyncsit,&filter);
 									if(memcmp(dbsyncsit->hash,srvsyncsit->hash,16) == 0){
 										MC_INFL(dbsyncsit->name << " has not been updated on server, walking locally");
 										wrc = walk_nochange(&context,"",-dbsyncsit->id,hash);

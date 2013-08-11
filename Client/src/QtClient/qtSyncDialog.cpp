@@ -145,13 +145,21 @@ void qtSyncDialog::syncListReceived(int rc){
 
 void qtSyncDialog::filterListReceived(int rc){
 	std::list<mc_filter> list;
+	mc_sync_ctx ctx;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
+	init_sync_ctx(&ctx,&dbsynclist[dbindex],&list);
 	if(rc) {
 		reject();
 		return;
 	}
 
 	rc = srv_listfilters_process(&netobuf,&list);
+	if(rc){
+		reject();
+		return;
+	}
+
+	rc = crypt_filterlist_fromsrv(&ctx,dbsynclist[dbindex].name,&list);
 	if(rc){
 		reject();
 		return;
