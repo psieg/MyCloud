@@ -420,6 +420,47 @@ int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, m
 	return 0;
 }
 /* sub-uploads */
+int upload_newdeleted(mc_sync_ctx *ctx, const string& path, const string& rpath, mc_file *newdb, mc_file *srv, bool recursive, mc_crypt_ctx *extcctx, int *rrc){
+	int rc;
+	bool empty;
+
+	newdb->id = srv->id;
+	newdb->name = srv->name;
+	newdb->cryptname = srv->cryptname;
+	newdb->ctime = srv->ctime;
+	newdb->mtime = time(NULL);
+	newdb->size = srv->size;
+	newdb->is_dir = srv->is_dir;
+	newdb->parent = srv->parent;
+	newdb->status = MC_FILESTAT_DELETED;
+
+	rc = db_insert_file(newdb);
+	MC_CHKERR(rc);
+	if(newdb->is_dir){					
+		if(recursive){
+			*rrc = walk_nolocal(ctx,rpath,newdb->id,newdb->hash);
+						
+			rc = db_update_file(newdb);
+			MC_CHKERR(rc);
+						
+			rc = dirempty(newdb->id,&empty);
+			MC_CHKERR(rc);
+		} else {
+			empty = true;
+		}					
+
+		if(empty){
+			rc = srv_delfile(newdb);
+			MC_CHKERR(rc);
+		} else { // files remain
+			//Underlying handlers...?!
+		}
+	} else {
+		rc = srv_delfile(newdb);
+		MC_CHKERR(rc);
+	}
+	return 0;
+}
 int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const string& rpath, mc_file_fs *fs, mc_file *newdb, mc_file *srv, int parent, bool recursive, mc_crypt_ctx *extcctx, int *rrc){
 	int rc;
 	bool modified;
@@ -712,14 +753,20 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 	
 	if(db == NULL){
 		if(fs == NULL){
-			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"if db is NULL, fs and parent must be set");
-			//MC_INF("Uploading never known deleted file " << printname(srv));
+			MC_INF("Uploading new deleted file " << srv->id << ": " << printname(srv));
+			rpath.append(srv->name);
+			fpath.append(rpath);
+
+			rc = upload_newdeleted(ctx, path, rpath, &newdb, srv, recursive, extcctx, &rrc);
+			MC_CHKERR(rc);
+			db = &newdb;
+
+			crypt_filestring(ctx,&newdb,hashstr);
 		} else {
 			MC_INF("Uploading new file: " << printname(fs));
 			rpath.append(fs->name);
 			fpath.append(rpath);
-
-
+			
 			rc = upload_new(ctx, path, fpath, rpath, fs, &newdb, srv, parent, recursive, extcctx, &rrc);
 			MC_CHKERR(rc);
 			db = &newdb;

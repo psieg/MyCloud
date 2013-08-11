@@ -283,17 +283,17 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 	switch(act){
 		case MC_CONFLICTACT_DOWN:
 			if(srv->status != MC_FILESTAT_DELETED){ //restore previous path
-				fp.assign(ctx->sync->path).append(path).append(srv->name);
+				fp.assign(ctx->sync->path).append(path);
 				p.assign(path);
 				parent.id = srv->parent;
 				while(parent.id > 0){
 					rc = db_select_file_id(&parent);
 					MC_CHKERR(rc);
+					if(fs_exists(fp)) break;
 					p = p.substr(0,p.length()-1);
 					p.assign(p.substr(0,p.find_last_of("/")+1));
 					fp = fp.substr(0,fp.length()-1);
 					fp.assign(fp.substr(0,fp.find_last_of("/")+1));
-					if(fs_exists(fp)) break;
 					tree.push_back(parent);
 					ptree.push_back(p);
 					parent.id = parent.parent;
@@ -308,10 +308,11 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 				while(tit != tend){
 					rc = srv_getmeta(tit->id,&srvdummy);
 					MC_CHKERR(rc);
-					rc = crypt_file_fromsrv(ctx,path,&srvdummy);
+					rc = crypt_file_fromsrv(ctx,p,&srvdummy);
 					MC_CHKERR(rc);
 					rc = download(ctx,*pit,NULL,&*tit,&srvdummy,hashstr,false);
 					MC_CHKERR(rc);
+					p.append(srvdummy.name).append("/");
 					++tit;
 					++pit;
 				}
@@ -441,11 +442,11 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 				//rc = db_select_file_id(&parent);
 				rc = srv_getmeta(parent.id,&parent);
 				MC_CHKERR(rc);
-				rc = crypt_file_fromsrv(ctx,path,&parent);
+				rc = crypt_file_fromsrv(ctx,p,&parent);
 				MC_CHKERR(rc);
+				if(parent.status != MC_FILESTAT_DELETED) break;
 				p = p.substr(0,p.length()-1);
 				p.assign(p.substr(0,p.find_last_of("/")+1));
-				if(parent.status != MC_FILESTAT_DELETED) break;
 				tree.push_back(parent);
 				ptree.push_back(p);
 				parent.id = parent.parent;
