@@ -4,8 +4,6 @@
 qtSyncDialog::qtSyncDialog(QWidget *parent, int editID)
 	: QDialog(parent)
 {
-	int rc;	
-	//std::list<mc_sync_db> sl;
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 	ui.tableWidget->setColumnWidth(0,23);
@@ -115,7 +113,7 @@ void qtSyncDialog::syncListReceived(int rc){
 			i++;
 		}
 
-		//populate db list		
+		//populate db list
 		rc = db_list_sync(&sl);
 		if(rc){ 
 			reject();
@@ -130,6 +128,7 @@ void qtSyncDialog::syncListReceived(int rc){
 		ui.fetchSyncLabel->setVisible(false);
 		ui.nameBox->setEnabled(true);
 		ui.okButton->setEnabled(true);
+		ui.globalButton->setEnabled(true); //might cause simultaneous use of performer but only if user wants it to
 	} else {
 		QMessageBox b(myparent);
 		b.setText(tr("No Sync available on server"));
@@ -384,6 +383,21 @@ void qtSyncDialog::on_tableWidget_itemSelectionChanged(){
 		ui.removeButton->setEnabled(true);
 		ui.editButton->setEnabled(true);
 	}
+}
+
+void qtSyncDialog::on_globalButton_clicked(){
+	int rc;
+	std::list<mc_sync_db> sl;
+	qtGeneralFilterDialog d(this,performer,&netibuf,&netobuf);
+	d.exec();
+	//re-populate db list
+	rc = db_list_sync(&sl);
+	if(rc){ 
+		reject();
+		return; 
+	}
+	dbsynclist.assign(sl.begin(),sl.end());
+	filldbdata();
 }
 
 void qtSyncDialog::filldbdata(){

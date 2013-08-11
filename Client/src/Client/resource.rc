@@ -5,7 +5,8 @@
 //
 // Icon
 //
-ICN                     ICON                    "Resources/icon.ico"
+//No icon for CLI version
+//ICN                     ICON                    "Resources/icon.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -20,9 +21,9 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "FileDescription",	"MyCloud Client"
+            VALUE "FileDescription",	"MyCloud Console Client"
             VALUE "ProductName",		"MyCloud"
-            VALUE "OriginalFilename",	"QtClient.exe"
+            VALUE "OriginalFilename",	"Client.exe"
         END
     END
     BLOCK "VarFileInfo"

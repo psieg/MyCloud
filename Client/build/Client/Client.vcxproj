@@ -71,6 +71,7 @@
     <ClInclude Include="..\..\src\mycloud\mc_transfer.h" />
     <ClInclude Include="..\..\src\mycloud\mc_types.h" />
     <ClInclude Include="..\..\src\mycloud\mc_util.h" />
+    <ClInclude Include="..\..\src\mycloud\mc_version.h" />
     <ClInclude Include="..\..\src\mycloud\mc_walk.h" />
     <CustomBuild Include="..\..\src\mycloud\mc_workerthread.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
@@ -127,6 +128,9 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DQT_DLL -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_NETWORK_LIB  "-I.\..\..\deps\openssl\include" "-I.\..\..\src\sqlite-amalgamation" "-I.\..\..\src\mycloud" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtNetwork"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DQT_DLL -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_NETWORK_LIB  "-I.\..\..\deps\openssl\include" "-I.\..\..\src\sqlite-amalgamation" "-I.\..\..\src\mycloud" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtNetwork"</Command>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\src\Client\resource.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C3AAEFD7-FCFA-4575-A26C-A94450CC84EA}</ProjectGuid>
