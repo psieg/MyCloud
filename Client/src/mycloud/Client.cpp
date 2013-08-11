@@ -139,7 +139,7 @@ int runmc()
 										wrc = walk_nochange(&context,"",-dbsyncsit->id,hash);
 										//MC_INFL("Sync completed (Code " << wrc << ")");
 									} else {
-										MC_INF(dbsyncsit->name << " has been updated on server, walking");
+										MC_INFL(dbsyncsit->name << " has been updated on server, walking");
 										wrc = walk(&context,"",-dbsyncsit->id,hash);
 										//MC_INF("Sync completed (Code " << wrc << ")");
 									}
