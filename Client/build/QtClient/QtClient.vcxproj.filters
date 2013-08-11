@@ -130,9 +130,6 @@
     <ClInclude Include="..\..\src\mycloud\mc_walk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\QtClient\resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\mycloud\mc_version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
