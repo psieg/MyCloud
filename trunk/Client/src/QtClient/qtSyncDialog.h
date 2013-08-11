@@ -10,6 +10,7 @@
 #include "qtGeneralFilterDialog.h"
 #include "mc_db.h"
 #include "mc_srv.h"
+#include "mc_filter.h"
 #include "mc_crypt.h"
 
 class qtSyncDialog : public QDialog
@@ -35,7 +36,7 @@ private slots:
 	void on_addButton_clicked();
 	void on_removeButton_clicked();
 	void on_editButton_clicked();
-	void on_tableWidget_itemSelectionChanged();
+	void on_filterTable_itemSelectionChanged();
 	void on_globalButton_clicked();
 
 protected:

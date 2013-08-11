@@ -155,7 +155,7 @@
     <rect>
      <x>270</x>
      <y>30</y>
-     <width>131</width>
+     <width>271</width>
      <height>16</height>
     </rect>
    </property>
@@ -224,6 +224,15 @@
    </property>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>filesBox</tabstop>
+  <tabstop>directoriesBox</tabstop>
+  <tabstop>typeBox</tabstop>
+  <tabstop>valueEdit</tabstop>
+  <tabstop>browseButton</tabstop>
+  <tabstop>okButton</tabstop>
+  <tabstop>cancelButton</tabstop>
+ </tabstops>
  <resources>
   <include location="qtClient.qrc"/>
  </resources>

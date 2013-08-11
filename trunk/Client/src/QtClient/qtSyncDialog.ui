@@ -40,7 +40,7 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>131</width>
+     <width>171</width>
      <height>16</height>
     </rect>
    </property>
@@ -53,7 +53,7 @@
     <rect>
      <x>190</x>
      <y>10</y>
-     <width>131</width>
+     <width>221</width>
      <height>16</height>
     </rect>
    </property>
@@ -139,7 +139,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>&lt;i&gt;retrieving Sync list...&lt;/i&gt;</string>
+    <string>&lt;i&gt;retreiving Sync list...&lt;/i&gt;</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_3">
@@ -147,7 +147,7 @@
     <rect>
      <x>10</x>
      <y>60</y>
-     <width>111</width>
+     <width>401</width>
      <height>16</height>
     </rect>
    </property>
@@ -179,7 +179,7 @@
     <rect>
      <x>10</x>
      <y>110</y>
-     <width>101</width>
+     <width>401</width>
      <height>16</height>
     </rect>
    </property>
@@ -187,7 +187,7 @@
     <string>Filters / Ignore List</string>
    </property>
   </widget>
-  <widget class="QTableWidget" name="tableWidget">
+  <widget class="QTableWidget" name="filterTable">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -308,9 +308,9 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>320</x>
+     <x>310</x>
      <y>140</y>
-     <width>91</width>
+     <width>101</width>
      <height>20</height>
     </rect>
    </property>
@@ -318,7 +318,7 @@
     <string notr="true">color:blue</string>
    </property>
    <property name="text">
-    <string>edit global Filters</string>
+    <string>view global Filters</string>
    </property>
    <property name="autoRaise">
     <bool>true</bool>
@@ -373,13 +373,14 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>210</y>
+     <y>200</y>
      <width>401</width>
-     <height>16</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="text">
-    <string>you have to subscribe to the sync to edit filters</string>
+    <string>you have to subscribe to the sync to edit filters
+Hit OK to subscribe</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>
@@ -405,6 +406,11 @@
   <tabstop>pathEdit</tabstop>
   <tabstop>browseButton</tabstop>
   <tabstop>keyEdit</tabstop>
+  <tabstop>addButton</tabstop>
+  <tabstop>removeButton</tabstop>
+  <tabstop>editButton</tabstop>
+  <tabstop>globalButton</tabstop>
+  <tabstop>filterTable</tabstop>
   <tabstop>okButton</tabstop>
   <tabstop>cancelButton</tabstop>
  </tabstops>

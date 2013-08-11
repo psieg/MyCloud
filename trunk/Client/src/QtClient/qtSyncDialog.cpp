@@ -6,14 +6,14 @@ qtSyncDialog::qtSyncDialog(QWidget *parent, int editID)
 {
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-	ui.tableWidget->setColumnWidth(0,23);
-	ui.tableWidget->setColumnWidth(1,23);
-	ui.tableWidget->setColumnWidth(2,100);
-	ui.tableWidget->setColumnWidth(3,230);
+	ui.filterTable->setColumnWidth(0,23);
+	ui.filterTable->setColumnWidth(1,23);
+	ui.filterTable->setColumnWidth(2,100);
+	ui.filterTable->setColumnWidth(3,230);
 	ui.fetchFilterLabel->setVisible(false);
 	ui.needSubscribeLabel->setVisible(false);
 	ui.sendLabel->setVisible(false);
-	connect(ui.tableWidget,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
+	connect(ui.filterTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
 	myparent = parent;
 	syncID = editID;
 	dbindex = -1;
@@ -178,7 +178,7 @@ void qtSyncDialog::filterListReceived(int rc){
 	}
 
 	ui.fetchFilterLabel->setVisible(false);
-	ui.tableWidget->setEnabled(true);
+	ui.filterTable->setEnabled(true);
 	ui.addButton->setEnabled(true);
 	listFilters();
 }
@@ -218,7 +218,7 @@ void qtSyncDialog::deleteReceived(int rc){
 	}
 
 	ui.sendLabel->setVisible(false);
-	ui.tableWidget->setEnabled(true);
+	ui.filterTable->setEnabled(true);
 	ui.addButton->setEnabled(true);
 	ui.removeButton->setEnabled(true);
 	ui.editButton->setEnabled(true);
@@ -231,6 +231,17 @@ void qtSyncDialog::accept(){
 	QByteArray ckey;
 	mc_sync_db *worksync;
 	mc_sync_db newsync;
+
+	if(ui.pathEdit->text().length() == 0){
+		QMessageBox b(myparent);
+		b.setText(tr("No path specified"));
+		b.setInformativeText(tr("Please specify where the files are to be synced."));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Warning);
+		b.exec();
+		return;
+	}
 
 	if(dbindex == -1){ //new sync
 
@@ -348,8 +359,8 @@ void qtSyncDialog::on_addButton_clicked(){
 }
 
 void qtSyncDialog::on_removeButton_clicked(){
-	const int index = ui.tableWidget->selectedItems().at(0)->row();
-	ui.tableWidget->setEnabled(false);
+	const int index = ui.filterTable->selectedItems().at(0)->row();
+	ui.filterTable->setEnabled(false);
 	ui.addButton->setEnabled(false);
 	ui.removeButton->setEnabled(false);
 	ui.editButton->setEnabled(false);
@@ -361,7 +372,7 @@ void qtSyncDialog::on_removeButton_clicked(){
 
 void qtSyncDialog::on_editButton_clicked(){
 	int rc;
-	const int index = ui.tableWidget->selectedItems().at(0)->row();
+	const int index = ui.filterTable->selectedItems().at(0)->row();
 	qtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id,filterlist[index].id);
 	d.exec();
 	
@@ -372,11 +383,11 @@ void qtSyncDialog::on_editButton_clicked(){
 		return;
 	}
 	listFilters();
-	ui.tableWidget->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.tableWidget->columnCount()-1),true);
+	ui.filterTable->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.filterTable->columnCount()-1),true);
 }
 
-void qtSyncDialog::on_tableWidget_itemSelectionChanged(){
-	if(ui.tableWidget->selectedItems().length() == 0){
+void qtSyncDialog::on_filterTable_itemSelectionChanged(){
+	if(ui.filterTable->selectedItems().length() == 0){
 		ui.removeButton->setEnabled(false);
 		ui.editButton->setEnabled(false);
 	} else {
@@ -387,17 +398,20 @@ void qtSyncDialog::on_tableWidget_itemSelectionChanged(){
 
 void qtSyncDialog::on_globalButton_clicked(){
 	int rc;
-	std::list<mc_sync_db> sl;
-	qtGeneralFilterDialog d(this,performer,&netibuf,&netobuf);
-	d.exec();
-	//re-populate db list
-	rc = db_list_sync(&sl);
-	if(rc){ 
-		reject();
-		return; 
+	bool refresh = true;
+	//check wether a refresh from server is needed
+	for(mc_sync_db& d : dbsynclist){
+		for(mc_sync& s : srvsynclist){
+			//If a single sync is up-to-date the globals must be too
+			if(d.id == s.id && d.filterversion >= s.filterversion){
+				refresh = false; 
+				break;
+			}
+		}
+		if(!refresh) break;
 	}
-	dbsynclist.assign(sl.begin(),sl.end());
-	filldbdata();
+	qtGeneralFilterDialog d(this,performer,&netibuf,&netobuf,refresh);
+	d.exec();
 }
 
 void qtSyncDialog::filldbdata(){
@@ -417,7 +431,7 @@ void qtSyncDialog::filldbdata(){
 					ui.keyEdit->setText("");
 				}
 				//Filters
-				ui.tableWidget->setEnabled(true);
+				ui.filterTable->setEnabled(true);
 				ui.addButton->setEnabled(true);
 				ui.needSubscribeLabel->setVisible(false);
 				listFilters();
@@ -429,9 +443,9 @@ void qtSyncDialog::filldbdata(){
 		dbindex = -1; // = there is no matching db entry
 		ui.pathEdit->setText("");
 		ui.keyEdit->setText("");
-		ui.tableWidget->clearContents();
-		ui.tableWidget->setRowCount(0);
-		ui.tableWidget->setEnabled(false);
+		ui.filterTable->clearContents();
+		ui.filterTable->setRowCount(0);
+		ui.filterTable->setEnabled(false);
 		ui.addButton->setEnabled(false);
 		ui.needSubscribeLabel->setVisible(true);
 	}
@@ -442,7 +456,7 @@ void qtSyncDialog::listFilters(){
 	int rc;
 	
 	if(dbsynclist[dbindex].filterversion < srvsynclist[ui.nameBox->currentIndex()].filterversion){		
-		ui.tableWidget->setEnabled(false);
+		ui.filterTable->setEnabled(false);
 		ui.addButton->setEnabled(false);
 		ui.fetchFilterLabel->setVisible(true);
 		connect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
@@ -458,41 +472,41 @@ void qtSyncDialog::listFilters_actual(){
 	rc = db_list_filter_sid(&fl,dbsynclist[dbindex].id);
 	if(rc) return;
 	filterlist.assign(fl.begin(),fl.end());
-	ui.tableWidget->clearContents();
-	ui.tableWidget->setRowCount(0);
+	ui.filterTable->clearContents();
+	ui.filterTable->setRowCount(0);
 	for(mc_filter& f : filterlist){
-		ui.tableWidget->insertRow(ui.tableWidget->rowCount());
-		if(f.files) ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,0,new QTableWidgetItem(file,""));
-		if(f.directories) ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,1,new QTableWidgetItem(directory,""));
+		ui.filterTable->insertRow(ui.filterTable->rowCount());
+		if(f.files) ui.filterTable->setItem(ui.filterTable->rowCount()-1,0,new QTableWidgetItem(file,""));
+		if(f.directories) ui.filterTable->setItem(ui.filterTable->rowCount()-1,1,new QTableWidgetItem(directory,""));
 		switch(f.type){
 			case MC_FILTERT_MATCH_NAME:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Name")));
+				ui.filterTable->setItem(ui.filterTable->rowCount()-1,2,new QTableWidgetItem(tr("Name")));
 				break;
 			case MC_FILTERT_MATCH_EXTENSION:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Extension")));
+				ui.filterTable->setItem(ui.filterTable->rowCount()-1,2,new QTableWidgetItem(tr("Extension")));
 				break;
 			case MC_FILTERT_MATCH_FULLNAME:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Full Name")));
+				ui.filterTable->setItem(ui.filterTable->rowCount()-1,2,new QTableWidgetItem(tr("Full Name")));
 				break;
 			case MC_FILTERT_MATCH_PATH:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Path")));
+				ui.filterTable->setItem(ui.filterTable->rowCount()-1,2,new QTableWidgetItem(tr("Path")));
 				break;
 			case MC_FILTERT_REGEX_NAME:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Name (regex)")));
+				ui.filterTable->setItem(ui.filterTable->rowCount()-1,2,new QTableWidgetItem(tr("Name (regex)")));
 				break;
 			case MC_FILTERT_REGEX_EXTENSION:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Extension (regex)")));
+				ui.filterTable->setItem(ui.filterTable->rowCount()-1,2,new QTableWidgetItem(tr("Extension (regex)")));
 				break;
 			case MC_FILTERT_REGEX_FULLNAME:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Full Name (regex)")));
+				ui.filterTable->setItem(ui.filterTable->rowCount()-1,2,new QTableWidgetItem(tr("Full Name (regex)")));
 				break;
 			case MC_FILTERT_REGEX_PATH:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Path (regex)")));
+				ui.filterTable->setItem(ui.filterTable->rowCount()-1,2,new QTableWidgetItem(tr("Path (regex)")));
 				break;
 			default:
-				ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,2,new QTableWidgetItem(tr("Unrecognized")));
+				ui.filterTable->setItem(ui.filterTable->rowCount()-1,2,new QTableWidgetItem(tr("Unrecognized")));
 		}
 					
-		ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,3,new QTableWidgetItem(f.rule.c_str()));
+		ui.filterTable->setItem(ui.filterTable->rowCount()-1,3,new QTableWidgetItem(f.rule.c_str()));
 	}
 }
