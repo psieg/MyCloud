@@ -37,7 +37,7 @@ function handle_putfilter($ibuf,$uid){
 		
 		//insert into table
 		$q = $mysqli->query("INSERT INTO mc_filters (uid,sid,files,directories,type,rule) VALUES ".
-			"(".$uid.", ".$qry['sid'].", ".($qry['files']?1:0).", ".($qry['directories']?1:0).", ".$qry['type'].", ".esc($qry['rule']).")");
+			"(".$uid.", ".$qry['sid'].", ".($qry['files']?1:0).", ".($qry['directories']?1:0).", ".$qry['type'].", '".esc($qry['rule'])."')");
 		if(!$q) return pack_interror($mysqli->error);
 		$fid = $mysqli->insert_id;
 	} else { //update
@@ -50,7 +50,7 @@ function handle_putfilter($ibuf,$uid){
 
 		//update table, uid,sid can't change
 		$q = $mysqli->query("UPDATE mc_filters SET files = ".($qry['files']?1:0).", directories = ".($qry['directories']?1:0).", ".
-			"type = ".$qry['type'].", rule = ".esc($qry['rule'])." WHERE id = ".$qry['id']." AND uid = ".$uid);
+			"type = ".$qry['type'].", rule = '".esc($qry['rule'])."' WHERE id = ".$qry['id']." AND uid = ".$uid);
 		if(!$q) return pack_interror($mysqli->error);
 		$fid = $res[0];
 	}
@@ -67,15 +67,15 @@ function handle_putfilter($ibuf,$uid){
 
 function handle_delfilter($ibuf,$uid){
 	global $mysqli;
-
+	$id = unpack_delfilter($ibuf);
 	//check old filter
-	$q = $mysqli->query("SELECT id,sid FROM mc_filters WHERE id = ".$qry['id']." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT id,sid FROM mc_filters WHERE id = ".$id." AND uid = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$res = $q->fetch_row();
 
 	//delete filter
-	$q = $mysqli->query("DELETE FROM mc_filters WHERE id = ".$qry['id']." AND uid = ".$uid);
+	$q = $mysqli->query("DELETE FROM mc_filters WHERE id = ".$id." AND uid = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
 
 	//update filterversion
