@@ -103,7 +103,7 @@ void qtSyncDialog::syncListReceived(int rc){
 		//add to ComboBox
 		i = 0;
 		srvsynclist = vector<mc_sync>(list.begin(),list.end());
-		for(mc_sync s : srvsynclist){
+		for(mc_sync& s : srvsynclist){
 			if(s.crypted)
 				ui.nameBox->addItem(lock,QString(s.name.c_str())+tr(" (encrypted)"));
 			else
@@ -384,7 +384,7 @@ void qtSyncDialog::filldbdata(){
 	int sid = srvsynclist[ui.nameBox->currentIndex()].id;
 	if(loadcompleted){
 		i = 0;		
-		for(mc_sync_db s : dbsynclist){
+		for(mc_sync_db& s : dbsynclist){
 			if(s.id == sid){
 				dbindex = i;
 				//Path, Key
@@ -438,7 +438,7 @@ void qtSyncDialog::listFilters_actual(){
 	filterlist.assign(fl.begin(),fl.end());
 	ui.tableWidget->clearContents();
 	ui.tableWidget->setRowCount(0);
-	for(mc_filter f : filterlist){
+	for(mc_filter& f : filterlist){
 		ui.tableWidget->insertRow(ui.tableWidget->rowCount());
 		if(f.files) ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,0,new QTableWidgetItem(file,""));
 		if(f.directories) ui.tableWidget->setItem(ui.tableWidget->rowCount()-1,1,new QTableWidgetItem(directory,""));
