@@ -1,6 +1,6 @@
 #include "mc_helpers.h"
 #ifdef MC_QTCLIENT
-#	include "qtClient.h"7
+#	include "qtClient.h"
 #endif
 
 /* cascade up the tree and recalc hashes from db */
