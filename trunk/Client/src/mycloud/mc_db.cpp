@@ -669,8 +669,6 @@ int _db_insert_file(mc_file *var){
 	int rc;
 	MC_DBGL("Inserting file " << var->id << ": " << var->name);
 	rc = sqlite3_reset(stmt_insert_file);
-	if(var->cryptname == "")
-		MC_WRN("empty cryptname insert");
 	rc = sqlite3_clear_bindings(stmt_insert_file);
 	MC_CHKERR_MSG(rc,"Clear failed");
 	// id,name,namehash,ctime,mtime,size,is_dir,parent,hash,status
@@ -704,8 +702,6 @@ int _db_update_file(mc_file *var){
 	int rc;
 	MC_DBGL("Updating file " << var->id << ": " << var->name);
 	rc = sqlite3_reset(stmt_update_file);
-	if(var->cryptname == "")
-		MC_WRN("empty cryptname update");
 	rc = sqlite3_clear_bindings(stmt_update_file);
 	MC_CHKERR_MSG(rc,"Clear failed");
 	// name,namehash,ctime,mtime,size,is_dir,parent,hash,status
