@@ -185,7 +185,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 
 	// check for "easy" cases
 	if(act == MC_CONFLICTACT_UNKNOWN){
-		if(db && db->status == MC_FILESTAT_DELETED && srv->status == MC_FILESTAT_DELETED){
+		if(db && srv->status == MC_FILESTAT_DELETED){
 			MC_DBG("Mtime/hash mismatch on deleted file");
 			if(db->mtime <= srv->mtime)
 				act = MC_CONFLICTACT_DOWN;
