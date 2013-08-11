@@ -16,8 +16,12 @@ function handle_listsyncs($ibuf,$uid){
 function handle_listfilters($ibuf,$uid){
 	global $mysqli;
 	$sid = unpack_listfilters($ibuf);
-	// sid 0 = rules for all syncs, uid 0 = rules for all users and all syncs (sid must be 0) 
-	$q = $mysqli->query("SELECT id,sid,files,directories,type,rule FROM mc_filters WHERE sid = ".$sid." AND (uid = ".$uid." OR uid = 0)");
+	// sid 0 = rules for all syncs, not editable
+	if($sid == 0){
+		$q = $mysqli->query("SELECT id,sid,files,directories,type,rule FROM mc_filters WHERE sid = ".$sid); //." AND (uid = ".$uid." OR uid = 0)"); //no user-global syncs
+	} else {
+		$q = $mysqli->query("SELECT id,sid,files,directories,type,rule FROM mc_filters WHERE sid = ".$sid." AND uid = ".$uid);
+	}
 	if(!$q) return pack_interror($mysqli->error);
 	$l = array();
 	while($r = $q->fetch_row()){ $l[]= $r; }
@@ -28,11 +32,13 @@ function handle_putfilter($ibuf,$uid){
 	global $mysqli;
 	$qry = unpack_putfilter($ibuf);
 	if($qry['id'] == MC_FILTERID_NONE){ //new
-		//sync must exist and be owned by user, unless 0 which means all my syncs
+		//sync must exist and be owned by user (unless 0 which would mean all my syncs)
 		if($qry['sid'] != 0){
 			$q = $mysqli->query("SELECT uid FROM mc_syncs WHERE id = ".$qry['sid']." AND uid = ".$uid);
 			if(!$q) return pack_interror($mysqli->error);
 			if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
+		} else {
+			return pack_interror(MC_SRVSTAT_BADQRY); //No (user-global-syncs at the moment)
 		}
 		
 		//insert into table
