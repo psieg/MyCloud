@@ -185,7 +185,7 @@ function handle_putfile($ibuf,$uid){
 		$q = $mysqli->query("INSERT INTO mc_files (uid,name,ctime,mtime,size,is_dir,parent,hash,status) VALUES ".
 			"(".$uid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
 			($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".
-			($qry['size']==$qry['blocksize']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
+			($qry['is_dir']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
 		if(!$q) return pack_interror($mysqli->error);
 
 		//return pack_interror("INSERT INTO mc_files(uid,name,ctime,mtime,size,is_dir,parent,hash,status) VALUES ".
@@ -247,13 +247,11 @@ function handle_putfile($ibuf,$uid){
 			if($qry['is_dir'])
 				$q = $mysqli->query("INSERT INTO mc_files(uid,name,ctime,mtime,size,is_dir,parent,status) VALUES ".
 					"(".$uid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
-					($qry['is_dir']?1:0).", ".$qry['parent'].", '".
-					($qry['size']==$qry['blocksize']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
+					($qry['is_dir']?1:0).", ".$qry['parent'].", '".MC_FILESTAT_COMPLETE." )");
 			else
 				$q = $mysqli->query("INSERT INTO mc_files(uid,name,ctime,mtime,size,is_dir,parent,hash,status) VALUES ".
 					"(".$uid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
-					($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".
-					($qry['size']==$qry['blocksize']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
+					($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".MC_FILESTAT_INCOMPLETE_UP." )");
 			if(!$q) return pack_interror($mysqli->error);
 			$fid = $mysqli->insert_id;
 		} else { //Just a content change
@@ -268,7 +266,7 @@ function handle_putfile($ibuf,$uid){
 				$q = $mysqli->query("UPDATE mc_files SET ctime = ".$qry['ctime'].", ".
 					"mtime = ".$qry['mtime'].", size = ".$qry['size'].", ".
 					"is_dir = ".($qry['is_dir']?1:0).", hash = '".esc($qry['hash'])."', ".
-					"status = ".($qry['size']==$qry['blocksize']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." ".
+					"status = ".MC_FILESTAT_INCOMPLETE_UP." ".
 					"WHERE id = ".$qry['id']." AND uid = ".$uid);
 			if(!$q) return pack_interror($mysqli->error);
 			$fid = $qry['id'];
@@ -293,6 +291,11 @@ function handle_putfile($ibuf,$uid){
 	}
 	$rc = touch($filedata[0],$qry['mtime']);
 	if(!$rc) return pack_interror("Failed to set mtime");
+
+	if($qry['blocksize']==$qry['size']){
+		$q = $mysqli->query("UPDATE mc_files SET status = ".MC_FILESTAT_COMPLETE." ".
+			"WHERE id = ".$fid." AND uid = ".$uid);
+	}
 	
 	if(isset($oldfiledata) && ($oldfiledata[1] != $filedata[1])){
 		$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$oldfiledata[1]);
