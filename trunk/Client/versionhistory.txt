@@ -30,5 +30,6 @@
 + Added Application Icon for QtClient binary
 + Syncs can be edited (change local path, cryptokey)
 + User Interface to view and edit filters
++ Filters are encrypted for encrypted syncs
 * resume functions restart up/download on verification failure (=file change)
 * mtime set to current time when replacing a deleted file (#24)

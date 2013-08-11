@@ -40,7 +40,6 @@ private:
 	QWidget *myparent;
 	QtNetworkPerformer *performer;
 	mc_buf *netibuf,*netobuf;
-	int64 authtime;
 	mc_filter filter;
 	mc_sync_db sync;
 

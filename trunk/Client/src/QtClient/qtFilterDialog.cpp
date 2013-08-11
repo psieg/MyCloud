@@ -3,8 +3,6 @@
 qtFilterDialog::qtFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, int syncID, int editID)
 	: QDialog(parent)
 {
-	int rc;	
-	//std::list<mc_sync_db> sl;
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 	myparent = parent;

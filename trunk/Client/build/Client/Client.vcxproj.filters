@@ -49,102 +49,110 @@
     <ClCompile Include="GeneratedFiles\Release\moc_mc_workerthread.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Client\main.cpp">
+    <ClCompile Include="..\..\src\Client\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\Client.cpp">
+    <ClCompile Include="..\..\src\mycloud\Client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_crypt.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_crypt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_db.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_db.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_filter.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_filter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_fs.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_fs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_helpers.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_protocol.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_protocol.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_srv.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_srv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_transfer.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_transfer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_util.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_walk.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_walk.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_watch.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_watch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\mycloud\mc_workerthread.cpp">
+    <ClCompile Include="..\..\src\mycloud\mc_workerthread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\sqlite-amalgamation\sqlite3.c">
+    <ClCompile Include="..\..\src\sqlite-amalgamation\sqlite3.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\mycloud\Client.h">
+    <ClInclude Include="..\..\src\mycloud\Client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc.h">
+    <ClInclude Include="..\..\src\mycloud\mc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_crypt.h">
+    <ClInclude Include="..\..\src\mycloud\mc_crypt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_db.h">
+    <ClInclude Include="..\..\src\mycloud\mc_db.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_filter.h">
+    <ClInclude Include="..\..\src\mycloud\mc_filter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_fs.h">
+    <ClInclude Include="..\..\src\mycloud\mc_fs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_helpers.h">
+    <ClInclude Include="..\..\src\mycloud\mc_helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_protocol.h">
+    <ClInclude Include="..\..\src\mycloud\mc_protocol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_transfer.h">
+    <ClInclude Include="..\..\src\mycloud\mc_transfer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_types.h">
+    <ClInclude Include="..\..\src\mycloud\mc_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_util.h">
+    <ClInclude Include="..\..\src\mycloud\mc_util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\mycloud\mc_walk.h">
+    <ClInclude Include="..\..\src\mycloud\mc_walk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\sqlite-amalgamation\sqlite3.h">
+    <ClInclude Include="..\..\src\sqlite-amalgamation\sqlite3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\mc_version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\mycloud\mc_workerthread.h">
+    <CustomBuild Include="..\..\src\mycloud\mc_workerthread.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\mycloud\mc_srv.h">
+    <CustomBuild Include="..\..\src\mycloud\mc_srv.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\mycloud\mc_watch.h">
+    <CustomBuild Include="..\..\src\mycloud\mc_watch.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\src\Client\resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
