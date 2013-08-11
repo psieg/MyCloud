@@ -44,11 +44,16 @@ function filedata($fid,$fname=NULL,$fparent=NULL){
 // Compute and return the hash for directory $fid
 function directoryHash($fid){
 	global $mysqli;
-	$q = $mysqli->query("SELECT id,name,ctime,mtime,size,is_dir,hash FROM mc_files WHERE parent = ".$fid." ORDER BY id");
+	$q = $mysqli->query("SELECT id,name,ctime,mtime,size,is_dir,status,hash FROM mc_files WHERE parent = ".$fid." ORDER BY id");
 	if(!$q) print($mysqli->error);
 	$str = "";
 	while($r = $q->fetch_row()){
 		$str .= pack("l1",$r[0]).$r[1].
+			//pack("L2",$r[2]&0xFFFFFFFF,($r[2]&0xFFFFFFFF00000000)>>32). //ctime is not an important / deciding criteria
+			pack("L2",$r[3]&0xFFFFFFFF,($r[3]&0xFFFFFFFF00000000)>>32).
+			pack("L2",$r[4]&0xFFFFFFFF,($r[4]&0xFFFFFFFF00000000)>>32).
+			pack("C1l1",$r[5],$r[6]).
+			$r[7];
 			//pack("L2",$r[2]&0xFFFFFFFF,($r[2]&0xFFFFFFFF00000000)>>32). //ctime is not an important / deciding criteria
 			pack("L2",$r[3]&0xFFFFFFFF,($r[3]&0xFFFFFFFF00000000)>>32).
 			pack("L2",$r[4]&0xFFFFFFFF,($r[4]&0xFFFFFFFF00000000)>>32).
