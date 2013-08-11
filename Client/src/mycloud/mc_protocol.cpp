@@ -243,7 +243,7 @@ void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db
 	memcpy(&buf->mem[index],authtoken,16);
 	index += 16;
 
-	for(mc_sync_db s : *l){
+	for(mc_sync_db& s : *l){
 		memcpy(&buf->mem[index],&s.id,sizeof(int));
 		index += sizeof(int);
 		memcpy(&buf->mem[index],&s.hash,16);

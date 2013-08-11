@@ -308,7 +308,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 				while(tit != tend){
 					rc = srv_getmeta(tit->id,&srvdummy);
 					MC_CHKERR(rc);
-					rc = crypt_translate_fromsrv(ctx,path,&srvdummy);
+					rc = crypt_file_fromsrv(ctx,path,&srvdummy);
 					MC_CHKERR(rc);
 					rc = download(ctx,*pit,NULL,&*tit,&srvdummy,hashstr,false);
 					MC_CHKERR(rc);
@@ -441,7 +441,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 				//rc = db_select_file_id(&parent);
 				rc = srv_getmeta(parent.id,&parent);
 				MC_CHKERR(rc);
-				rc = crypt_translate_fromsrv(ctx,path,&parent);
+				rc = crypt_file_fromsrv(ctx,path,&parent);
 				MC_CHKERR(rc);
 				p = p.substr(0,p.length()-1);
 				p.assign(p.substr(0,p.find_last_of("/")+1));
@@ -619,7 +619,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 		}
 	}
 
-	crypt_filestring(ctx,db,hashstr);
+	crypt_filestring(ctx,srv,hashstr);
 
 	if(terminating) return MC_ERR_TERMINATING;
 	else return 0;
@@ -660,7 +660,7 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	rc  = srv_listdir(&onsrv,id);
 	MC_CHKERR(rc);
 
-	rc = crypt_translatelist_fromsrv(ctx,path,&onsrv);
+	rc = crypt_filelist_fromsrv(ctx,path,&onsrv);
 	MC_CHKERR(rc);
 
 	onfs.sort(compare_mc_file_fs);
@@ -936,7 +936,7 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 			if(indbit->status == MC_FILESTAT_INCOMPLETE_DOWN){
 				rc = srv_getmeta(indbit->id,&srv); //actually just because we need to have srv->status == COMPLETE (or, what shouldn't be INCOMPLETE_UP)
 				MC_CHKERR(rc);
-				rc = crypt_translate_fromsrv(ctx,path,&srv);
+				rc = crypt_file_fromsrv(ctx,path,&srv);
 				MC_CHKERR(rc);
 				rc = verifyandcomplete(ctx,path,&*onfsit,&*indbit,&srv,&hashstr);
 				if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
@@ -1004,7 +1004,7 @@ int walk_nolocal(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	rc  = srv_listdir(&onsrv,id);
 	MC_CHKERR(rc);
 
-	rc = crypt_translatelist_fromsrv(ctx,path,&onsrv);
+	rc = crypt_filelist_fromsrv(ctx,path,&onsrv);
 	MC_CHKERR(rc);
 
 	indb.sort(compare_mc_file);
@@ -1111,7 +1111,7 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	rc  = srv_listdir(&onsrv,id);
 	MC_CHKERR(rc);
 
-	rc = crypt_translatelist_fromsrv(ctx,path,&onsrv);
+	rc = crypt_filelist_fromsrv(ctx,path,&onsrv);
 	MC_CHKERR(rc);
 
 	onfs.sort(compare_mc_file_fs);
