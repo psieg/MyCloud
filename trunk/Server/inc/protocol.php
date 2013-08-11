@@ -1,6 +1,6 @@
 <?php
-define('MC_SERVER_PROTOCOL_VERSION',6);
-define('MC_MIN_CLIENT_PROTOCOL_VERSION',5);
+define('MC_SERVER_PROTOCOL_VERSION',7);
+define('MC_MIN_CLIENT_PROTOCOL_VERSION',7);
 
 define("MC_SRVQRY_STATUS",		100);	// What's your status
 define("MC_SRVQRY_AUTH",		101);	// Authorize + Timecheck (all following queries require an AuthToken)
