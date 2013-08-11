@@ -36,6 +36,9 @@ void qtFilterDialog::showEvent(QShowEvent *event){
 }
 
 void qtFilterDialog::accept(){
+	mc_sync_ctx ctx;
+	string cleanrule;
+	int rc;
 	if(!ui.filesBox->isChecked() && !ui.directoriesBox->isChecked()){
 		QMessageBox b(myparent);
 		b.setText("No match type set");
@@ -61,8 +64,26 @@ void qtFilterDialog::accept(){
 	filter.type = indexToType(ui.typeBox->currentIndex());
 	filter.rule = qPrintable(ui.valueEdit->text());
 
+
+	sync.id = filter.sid;
+	rc = db_select_sync(&sync);
+	if(rc){
+		reject();
+		return;
+	}
+	init_sync_ctx(&ctx,&sync,NULL);
+	cleanrule = filter.rule;
+	rc = crypt_filter_tosrv(&ctx,sync.name,&filter);
+	if(rc){
+		reject();
+		return;
+	}
+
 	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
 	srv_putfilter_async(netibuf,netobuf,performer,&filter);
+
+	filter.rule = cleanrule;
+
 	ui.filesBox->setEnabled(false);
 	ui.directoriesBox->setEnabled(false);
 	ui.typeBox->setEnabled(false);
@@ -75,7 +96,6 @@ void qtFilterDialog::accept(){
 }
 
 void qtFilterDialog::replyReceived(int rc){
-	mc_sync_db s;
 	int id = filter.id;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
 	if(rc){
@@ -97,14 +117,14 @@ void qtFilterDialog::replyReceived(int rc){
 	}
 
 	//if successful, the server will have increased the filterversion by one
-	s.id = filter.sid;
-	rc = db_select_sync(&s);
+	sync.id = filter.sid;
+	rc = db_select_sync(&sync);
 	if(rc){
 		reject();
 		return;
 	}
-	s.filterversion += 1;
-	rc = db_update_sync(&s);
+	sync.filterversion += 1;
+	rc = db_update_sync(&sync);
 	if(rc){
 		reject();
 		return;

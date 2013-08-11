@@ -9,6 +9,7 @@
 #include "qtFilterDialog.h"
 #include "mc_db.h"
 #include "mc_srv.h"
+#include "mc_crypt.h"
 
 class qtSyncDialog : public QDialog
 {

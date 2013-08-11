@@ -119,41 +119,13 @@ int crypt_decryptstring(mc_sync_ctx *ctx, const string& ivstr, const string& dat
 	return 0;
 }
 
-/*
-int cryptfilter_tosrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f){
+int crypt_filter_tosrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f){
 	mc_crypt_ctx cctx;
 	QByteArray buf;
 	int rc,written;
 	if(ctx->sync->crypted){
-		if(f->cryptname == ""){
-			buf = QByteArray(f->name.length()+MC_CRYPTNAME_SIZEOVERHEAD,'\0');
-
-			init_crypt_ctx(&cctx,ctx);
-			MC_CHKERR(crypt_striv(&cctx,path));
-			memcpy(cctx.iv,MC_CRYPTNAME_IDENTIFIER,strlen(MC_CRYPTNAME_IDENTIFIER));
-			memcpy(buf.data(),cctx.iv,MC_CRYPTNAME_OFFSET);
-
-			cctx.evp = EVP_CIPHER_CTX_new();
-			MC_DBGL("Encrypting Name at " << path << " with " << MD5BinToHex(cctx.iv));
-
-			rc = EVP_EncryptInit_ex(cctx.evp,EVP_aes_256_gcm(),NULL,cctx.ctx->sync->cryptkey,cctx.iv+MC_CRYPTNAME_IDOFFSET);
-			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptInit failed");
-			
-			rc = EVP_EncryptUpdate(cctx.evp, (unsigned char*)buf.data()+MC_CRYPTNAME_OFFSET, &written, (unsigned char*)f->name.c_str(), f->name.length());
-			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptUpdate failed");
-
-			rc = EVP_EncryptFinal_ex(cctx.evp, NULL, &written);
-			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptFinal failed");
-				
-			rc = EVP_CIPHER_CTX_ctrl(cctx.evp, EVP_CTRL_GCM_GET_TAG, MC_CRYPTNAME_PADDING, cctx.tag);
-			if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"CipherCTXCtrl failed");
-			memcpy(buf.data()+buf.size()-MC_CRYPTNAME_PADDING,cctx.tag,MC_CRYPTNAME_PADDING);
-
-			EVP_CIPHER_CTX_free(cctx.evp);
-
-			f->cryptname.assign(buf.toHex());
-		}
-	} else f->cryptname = "";
+		return crypt_encryptstring(ctx,syncname,f->rule,&f->rule);
+	}
 	return 0;	
 }
 int crypt_filter_fromsrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f){
@@ -162,41 +134,7 @@ int crypt_filter_fromsrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f)
 	int rc,written;
 	void* data;
 	if(ctx->sync->crypted){
-		f->cryptname = f->name;
-		buf = QByteArray::fromHex(f->cryptname.c_str());
-
-		init_crypt_ctx(&cctx,ctx);
-		memcpy(cctx.iv,buf.data(),MC_CRYPTNAME_OFFSET);
-		if(memcmp(cctx.iv,MC_CRYPTNAME_IDENTIFIER,MC_CRYPTNAME_IDOFFSET) != 0){
-				MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized cryptoname format: " << f->cryptname);
-		};
-		MC_CHKERR(crypt_striv(&cctx,path)); //the IV is not part of the string as it is implicit
-		
-		cctx.evp = EVP_CIPHER_CTX_new();
-		MC_DBGL("Decrypting Name " << BinToHex((unsigned char*)buf.data()) << " with " << MD5BinToHex(cctx.iv));
-		
-		rc = EVP_DecryptInit_ex(cctx.evp,EVP_aes_256_gcm(),NULL,cctx.ctx->sync->cryptkey,cctx.iv+MC_CRYPTNAME_IDOFFSET);
-		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptInit failed");
-		data = buf.data();
-		rc = EVP_DecryptUpdate(cctx.evp, (unsigned char*)buf.data()+MC_CRYPTNAME_OFFSET, &written, (unsigned char*)buf.data()+MC_CRYPTNAME_OFFSET, buf.size()-MC_CRYPTNAME_SIZEOVERHEAD);
-		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptUpdate failed");
-
-		memcpy(cctx.tag,buf.data()+buf.size()-MC_CRYPTNAME_PADDING,MC_CRYPTNAME_PADDING);
-		rc = EVP_CIPHER_CTX_ctrl(cctx.evp,EVP_CTRL_GCM_SET_TAG,MC_CRYPTNAME_PADDING,cctx.tag);
-		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"CipherCTXCtrl failed");
-
-		rc = EVP_DecryptFinal_ex(cctx.evp,NULL,&written);
-		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptFinal failed! This means the file was renamed or you entered the wrong key.");
-
-		EVP_CIPHER_CTX_free(cctx.evp);
-
-		f->name.assign(buf.data()+MC_CRYPTNAME_OFFSET,buf.size()-MC_CRYPTNAME_SIZEOVERHEAD);
-
-		//if(f->cryptname.size()<5) 
-		//	MC_ERR_MSG(MC_ERR_SERVER,"Invalid Cryptname: " << f->cryptname);
-		//f->name = f->cryptname.substr(5);
-
-		if(!f->is_dir) f->size -= MC_CRYPT_SIZEOVERHEAD;
+		return crypt_decryptstring(ctx,syncname,f->rule,&f->rule);
 	}
 	return 0;
 }
@@ -210,7 +148,7 @@ int crypt_filterlist_fromsrv(mc_sync_ctx *ctx, const string& syncname, list<mc_f
 	}
 	return 0;
 }
-*/
+
 //Fields that cannot be mapped: id,parent,(ctime),mtime,is_dir,status
 //Hash is not mapped because it must be encrypted locally too for encrypted syncs
 //Fields that are to be mapped: name, size (crypt needs a few bytes more)

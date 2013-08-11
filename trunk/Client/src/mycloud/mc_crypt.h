@@ -37,7 +37,7 @@ int crypt_filter_tosrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f);
 // Translates rule
 int crypt_filter_fromsrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f); //TODO: private because implicit?
 // Translate a filter listing in-place
-int crypt_filterlist_fromsrv(mc_sync_ctx *ctx, const string& syncname, list<mc_file> *l);
+int crypt_filterlist_fromsrv(mc_sync_ctx *ctx, const string& syncname, list<mc_filter> *l);
 // Does not translate size
 int crypt_file_tosrv(mc_sync_ctx *ctx, const string& path, mc_file *f);
 // Also translates size, as locally only the unencrypted size counts, or sizetranslate is used
