@@ -16,4 +16,7 @@ int updateHash(mc_sync_ctx *ctx, mc_file *f, mc_sync_db *s);
 int fullsync();
 int fullsync(list<mc_sync_db> *dbsyncs);
 
+/* panic action when decryption failed */
+int cryptopanic();
+
 #endif /* MC_HELPERS_H */
