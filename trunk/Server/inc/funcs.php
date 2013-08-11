@@ -54,11 +54,6 @@ function directoryHash($fid){
 			pack("L2",$r[4]&0xFFFFFFFF,($r[4]&0xFFFFFFFF00000000)>>32).
 			pack("C1l1",$r[5],$r[6]).
 			$r[7];
-			//pack("L2",$r[2]&0xFFFFFFFF,($r[2]&0xFFFFFFFF00000000)>>32). //ctime is not an important / deciding criteria
-			pack("L2",$r[3]&0xFFFFFFFF,($r[3]&0xFFFFFFFF00000000)>>32).
-			pack("L2",$r[4]&0xFFFFFFFF,($r[4]&0xFFFFFFFF00000000)>>32).
-			pack("C1",$r[5]).
-			$r[6];
 	}
 	return md5($str,true);
 	//return array(md5($str,true),$str);
