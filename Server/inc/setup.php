@@ -31,6 +31,7 @@ if(isset($_GET['phase1'])){
 		#'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,0,'.MC_FILTERT_REGEX_PATH.',".*/Debug/[^/]*\\\.(htm|manifest|res|ilk|obj|pch|idb|pdb|dep|tlog)","VC Compiled Files")',
 		'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,0,'.MC_FILTERT_REGEX_NAME.',"~\\\$.*","MS Office-Backups")',
 		'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,1,'.MC_FILTERT_MATCH_EXTENSION.',"tmp","Temporary Files")',
+		'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,1,'.MC_FILTERT_MATCH_EXTENSION.',"swp","Swap Files")',
 		#'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,1,'.MC_FILTERT_.',"","")',
 	
 		#debug
