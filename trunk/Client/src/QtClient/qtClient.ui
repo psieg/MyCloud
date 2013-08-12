@@ -59,6 +59,9 @@
         <property name="enabled">
          <bool>true</bool>
         </property>
+        <property name="toolTip">
+         <string>Add a Sync</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -81,6 +84,9 @@
        <widget class="QToolButton" name="removeButton">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Remove Sync</string>
         </property>
         <property name="text">
          <string/>
@@ -105,6 +111,9 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
+        <property name="toolTip">
+         <string>Move down</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -127,6 +136,9 @@
        <widget class="QToolButton" name="upButton">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Move up</string>
         </property>
         <property name="text">
          <string/>
@@ -151,6 +163,9 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
+        <property name="toolTip">
+         <string>Edit Sync</string>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -173,6 +188,9 @@
        <widget class="QToolButton" name="disableButton">
         <property name="enabled">
          <bool>false</bool>
+        </property>
+        <property name="toolTip">
+         <string>Disable Sync</string>
         </property>
         <property name="text">
          <string/>
@@ -220,6 +238,9 @@
       </item>
       <item>
        <widget class="QToolButton" name="settingsButton">
+        <property name="toolTip">
+         <string>Settings</string>
+        </property>
         <property name="text">
          <string/>
         </property>

@@ -3,7 +3,7 @@
 
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QMessageBox>
-#include <Qtwidgets/QFileDialog>
+#include <QtWidgets/QFileDialog>
 #include <QtGui/QShowEvent>
 #include "ui_qtFilterDialog.h"
 #include "mc_db.h"
