@@ -1,4 +1,5 @@
 #include "qtClient.h"
+#include "mc_types.h"
 QtClient *QtClient::_instance = NULL;
 #ifdef MC_IONOTIFY
 #	define RESERVED_STATUSWIDTH				80
@@ -252,7 +253,7 @@ void QtClient::__notifyEnd(int evt)
 {
 	uploading = false;
 	downloading = false;
-	switch(evt){
+	switch((MC_NOTIFYTYPE)evt){
 		case MC_NT_CONN:
 			setStatus(tr("idle"),"",icon);
 			break;

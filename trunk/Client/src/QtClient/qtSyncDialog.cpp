@@ -371,7 +371,7 @@ void qtSyncDialog::on_removeButton_clicked(){
 	ui.editButton->setEnabled(false);
 	ui.sendLabel->setVisible(true);
 	deletingfilterid = filterlist[index].id;
-	bool ok = connect(performer,SIGNAL(finished(int)),this,SLOT(deleteReceived(int)));
+	connect(performer,SIGNAL(finished(int)),this,SLOT(deleteReceived(int)));
 	srv_delfilter_async(&netibuf,&netobuf,performer,&filterlist[index]);
 }
 
@@ -402,7 +402,6 @@ void qtSyncDialog::on_filterTable_itemSelectionChanged(){
 }
 
 void qtSyncDialog::on_globalButton_clicked(){
-	int rc;
 	bool refresh = true;
 	//check wether a refresh from server is needed
 	for(mc_sync_db& d : dbsynclist){
@@ -421,7 +420,6 @@ void qtSyncDialog::on_globalButton_clicked(){
 
 void qtSyncDialog::filldbdata(){
 	int i;
-	int rc;
 	int sid = srvsynclist[ui.nameBox->currentIndex()].id;
 	if(loadcompleted){
 		i = 0;		
@@ -458,7 +456,6 @@ void qtSyncDialog::filldbdata(){
 
 void qtSyncDialog::listFilters(){
 	std::list<mc_filter> fl;
-	int rc;
 	
 	if(dbsynclist[dbindex].filterversion < srvsynclist[ui.nameBox->currentIndex()].filterversion){		
 		ui.filterTable->setEnabled(false);

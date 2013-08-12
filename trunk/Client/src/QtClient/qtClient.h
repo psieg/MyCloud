@@ -18,6 +18,9 @@
 #include "mc_db.h"
 #include "mc_transfer.h"
 
+#ifndef MC_QTCLIENT
+#	error If you want to compile QtClient, use -DMC_QTCLIENT
+#endif
 
 class QtClient : public QMainWindow
 {

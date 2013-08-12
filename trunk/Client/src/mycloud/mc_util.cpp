@@ -226,6 +226,17 @@ void mc_sleepms(int ms){
 void mc_sleep(int time){
 	sleep(time);
 }
+void mc_sleep_checkterminate(int sec){
+	int t0 = time(NULL);
+	MC_INF("Sleeping for " << sec << " secs");
+	while(time(NULL)-t0 < sec){
+		if(MC_TERMINATING()){
+			MC_INF("Abort from GUI");
+			break;
+		}
+		sleep(2000);
+	}
+}
 void mc_sleepms(int time){
 	usleep(time*1000);
 }
