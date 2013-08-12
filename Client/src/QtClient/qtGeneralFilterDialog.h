@@ -2,8 +2,6 @@
 #define qtGeneralFilterDialog_H
 
 #include <QtWidgets/QDialog>
-#include <QtWidgets/QMessageBox>
-#include <Qtwidgets/QFileDialog>
 #include <QtGui/QShowEvent>
 #include "ui_qtGeneralFilterDialog.h"
 #include "mc_db.h"

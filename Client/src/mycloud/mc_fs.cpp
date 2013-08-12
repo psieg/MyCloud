@@ -34,7 +34,7 @@ FILE* fs_fopen(const string& filename, const string& mode){
 }
 #else
 FILE* fs_fopen(const string& filename, const string& mode){
-	return fopen(filename.c_str(),mode);
+	return fopen(filename.c_str(),mode.c_str());
 }
 #endif
 
@@ -213,7 +213,7 @@ int fs_touch(const string& path, int64 mtime, int64 ctime){
 	int rc;
 	struct utimbuf buf;
 	if(ctime == 0)
-		MC_DBGL("Touching " << path << " with m" << mtime);
+		MC_DBGL("Touching " << path << " with m" << mtime)
 	else
 		MC_DBGL("Touching " << path << " with m" << mtime << "/c" << ctime);
 	buf.actime = NULL;
@@ -246,7 +246,7 @@ int fs_mkdir(const string& path){
 	return 0;
 }
 #else
-int fs_mkdir(const string& path, int64 mtime, int64 ctime = 0){
+int fs_mkdir(const string& path, int64 mtime, int64 ctime){
 	int rc;
 	MC_DBGL("Creating directory " << path);
 	rc = mkdir(path.c_str(),NULL);

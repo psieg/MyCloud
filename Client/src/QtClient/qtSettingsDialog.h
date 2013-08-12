@@ -2,7 +2,7 @@
 #define QTSETTINGSDIALOG_H
 
 #include <QtWidgets/QDialog>
-#include <QtWidgets/qmessagebox>
+#include <QtWidgets/QMessageBox>
 #include "ui_qtSettingsDialog.h"
 #include "mc.h" //wether MC_WATCHMODE is defined
 #include "mc_db.h"

@@ -256,6 +256,9 @@
      <height>30</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>Add a Filter</string>
+   </property>
    <property name="text">
     <string/>
    </property>
@@ -284,6 +287,9 @@
      <width>31</width>
      <height>30</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>Remove Filter</string>
    </property>
    <property name="text">
     <string/>
@@ -335,6 +341,9 @@
      <width>31</width>
      <height>30</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>Edit Filter</string>
    </property>
    <property name="text">
     <string/>

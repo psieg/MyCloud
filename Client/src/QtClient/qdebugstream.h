@@ -9,7 +9,7 @@
 #include <streambuf>
 #include <string>
 
-#include "QtWidgets/QTextEdit.h"
+#include <QtWidgets/QTextEdit>
 
 class QDebugStream : public std::basic_streambuf<char>
 {
