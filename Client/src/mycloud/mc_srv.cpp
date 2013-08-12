@@ -176,7 +176,7 @@ void QtNetworkPerformer::abort(){
 
 int QtNetworkPerformer::perform(mc_buf *inbuf, mc_buf *outbuf, bool withprogress){
 	if(rep) MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"NetworkPerformer can only handle one query at a time");
-	req.setHeader(QNetworkRequest::ContentLengthHeader, inbuf->used);
+	req.setHeader(QNetworkRequest::ContentLengthHeader, QVariant::fromValue(inbuf->used));
 	rep = manager.post(req,QByteArray(inbuf->mem,inbuf->used));
 	if(withprogress){
 		connect(rep, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(downloadProgress(qint64,qint64)));
@@ -201,25 +201,25 @@ int QtNetworkPerformer::processReply(){
 		if(rep->error() == QNetworkReply::OperationCanceledError){
 			if(timedout){
 				MC_WRN("Network failure: Timeout (Code " << QNetworkReply::TimeoutError << ")");
-				if(rep) if(async) rep->deleteLater(); else delete rep;
+				if(rep){ if(async) rep->deleteLater(); else delete rep; }
 				rep = NULL;
 				return QNetworkReply::TimeoutError;
 			} else {
-				if(rep) if(async) rep->deleteLater(); else delete rep;
+				if(rep){ if(async) rep->deleteLater(); else delete rep; }
 				rep = NULL;
 				return QNetworkReply::OperationCanceledError; //User abort
 			}
 		} else {
 			int rc = MC_ERR_NETWORK; //rep->error();
 			MC_WRN("Network failure: " << qPrintable(rep->errorString()) << " (Code " << rep->error() << ")");
-			if(rep) if(async) rep->deleteLater(); else delete rep;
+			if(rep){ if(async) rep->deleteLater(); else delete rep; }
 			rep = NULL;
 			return rc;
 		}
 	}
 	if(rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != 200) {
 		int val = rep->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-		if(rep) if(async) rep->deleteLater(); else delete rep;
+		if(rep){ if(async) rep->deleteLater(); else delete rep; }
 		rep = NULL;
 		MC_ERR_MSG(MC_ERR_SERVER,"Server did not send 200 OK: " << val);
 	}
@@ -227,7 +227,7 @@ int QtNetworkPerformer::processReply(){
 	MatchBuf(outbuf,data.size());
 	outbuf->used = data.size();
 	memcpy(outbuf->mem,data.constData(),data.size());
-	if(rep) if(async) rep->deleteLater(); else delete rep;
+	if(rep){ if(async) rep->deleteLater(); else delete rep; }
 	rep = NULL;
 	return 0;
 }

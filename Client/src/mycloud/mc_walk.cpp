@@ -67,6 +67,7 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(fs->name);
 		ostringstream local,server;
+		string localstr,serverstr;
 		local << "Name: " << shortname(fs->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(fs->is_dir) local << "Directory\n";
 		else local << "Size: " << BytesToSize(fs->size) << "\n";
@@ -79,7 +80,9 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 		if(srv->status == MC_FILESTAT_DELETED) server << "Deleted at: " << TimeToString(srv->mtime);
 		else server << "Last Modification: " << TimeToString(srv->mtime);
 
-		rc = QtClient::execConflictDialog(&p,&local.str(),&server.str(),doubtaction,fs->is_dir || srv->is_dir,true);
+		localstr = local.str();
+		serverstr = server.str();
+		rc = QtClient::execConflictDialog(&p,&localstr,&serverstr,doubtaction,fs->is_dir || srv->is_dir,true);
 		switch(rc){
 			case QtConflictDialog::Download:
 			case QtConflictDialog::DownloadD:
@@ -200,6 +203,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(srv->name);
 		ostringstream local,server;
+		string localstr,serverstr;
 		if(db){
 			local << "Name: " << shortname(db->name,MC_QTCONFLICTMAXLEN) << "\n";
 			local << "deleted\n";
@@ -215,8 +219,10 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 		else server << "Size: " << BytesToSize(srv->size) << "\n";
 		if(srv->status == MC_FILESTAT_DELETED) server << "Deleted at: " << TimeToString(srv->mtime);
 		else server << "Last Modification: " << TimeToString(srv->mtime);
-
-		rc = QtClient::execConflictDialog(&p,&local.str(),&server.str(),0,(db && db->is_dir) || srv->is_dir,false);
+		
+		localstr = local.str();
+		serverstr = server.str();
+		rc = QtClient::execConflictDialog(&p,&localstr,&serverstr,0,(db && db->is_dir) || srv->is_dir,false);
 		switch(rc){
 			case QtConflictDialog::Download:	
 			case QtConflictDialog::DownloadD:
@@ -355,6 +361,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(fs->name);
 		ostringstream local,server;
+		string localstr,serverstr;
 		local << "Name: " << shortname(fs->name,MC_QTCONFLICTMAXLEN) << "\n";
 		if(fs->is_dir) local << "Directory\n";
 		else local << "Size: " << BytesToSize(fs->size) << "\n";
@@ -370,7 +377,9 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 			server << "File never seen on Server\nParent directory is deleted";
 		}
 	
-		rc = QtClient::execConflictDialog(&p,&local.str(),&server.str(),0,fs->is_dir || (srv && srv->is_dir),false);
+		localstr = local.str();
+		serverstr = server.str();
+		rc = QtClient::execConflictDialog(&p,&localstr,&serverstr,0,fs->is_dir || (srv && srv->is_dir),false);
 		switch(rc){
 			case QtConflictDialog::Download:	
 			case QtConflictDialog::DownloadD:	
@@ -888,6 +897,7 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	list<mc_file_fs>::iterator onfsit,onfsend;
 	list<mc_file> indb;
 	list<mc_file>::iterator indbit,indbend;
+	list <mc_file> srvdummy;
 	mc_file srv;
 	string hashstr = "";
 	list<string> hashes;
@@ -911,8 +921,10 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 
 	onfs.sort(compare_mc_file_fs);
 	indb.sort(compare_mc_file);
+
+	srvdummy.assign(indb.begin(),indb.end());
 	
-	rc = filter_lists(path,&onfs,&indb,&list<mc_file>(indb),ctx->filter);
+	rc = filter_lists(path,&onfs,&indb,&srvdummy,ctx->filter);
 	MC_CHKERR(rc);
 
 	onfsit = onfs.begin();

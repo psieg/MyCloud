@@ -13,7 +13,7 @@
 
 #define MC_UPDATEFREQ	86400
 #define MC_UPDATECHECKURL	"https://padimail.de/mycloud/update/currentver/"
-#define MC_UPDATEGETURL		"https://padimail.de/mycloud/update/getpatch/?oldver="##MC_VERSION
+#define MC_UPDATEGETURL		"https://padimail.de/mycloud/update/getpatch/?oldver=" MC_VERSION
 #define MC_UPDATECERT	"updateCA.crt"
 
 class QtUpdateChecker : public QObject {

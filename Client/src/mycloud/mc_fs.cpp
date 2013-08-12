@@ -276,7 +276,13 @@ int fs_rename(const string& oldpath, const string& newpath){
 	return 0;
 }
 #else
-//TODO: linux version
+int fs_rename(const string& oldpath, const string& newpath){
+	int rc;
+	MC_DBGL("Renaming " << oldpath << " to " << newpath);
+	rc = rename(oldpath.c_str(),newpath.c_str());
+	MC_CHKERR_MSG(rc,"Rename failed: " << errno << ": " << strerror(errno));
+	return 0;
+}
 #endif
 
 /* Delete a file */
@@ -336,12 +342,14 @@ int fs_exists(const string& path){
 		return false;
 }
 #else
-//int fs_exists(const string& path){
+int fs_exists(const string& path){
 	/*FILE *f;
 
 	f = fs_fopen(path, "rb");
 	if(!f) return false;
 	fclose(f);
 	return true;*/
-//}
+	struct stat st;
+	return (stat(path.c_str(),&st) == 0);
+}
 #endif
