@@ -260,6 +260,11 @@ void qtSyncDialog::accept(){
 
 	} else {
 		worksync = &dbsynclist[dbindex];
+		rc = db_select_sync(worksync);
+		if(rc){
+			reject();
+			return;
+		}
 	}
 	worksync->path = qPrintable(ui.pathEdit->text().replace("\\","/"));
 	if(worksync->path[worksync->path.length()-1] != '/') worksync->path.append("/");
