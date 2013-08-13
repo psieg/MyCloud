@@ -8,8 +8,8 @@ qtSyncDialog::qtSyncDialog(QWidget *parent, int editID)
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 	ui.filterTable->setColumnWidth(0,23);
 	ui.filterTable->setColumnWidth(1,23);
-	ui.filterTable->setColumnWidth(2,100);
-	ui.filterTable->setColumnWidth(3,230);
+	//ui.filterTable->setColumnWidth(2,100);
+	//ui.filterTable->setColumnWidth(3,230);
 	ui.fetchFilterLabel->setVisible(false);
 	ui.needSubscribeLabel->setVisible(false);
 	ui.sendLabel->setVisible(false);
@@ -136,8 +136,11 @@ void qtSyncDialog::syncListReceived(int rc){
 		
 		ui.fetchSyncLabel->setVisible(false);
 		ui.nameBox->setEnabled(true);
+		ui.pathEdit->setEnabled(true);
+		ui.browseButton->setEnabled(true);
 		ui.okButton->setEnabled(true);
 		ui.globalButton->setEnabled(true); //might cause simultaneous use of performer but only if user wants it to
+		ui.nameBox->setFocus();
 	} else {
 		QMessageBox b(myparent);
 		b.setText(tr("No Sync available on server"));

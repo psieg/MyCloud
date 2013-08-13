@@ -7,8 +7,8 @@ qtGeneralFilterDialog::qtGeneralFilterDialog(QWidget *parent, QtNetworkPerformer
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 	ui.filterTable->setColumnWidth(0,23);
 	ui.filterTable->setColumnWidth(1,23);
-	ui.filterTable->setColumnWidth(2,100);
-	ui.filterTable->setColumnWidth(3,230);
+	//ui.filterTable->setColumnWidth(2,100);
+	//ui.filterTable->setColumnWidth(3,230);
 	myparent = parent;
 	performer = parentperf;
 	netibuf = parentibuf;

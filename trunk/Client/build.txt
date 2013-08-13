@@ -1,4 +1,4 @@
-For x64:
+For Win x64:
 1. Install Qt5.0.2 msvc2012 x64
 2. Extract sqlite-amalgamtion
 3. Get OpenSSL sources (include+crypto, replace include-paths with #include "")
@@ -6,7 +6,7 @@ For x64:
 5. Compile + Link against openssl/libx64
 6. Add openssl/binx64/ dlls to output directory
 
-For x86:
+For Win x86:
 1. Install Qt5.0.1 msvc2008 x86
 2. Extract sqlite-amalgamtion
 3. Get OpenSSL sources (include+crypto, replace include-paths with #include "")
@@ -16,6 +16,12 @@ For x86:
 
 For Qt Release:
 Use qt.conf + directory structure from Qt/, copy Qt Libraries + Platform dlls
+
+For linux:
+1. Get Qt5 and openssl via package manager
+2. Extract sqlite (or get and link against?)
+3. Use qmake to gerate a makefile
+3. Use make to compile
 
 
 OLD
