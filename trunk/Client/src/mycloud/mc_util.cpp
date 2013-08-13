@@ -111,7 +111,7 @@ string TimeToString(int64 time){
 		ts = localtime(&time);
 		if(ts == NULL) ret = "Invalid Time Value";
 		else {
-			strftime(buf, 20, "%d.%m.%Y %X", ts);
+			strftime(buf, 20, "%d.%m.%Y %H:%M:%S", ts);
 			ret.assign(buf);
 		}
 	}

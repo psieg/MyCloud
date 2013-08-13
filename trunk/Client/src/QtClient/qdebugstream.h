@@ -48,7 +48,7 @@ protected:
  {
   m_string.append(p, p + n);
 
-  int pos = 0;
+  size_t pos = 0;
   while (pos != std::string::npos)
   {
    pos = m_string.find('\n');

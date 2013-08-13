@@ -39,7 +39,7 @@ signals:
 public:	
 	QtClient(QWidget *parent = 0, int autorun = 0);
 	~QtClient();
-	static QtClient* instance(QWidget *parent = 0){/* if(!_instance) _instance = new QtClient(parent);*/ return _instance; }
+	static QtClient* instance(){ return _instance; }
 
 	void logOutput(QString s);
 	void notifyEnd(int evt);

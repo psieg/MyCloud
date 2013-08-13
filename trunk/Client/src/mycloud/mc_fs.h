@@ -9,9 +9,10 @@
 #include <sys/utime.h>
 #include <direct.h>
 #else
-#include <sys/types.h>
 #include <utime.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #endif
 
 FILE* fs_fopen(const string& filename, const string& mode);
