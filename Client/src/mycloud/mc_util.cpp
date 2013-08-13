@@ -47,37 +47,13 @@ string BinToHex(const string& data){
 
 /* Calculate MD5 hash of a string */
 int strmd5(unsigned char hash[16], const string& str){
-	int rc;
-	//unsigned char *buf;
-	//GCRY_MD_HD gcry_h = NULL;
-
-	// Begin hashing
-	//rc = gcry_md_open(&gcry_h, GCRY_MD_MD5, 0);
-	//MC_CHKERR_MSG(rc,"Can't open gcry_md5");
-
-	//gcry_md_write(gcry_h,str.data(),str.size());
-	
-	//buf = gcry_md_read(gcry_h, GCRY_MD_MD5);
-	
+	int rc;	
 	QByteArray tmp = QCryptographicHash::hash(QByteArray(str.c_str(),str.length()),QCryptographicHash::Md5);
 
-	//rc = MD5BinToHex(hash,fbuf);
 	memcpy(hash,tmp.constData(),sizeof(unsigned char)*16);
 
 	return 0;
 }
-
-/* add a string identifying the file to s for hashing */
-/* Deprecated, use crypt_filestring
-void filestring(mc_sync_ctx *ctx, mc_file *f, string *s){
-	s->append((const char*)&f->id,sizeof(int));
-	s->append(f->name);
-	//s->append((const char*)&f->ctime,sizeof(int64)); //not a deciding/important criteria
-	s->append((const char*)&f->mtime,sizeof(int64));
-	s->append((const char*)&f->size,sizeof(int64));
-	s->append((const char*)&f->is_dir,sizeof(char));
-	s->append((const char*)&f->hash,sizeof(unsigned char)*16);
-}*/
 
 /* add a slash behind the name if it's a dir */
 string printname(mc_file *f){
@@ -92,7 +68,7 @@ string printname(mc_file_fs *f){
 }
 
 /* truncate and add ... where necessary */
-string shortname(const string& s, int len){
+string shortname(const string& s, size_t len){
 	if(s.length()+3 > len){
 		return s.substr(0,len-3).append("...");
 	} else {
@@ -182,7 +158,7 @@ string BytesToSize(int64 bytes, bool exact, int precision){
 }
 
 string AddConflictExtension(string path){
-	int posname,posext;
+	size_t posname,posext;
 	posname = path.find_last_of("/");
 	if(posname == string::npos) posname = 0;
 	posext = path.find_last_of(".");

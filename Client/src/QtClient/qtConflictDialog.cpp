@@ -17,7 +17,7 @@ QtConflictDialog::~QtConflictDialog()
 
 }
 
-int QtConflictDialog::exec(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool isDir, bool manualSolvePossible)
+int QtConflictDialog::exec(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible)
 {
 	setWindowTitle(tr("Conflict: ") + fullPath->c_str());
 	ui.downloadButton->setDescription(descServer->c_str());

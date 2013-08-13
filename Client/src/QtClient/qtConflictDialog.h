@@ -15,7 +15,7 @@ class QtConflictDialog : public QDialog
 public:
 	QtConflictDialog(QWidget *parent = 0);
 	~QtConflictDialog();
-	int exec(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool isDir, bool manualSolvePossible);
+	int exec(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible);
 
 	enum DialogCode {
 		// Bitmap 

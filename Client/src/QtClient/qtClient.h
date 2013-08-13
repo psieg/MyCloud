@@ -50,7 +50,7 @@ public:
 #endif
 	void notifyProgress(int value, int total);
 	void notifySubProgress(double value, double total);
-	static int execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool isDir, bool manualSolvePossible);
+	static int execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible);
 
 	int listSyncs();
 	void updateStatus(QString object);
@@ -75,7 +75,7 @@ private slots:
 //#endif
 	void __notifyProgress(int value, int total);
 	void __notifySubProgress(double value, double total);
-	int _execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool isDir, bool manualSolvePossible);
+	int _execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible);
 	void on_quitButton_clicked();
 	void on_pushButton_clicked();
 	void on_pushButton2_clicked();

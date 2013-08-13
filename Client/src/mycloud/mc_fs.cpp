@@ -39,7 +39,7 @@ FILE* fs_fopen(const string& filename, const string& mode){
 #endif
 
 /* Calculate MD5 hash from filename when the file is already open (rb,seek_set) */
-int fs_filemd5(unsigned char hash[16], const string& fpath, size_t fsize, FILE *fdesc){
+int fs_filemd5(unsigned char hash[16], size_t fsize, FILE *fdesc){
 	size_t bufsize;
 	char* fbuf;
 	QCryptographicHash cry(QCryptographicHash::Md5);
@@ -82,7 +82,7 @@ int fs_filemd5(unsigned char hash[16], const string& fpath, size_t fsize){
 	fdesc = fs_fopen(fpath, "rb");
 	if(!fdesc) MC_ERR_MSG(-1,"Can't open file");
 	
-	rc = fs_filemd5(hash,fpath,fsize,fdesc);
+	rc = fs_filemd5(hash,fsize,fdesc);
 
 	fclose(fdesc);
 
@@ -256,7 +256,7 @@ int fs_touch(const string& path, int64 mtime, int64 ctime){
 		MC_DBGL("Touching " << path << " with m" << mtime)
 	else
 		MC_DBGL("Touching " << path << " with m" << mtime << "/c" << ctime);
-	buf.actime = NULL;
+	buf.actime = 0;
 	buf.modtime = mtime;
 	//TODO: set c(reation)time on linux?!
 	rc = utime(path.c_str(),&buf);

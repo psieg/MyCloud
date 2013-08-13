@@ -399,14 +399,14 @@ void QtClient::__notifySubProgress(double value, double total)
 	}
 }
 
-int QtClient::execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool isDir, bool manualSolvePossible)
+int QtClient::execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible)
 {
 	int rc = -2;
 	
 	//foreach(QWidget *widget, qApp->topLevelWidgets()) {
 	//	if(widget->inherits("QMainWindow")){
 			QMetaObject::invokeMethod(/*qobject_cast<QtClient*>(widget)*/QtClient::instance(),"_execConflictDialog",Qt::BlockingQueuedConnection,
-				Q_RETURN_ARG(int,rc),Q_ARG(std::string*,fullPath),Q_ARG(std::string*,descLocal),Q_ARG(std::string*,descServer),Q_ARG(int,defaultValue),Q_ARG(bool,isDir),Q_ARG(bool,manualSolvePossible));
+				Q_RETURN_ARG(int,rc),Q_ARG(std::string*,fullPath),Q_ARG(std::string*,descLocal),Q_ARG(std::string*,descServer),Q_ARG(int,defaultValue),Q_ARG(bool,manualSolvePossible));
 			return rc;
 	//	}
 	//}
@@ -414,7 +414,7 @@ int QtClient::execConflictDialog(std::string *fullPath, std::string *descLocal, 
 	
 }
 
-int  QtClient::_execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool isDir, bool manualSolvePossible)
+int  QtClient::_execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible)
 {
 	int rc;
 	QString object = fullPath->c_str();
@@ -426,7 +426,7 @@ int  QtClient::_execConflictDialog(std::string *fullPath, std::string *descLocal
 		if(this->isVisible()) parent = this;
 		conflictDialog = new QtConflictDialog(parent);
 	}
-	rc = conflictDialog->exec(fullPath,descLocal,descServer,defaultValue,isDir,manualSolvePossible);
+	rc = conflictDialog->exec(fullPath,descLocal,descServer,defaultValue,manualSolvePossible);
 	progressBar->show();
 	progressLabel->show();
 	setStatus(tr("Syncing "),currentSyncString,icon_sync);

@@ -46,7 +46,6 @@ QtWatcher::~QtWatcher(){
 }
 
 void QtWatcher::run(int timeout){
-	int rc,id;
 	timer.start(timeout*1000);
 	quittimer.start();
 	repeatcounter = 0;
