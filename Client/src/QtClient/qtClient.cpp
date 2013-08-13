@@ -38,13 +38,17 @@ QtClient::QtClient(QWidget *parent, int autorun)
 
 	connect(ui.syncTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
 
-	//list syncs
-	//ui.syncTable->setColumnWidth(0,40);
+	//list syncs 
+	/*
 	ui.syncTable->setColumnWidth(0,100);
 	ui.syncTable->setColumnWidth(1,180);
 	ui.syncTable->setColumnWidth(2,110);
 	ui.syncTable->setColumnWidth(3,139);
-	ui.syncTable->setColumnWidth(4,40);
+	ui.syncTable->setColumnWidth(4,40);*/
+	ui.syncTable->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Stretch);
+	ui.syncTable->horizontalHeader()->setSectionResizeMode(1,QHeaderView::Stretch);
+	ui.syncTable->horizontalHeader()->setSectionResizeMode(2,QHeaderView::ResizeToContents);
+	ui.syncTable->horizontalHeader()->setSectionResizeMode(3,QHeaderView::Stretch);
 
 	//ui.splitter->setStretchFactor(0,2);
 	//ui.splitter->setStretchFactor(1,3);
