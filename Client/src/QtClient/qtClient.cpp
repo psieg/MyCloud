@@ -13,7 +13,6 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	: QMainWindow(parent)
 {
 	mc_status s;
-	int rc;
 
 	Q_ASSERT_X((QtClient::_instance == NULL), "QtClient", "There should only be one QtClient Instance");
 	QtClient::_instance = this;
@@ -39,7 +38,7 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	connect(ui.syncTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
 
 	//list syncs 
-	/*
+	/* Works nice on windows, sucks on linux
 	ui.syncTable->setColumnWidth(0,100);
 	ui.syncTable->setColumnWidth(1,180);
 	ui.syncTable->setColumnWidth(2,110);
@@ -592,7 +591,6 @@ void QtClient::on_settingsButton_clicked(){
 void QtClient::on_disableButton_clicked(){
 	int rc;
 	int index = ui.syncTable->selectedItems().at(0)->row();
-	int tmp = synclist[index].priority;
 	if(synclist[index].status == MC_SYNCSTAT_DISABLED)
 		synclist[index].status = MC_SYNCSTAT_UNKOWN;
 	else
