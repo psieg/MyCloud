@@ -5,10 +5,14 @@ qtGeneralFilterDialog::qtGeneralFilterDialog(QWidget *parent, QtNetworkPerformer
 {
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+	ui.filterTable->horizontalHeader()->setSectionResizeMode(0,QHeaderView::Fixed);
 	ui.filterTable->setColumnWidth(0,23);
+	ui.filterTable->horizontalHeader()->setSectionResizeMode(1,QHeaderView::Fixed);
 	ui.filterTable->setColumnWidth(1,23);
-	//ui.filterTable->setColumnWidth(2,100);
-	//ui.filterTable->setColumnWidth(3,230);
+	ui.filterTable->horizontalHeader()->setSectionResizeMode(2,QHeaderView::Fixed);
+	QFontMetrics fm(ui.filterTable->font()); 
+	ui.filterTable->setColumnWidth(2,fm.width(tr("MFull Name (regex)M")));
+	ui.filterTable->horizontalHeader()->setSectionResizeMode(3,QHeaderView::Stretch);
 	myparent = parent;
 	performer = parentperf;
 	netibuf = parentibuf;
