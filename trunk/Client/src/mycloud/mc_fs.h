@@ -19,7 +19,7 @@ FILE* fs_fopen(const string& filename, const string& mode);
 
 /* Calculate (plain) MD5 hash of the file at fname */
 int fs_filemd5(unsigned char hash[16], const string& fpath, size_t fsize);
-int fs_filemd5(unsigned char hash[16], const string& fpath, size_t fsize, FILE *fdesc);
+int fs_filemd5(unsigned char hash[16], size_t fsize, FILE *fdesc);
 
 /* Get stats of a file */
 int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname); //TODO: not used. deprecate?

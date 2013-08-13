@@ -16,13 +16,6 @@ int crypt_striv(mc_crypt_ctx *cctx, const string& path){
 }
 //Randomness helper function for generating IVs
 int crypt_randiv(mc_crypt_ctx *cctx){
-	int64 data;
-	int rc;
-/*#ifdef MC_OS_WIN
-	RAND_screen();
-#endif*/
-	//RAND_poll();
-
 	if(RAND_status()){
 		if(!RAND_bytes(cctx->iv+MC_CRYPT_IDOFFSET,MC_CRYPT_IVSIZE))
 			MC_ERR_MSG(MC_ERR_CRYPTO,"RAND_bytes failed");
@@ -32,13 +25,6 @@ int crypt_randiv(mc_crypt_ctx *cctx){
 }
 //Generate a new key
 int crypt_randkey(unsigned char key[MC_CRYPT_KEYSIZE]){
-	int64 data;
-	int rc;
-/*#ifdef MC_OS_WIN
-	RAND_screen();
-#endif*/
-	RAND_poll();
-
 	if(RAND_status()){
 		if(!RAND_bytes(key,MC_CRYPT_KEYSIZE))
 			MC_ERR_MSG(MC_ERR_CRYPTO,"RAND_bytes failed");
@@ -120,19 +106,12 @@ int crypt_decryptstring(mc_sync_ctx *ctx, const string& ivstr, const string& dat
 }
 
 int crypt_filter_tosrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f){
-	mc_crypt_ctx cctx;
-	QByteArray buf;
-	int rc,written;
 	if(ctx->sync->crypted){
 		return crypt_encryptstring(ctx,syncname,f->rule,&f->rule);
 	}
 	return 0;	
 }
 int crypt_filter_fromsrv(mc_sync_ctx *ctx, const string& syncname, mc_filter *f){
-	mc_crypt_ctx cctx;
-	QByteArray buf;
-	int rc,written;
-	void* data;
 	if(ctx->sync->crypted){
 		return crypt_decryptstring(ctx,syncname,f->rule,&f->rule);
 	}
@@ -154,7 +133,6 @@ int crypt_filterlist_fromsrv(mc_sync_ctx *ctx, const string& syncname, list<mc_f
 //Fields that are to be mapped: name, size (crypt needs a few bytes more)
 
 int crypt_file_tosrv(mc_sync_ctx *ctx, const string& path, mc_file *f){
-	int rc;
 	if(ctx->sync->crypted){
 		if(f->cryptname == ""){
 			return crypt_encryptstring(ctx,path,f->name,&f->cryptname);
@@ -199,7 +177,7 @@ void crypt_filestring(mc_sync_ctx *ctx, mc_file *f, string *s){
 }
 
 
-int crypt_filemd5_actual(mc_crypt_ctx *cctx, const string& fpath , size_t fsize, FILE *fdesc, unsigned char hash[16]){
+int crypt_filemd5_actual(mc_crypt_ctx *cctx, size_t fsize, FILE *fdesc, unsigned char hash[16]){
 	size_t bufsize;
 	char* fbuf;
 	QCryptographicHash cry(QCryptographicHash::Md5);
@@ -282,11 +260,10 @@ int crypt_filemd5_new(mc_crypt_ctx *cctx, unsigned char hash[16], const string& 
 		MC_CHKERR(crypt_randiv(cctx));
 		cctx->hasiv = true;
 		
-		return crypt_filemd5_actual(cctx,fpath,fsize,fdesc,hash);
-	} else return fs_filemd5(hash,fpath,fsize,fdesc);
+		return crypt_filemd5_actual(cctx,fsize,fdesc,hash);
+	} else return fs_filemd5(hash,fsize,fdesc);
 }
 int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16], const string& fpath){
-	int rc;
 	if(cctx->ctx->sync->crypted){
 		FILE *fdesc;
 		int rc;
@@ -305,15 +282,13 @@ int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16
 	if(cctx->ctx->sync->crypted){
 		int rc;
 		MC_DBGL("Calculating CryptMD5 of file " << fpath);
-		if(file->id == 0)
-			MC_INF("WTF?");
 
 		//For known we need the IV on the server
 		rc = srv_getfile(file->id,0,MC_CRYPT_PADDING,(char*)cctx->iv,NULL,file->hash,false);
 		MC_CHKERR(rc);
 		//cctx->hasiv = true; //has old iv but that is not good for a new upload...
 				
-		rc = crypt_filemd5_actual(cctx,fpath,file->size,fdesc,hash);
+		rc = crypt_filemd5_actual(cctx,file->size,fdesc,hash);
 		MC_CHKERR(rc);
 
 		//if(memcmp(hash,file->hash,16) != 0){
@@ -321,7 +296,7 @@ int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16
 		//}
 
 		return rc;
-	} else return fs_filemd5(hash,fpath,file->size,fdesc);
+	} else return fs_filemd5(hash,file->size,fdesc);
 }
 
 
@@ -346,7 +321,7 @@ int crypt_init_download(mc_crypt_ctx *cctx, mc_file *file){
 }
 
 int crypt_initresume_down(mc_crypt_ctx *cctx, mc_file *file){
-	int rc,written,blocksize;
+	int rc;
 	cctx->f = file;
 	if(cctx->ctx->sync->crypted){
 		//if(!file->is_dir){ //resume only on files
@@ -411,8 +386,6 @@ int crypt_resumetopos_down(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE
 
 int crypt_getfile(mc_crypt_ctx *cctx, int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16]){
 	int rc,cryptwritten;
-	mc_buf buftag;
-	mc_buf bufiv;
 	int64 tagoffset = 0;
 	int64 memwritten,write,writeoffset,written;
 	if(cctx->ctx->sync->crypted){
@@ -508,7 +481,7 @@ int crypt_getfile(mc_crypt_ctx *cctx, int id, int64 offset, int64 blocksize, FIL
 	} else return srv_getfile(id,offset,blocksize,fdesc,byteswritten,hash);
 }
 
-int crypt_finish_download(mc_crypt_ctx *cctx, int64 offset, FILE *fdesc){
+int crypt_finish_download(mc_crypt_ctx *cctx){
 	int rc,written;
 	if(cctx->ctx->sync->crypted){
 		if(!cctx->f->is_dir && cctx->f->size > 0){
@@ -672,7 +645,6 @@ int crypt_putfile(mc_crypt_ctx *cctx, const string& path, mc_file *file, int64 b
 int crypt_addfile(mc_crypt_ctx *cctx, int id, int64 offset, int64 blocksize, FILE *fdesc, unsigned char hash[16]){
 	int rc,written;
 	size_t read;
-	mc_buf buftag;
 	if(cctx->ctx->sync->crypted){
 		//if(!cctx->f->is_dir){ //addfile only on files
 			MatchBuf(&cctx->pbuf,blocksize);
@@ -725,8 +697,7 @@ int crypt_patchfile(mc_crypt_ctx *cctx, const string& path, mc_file *file){
 	} else return srv_patchfile(file);
 }
 
-int crypt_finish_upload(mc_crypt_ctx *cctx, int id){
-	mc_buf buftag;
+int crypt_finish_upload(mc_crypt_ctx *cctx){
 	int rc = 0;
 	if(cctx->ctx->sync->crypted){
 		if(!cctx->f->is_dir){

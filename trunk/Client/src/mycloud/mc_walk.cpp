@@ -82,7 +82,7 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 
 		localstr = local.str();
 		serverstr = server.str();
-		rc = QtClient::execConflictDialog(&p,&localstr,&serverstr,doubtaction,fs->is_dir || srv->is_dir,true);
+		rc = QtClient::execConflictDialog(&p,&localstr,&serverstr,doubtaction,true);
 		switch(rc){
 			case QtConflictDialog::Download:
 			case QtConflictDialog::DownloadD:
@@ -179,7 +179,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 	string p,fp;
 	int rc;
 	MC_CONFLICTACTION act = MC_CONFLICTACT_UNKNOWN;
-	bool up, actR = false, actD = false;
+	bool actR = false, actD = false;
 	MC_INFL("Found conflict at file " << srv->id << ": " << printname(srv));
 
 	// check for previous decision
@@ -222,7 +222,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 		
 		localstr = local.str();
 		serverstr = server.str();
-		rc = QtClient::execConflictDialog(&p,&localstr,&serverstr,0,(db && db->is_dir) || srv->is_dir,false);
+		rc = QtClient::execConflictDialog(&p,&localstr,&serverstr,0,false);
 		switch(rc){
 			case QtConflictDialog::Download:	
 			case QtConflictDialog::DownloadD:
@@ -349,7 +349,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 	string p;
 	int rc;
 	MC_CONFLICTACTION act = MC_CONFLICTACT_UNKNOWN;
-	bool up, actR = false, actD = false;
+	bool actR = false, actD = false;
 	if(srv) { MC_INFL("Found conflict at file " << srv->id << ": " << printname(srv)) }
 	else { MC_INFL("Found conflict at file ?: " << printname(fs)); }
 
@@ -379,7 +379,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 	
 		localstr = local.str();
 		serverstr = server.str();
-		rc = QtClient::execConflictDialog(&p,&localstr,&serverstr,0,fs->is_dir || (srv && srv->is_dir),false);
+		rc = QtClient::execConflictDialog(&p,&localstr,&serverstr,0,false);
 		switch(rc){
 			case QtConflictDialog::Download:	
 			case QtConflictDialog::DownloadD:	
@@ -473,7 +473,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 				MC_CHKERR(rc);
 				rc = fs_filestats(&fsdummy,pit->c_str(),tit->name.c_str());
 				MC_CHKERR(rc);
-				rc = upload(ctx,*pit,&fsdummy,&dbdummy,&*tit,false);
+				rc = upload(ctx,*pit,&fsdummy,&dbdummy,&*tit,hashstr,0,false);
 				MC_CHKERR(rc);
 				++tit;
 				++pit;

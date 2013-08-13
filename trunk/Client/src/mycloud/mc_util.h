@@ -36,7 +36,7 @@ string printname(mc_file *f);
 string printname(mc_file_fs *f);
 
 /* crop and add ... where necessary */
-string shortname(const string& s, int len);
+string shortname(const string& s, size_t len);
 
 string TimeToString(int64 time);
 //negative precision indicates dynamic (up to 2)

@@ -60,7 +60,7 @@ int crypt_init_download(mc_crypt_ctx *cctx, mc_file *file);
 int crypt_initresume_down(mc_crypt_ctx *cctx, mc_file *file);
 int crypt_resumetopos_down(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE *fdesc);
 int crypt_getfile(mc_crypt_ctx *cctx, int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16]);
-int crypt_finish_download(mc_crypt_ctx *cctx, int64 offset, FILE *fdesc);
+int crypt_finish_download(mc_crypt_ctx *cctx);
 
 // Modify and send, if new, encrypt name
 int crypt_init_upload(mc_crypt_ctx *cctx, mc_file *file);
@@ -69,7 +69,7 @@ int crypt_resumetopos_up(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE *
 int crypt_putfile(mc_crypt_ctx *cctx, const string& path, mc_file *file, int64 blocksize, FILE *fdesc);
 int crypt_addfile(mc_crypt_ctx *cctx, int id, int64 offset, int64 blocksize, FILE *fdesc, unsigned char hash[16]);
 int crypt_patchfile(mc_crypt_ctx *cctx, const string& path, mc_file *file);
-int crypt_finish_upload(mc_crypt_ctx *cctx, int id);
+int crypt_finish_upload(mc_crypt_ctx *cctx);
 
 
 #endif /* MC_CRYPT_H */

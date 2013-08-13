@@ -270,10 +270,7 @@ int srv_eval(int requiredcode, int altcode, mc_buf *outbuf){
 }
 
 int srv_perform(MC_SRVSTATUS requiredcode, bool withprogress = false, MC_SRVSTATUS altcode = -1, int rdepth = 0, mc_buf *inbuf = NULL, mc_buf *outbuf = NULL){
-	//CURLcode rc;
 	int rc;
-	long httpstatus = 0;
-	int64 dummy;
 	if(inbuf == NULL) inbuf = &ibuf;
 	if(outbuf == NULL) outbuf = &obuf;
 
@@ -688,7 +685,6 @@ SAFEFUNC3(srv_putfile,mc_file *file, int64 blocksize, char *buf, \
 int _srv_putfile(mc_file *file, int64 blocksize, char *buf){
 	MC_DBGL("Putting file " << file->id << ": " << file->name << (file->is_dir?"/":""));
 	int rc;
-	size_t read;
 	pack_putfile(&ibuf,authtoken,file,blocksize);
 		
 	MatchBuf(&ibuf,ibuf.used+blocksize);
@@ -714,10 +710,9 @@ int _srv_putfile(mc_file *file, int64 blocksize, char *buf){
 SAFEFUNC5(srv_addfile,int id, int64 offset, int64 blocksize, FILE *fdesc, unsigned char hash[16], \
 		  id,offset,blocksize,fdesc,hash)
 int _srv_addfile(int id, int64 offset, int64 blocksize, FILE *fdesc, unsigned char hash[16]){
-
 	MC_DBGL("Adding file " << id << " at offset " << offset);
-	int rc;
 	size_t read;
+	int rc;
 	pack_addfile(&ibuf,authtoken,id,offset,blocksize,hash);
 
 	MatchBuf(&ibuf,ibuf.used+blocksize);
