@@ -38,7 +38,7 @@ void qtSyncDialog::showEvent(QShowEvent *event){
 	rc = db_select_status(&s);
 	if(rc) QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
 	
-	if(s.url == ""){		
+	if(s.url == ""){
 		QMessageBox b(myparent);
 		b.setText("No server configured");
 		b.setInformativeText("To subscribe syncs, you need to set the server first.");
@@ -46,7 +46,7 @@ void qtSyncDialog::showEvent(QShowEvent *event){
 		b.setDefaultButton(QMessageBox::Ok);
 		b.setIcon(QMessageBox::Warning);
 		b.exec();
-		QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
+		reject();
 		return;
 	} else {
 		QString _url = "https://";
@@ -73,6 +73,15 @@ void qtSyncDialog::authed(int rc){
 
 	rc = srv_auth_process(&netobuf,&authtime,&dummy);
 	if(rc){
+		if((rc) == MC_ERR_TIMEDIFF){	
+			QMessageBox b(myparent);
+			b.setText("Time difference too high");
+			b.setInformativeText("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually.");
+			b.setStandardButtons(QMessageBox::Ok);
+			b.setDefaultButton(QMessageBox::Ok);
+			b.setIcon(QMessageBox::Warning);
+			b.exec();
+		}
 		reject();
 		return;
 	}

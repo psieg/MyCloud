@@ -124,9 +124,21 @@ int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname){
 	return 0;
 }
 #else
-//TODO: implement
-//int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname){
-//}
+int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname){
+	struct stat st;
+	int rc;
+	MC_DBGL("Getting stats of " << fname);
+
+	rc = stat(fpath.c_str(),&st);
+	if(rc) MC_ERR_MSG(MC_ERR_IO,"stat failed: " << errno);
+	file_fs->name = fname;
+	file_fs->ctime = st.st_ctime;
+	file_fs->mtime = st.st_mtime;
+	file_fs->is_dir = S_ISDIR(st.st_mode);
+	file_fs->size = (file_fs->is_dir?0:st.st_size);
+
+	return 0;
+}
 #endif
 
 #ifdef MC_OS_WIN
@@ -165,9 +177,37 @@ int fs_listdir(list<mc_file_fs> *l, const string& path){
 	return 0;
 }
 #else
-//TODO: implement
-//int fs_listdir(list<mc_file_fs> *l, const string& path){
-//}
+int fs_listdir(list<mc_file_fs> *l, const string& path){
+	DIR *d;
+	struct dirent *dent;
+	struct stat st;
+	mc_file_fs file;
+	string fpath;
+	int rc;
+	MC_DBGL("Listing " << path);
+
+	d = opendir(path.c_str());
+	if(d == NULL) MC_ERR_MSG(MC_ERR_IO,"opendir failed: " << errno);
+
+	errno = 0;
+	while((dent = readdir(d)) != NULL){
+		if(!strcmp(dent->d_name,".") || !strcmp(dent->d_name,"..")) continue;
+		fpath.assign(path).append(dent->d_name);
+
+		rc = stat(fpath.c_str(),&st);
+		if(rc) MC_ERR_MSG(MC_ERR_IO,"stat failed: " << errno);
+		file.name = dent->d_name;
+		file.ctime = st.st_ctime;
+		file.mtime = st.st_mtime;
+		file.is_dir = S_ISDIR(st.st_mode);
+		file.size = (file.is_dir?0:st.st_size);
+		l->push_back(file);
+	}
+	if(errno) MC_ERR_MSG(MC_ERR_IO,"readdir failed: " << errno);
+	closedir(d);
+
+	return 0;
+}
 #endif
 
 /* Set mtime of a file */
@@ -249,7 +289,7 @@ int fs_mkdir(const string& path){
 int fs_mkdir(const string& path, int64 mtime, int64 ctime){
 	int rc;
 	MC_DBGL("Creating directory " << path);
-	rc = mkdir(path.c_str(),NULL);
+	rc = mkdir(path.c_str(),0777);
 	MC_CHKERR_MSG(rc,"Failed to create directory " << path);
 	if(mtime != -1){
 		return fs_touch(path, mtime, ctime);
@@ -260,7 +300,7 @@ int fs_mkdir(const string& path, int64 mtime, int64 ctime){
 int fs_mkdir(const string& path){
 	int rc;
 	MC_DBGL("Creating directory " << path);
-	rc = mkdir(path.c_str(),NULL);
+	rc = mkdir(path.c_str(),0777);
 	MC_CHKERR_MSG(rc,"Failed to create directory " << path);
 	return 0;
 }
