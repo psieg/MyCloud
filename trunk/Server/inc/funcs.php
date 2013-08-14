@@ -84,4 +84,11 @@ function updateHash($fid,$fparent=NULL,$fis_dir=NULL){
 	//$q = $mysqli->query("UPDATE mc_syncs SET hash = '".esc($hash[0])."', hashdata = '".esc($hash[1])."' WHERE id = ".-$id);
 	if(!$q) print($mysqli->error);
 }
+
+function generatehash($password){
+	$cost = 10;
+	$salt = sprintf("$2a$%02d$",$cost).strtr(base64_encode(mcrypt_create_iv(16,MCRYPT_DEV_URANDOM)), '+', '.');
+	return crypt($password,$salt);
+}
+
 ?>
