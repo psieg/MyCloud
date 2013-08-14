@@ -78,11 +78,12 @@ function uscan($path){
 	$l = scandir($path);
 	foreach($l as $u){
 		if(is_dir($path.'/'.$u) && $u != "." && $u != ".."){
-			$pw = md5(mt_rand(0,32).time());
-			echo "INSERT INTO mc_users (name,password,lastseen) VALUES ('".esc($u)."','".$pw."',0)"."\n"; 
-			$q = $mysqli->query("INSERT INTO mc_users (name,password,lastseen) VALUES ('".esc($u)."','".$pw."',0)");
+			$pwplain = md5(mt_rand(0,32).time());
+			$pw = generatehash($pwplain);
+			echo "INSERT INTO mc_users (name,password,lastseen,lastregen) VALUES ('".esc($u)."','".$pw."',0,0)"."\n"; 
+			$q = $mysqli->query("INSERT INTO mc_users (name,password,lastseen,lastregen) VALUES ('".esc($u)."','".$pw."',0,0)");
 			if(!$q){ echo "Error: ".$mysqli->error; break; }
-			echo "User added: ".$u." (".$mysqli->insert_id.")\n";
+			echo "User added: ".$u.":".$pwplain." (".$mysqli->insert_id.")\n";
 			sscan($mysqli->insert_id,$path.'/'.$u);
 		}
 	}

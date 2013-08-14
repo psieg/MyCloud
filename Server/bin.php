@@ -29,16 +29,16 @@ if($ready){
 			$qry = unpack_auth($ibuf);
 			if($qry[2] < MC_MIN_CLIENT_PROTOCOL_VERSION) print(pack_code(MC_SRVSTAT_INCOMPATIBLE));
 			//Verify auth
-			$q = $mysqli->query("SELECT id,password,token,lastseen FROM mc_users WHERE name = '".esc($qry[0])."'");
+			$q = $mysqli->query("SELECT id,password,token,lastseen,lastregen FROM mc_users WHERE name = '".esc($qry[0])."'");
 			$res = $q->fetch_row();
 			if($res){
 				if(crypt($qry[1],$res[1]) == $res[1]){
-					if(time()-$res[3] <= MC_SESS_EXPIRE){
+					if((time()-$res[4] <= MC_TOKEN_REGEN) && (time()-$res[3] <= MC_SESS_EXPIRE)){
 						$mysqli->query("UPDATE mc_users SET lastseen = ".time()." WHERE id = ".$res[0]);
 						print(pack_authed($res[2],time(),$basedate));
 					} else {
 						$newtoken = md5("token".$res[0].time().$res[3].$res[2],true);
-						$mysqli->query("UPDATE mc_users SET token = '".esc($newtoken)."', lastseen = ".time()." WHERE id = ".$res[0]);
+						$mysqli->query("UPDATE mc_users SET token = '".esc($newtoken)."', lastseen = ".time().", lastregen = ".time()." WHERE id = ".$res[0]);
 						print(pack_authed($newtoken,time(),$basedate));
 					}
 				} else {
@@ -66,7 +66,7 @@ if($ready){
 		case MC_SRVQRY_NOTIFYCHANGE:
 			try {
 				$token = unpack_token($ibuf);
-				$q = $mysqli->query("SELECT id FROM mc_users WHERE token = '".esc($token)."' AND lastseen >= ".(time()-MC_SESS_EXPIRE));
+				$q = $mysqli->query("SELECT id FROM mc_users WHERE token = '".esc($token)."' AND lastseen >= ".(time()-MC_SESS_EXPIRE)." AND lastregen >= ".(time()-MC_TOKEN_REGEN));
 				$uid = $q->fetch_row();
 				if($uid){
 					$uid = $uid[0];
