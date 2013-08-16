@@ -16,6 +16,7 @@ For Win x86:
 
 For Qt Release:
 Use qt.conf + directory structure from Qt/, copy Qt Libraries + Platform dlls
+Use msvc*.dll from Microsoft.VC110.CRT
 
 For linux:
 1. Get Qt5 and openssl via package manager

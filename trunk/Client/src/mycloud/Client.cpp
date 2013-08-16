@@ -47,11 +47,37 @@ int runmc()
 								MC_WRN("Server has newer basedate, resetting");
 								rc = db_execstr("DELETE FROM files");
 								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
-								//rc = db_execstr("UPDATE syncs SET filterversion = 0");
+								rc = db_execstr("UPDATE syncs SET filterversion = 0");
+								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 								rc = db_execstr("DELETE FROM filters");
 								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								//Try to recover syncs
+								std::list<mc_sync> srvsyncs;
+								std::list<mc_sync_db> dbsyncs;
+								rc = srv_listsyncs(&srvsyncs);								
+								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								rc = db_list_sync(&dbsyncs);
+								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								//we're going to insert new, but for now all IDs must be free
 								rc = db_execstr("DELETE FROM syncs");
 								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								for(mc_sync_db& db : dbsyncs){
+									bool found = false;
+									for(mc_sync& srv : srvsyncs){
+										if(db.name == srv.name){
+											db.id = srv.id;
+											db.crypted = srv.crypted;
+											db.filterversion = 0;
+											memset(db.hash,0,16);
+											db.status = MC_SYNCSTAT_UNKOWN;
+											rc = db_insert_sync(&db);
+											if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+											found = true;
+											break;
+										}
+									}
+									if(!found) MC_WRN("Failed to find Sync " << db.id << ": " << db.name << " on Server");
+								}
 								MC_NOTIFYEND(MC_NT_SYNC); // Trigger listSyncs()
 							}
 							status.basedate = basedate;
