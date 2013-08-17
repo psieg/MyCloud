@@ -1,6 +1,6 @@
-#include "qtSettingsDialog.h"
+#include "QtSettingsDialog.h"
 
-qtSettingsDialog::qtSettingsDialog(QWidget *parent)
+QtSettingsDialog::QtSettingsDialog(QWidget *parent)
 	: QDialog(parent)
 {
 	int rc;
@@ -35,21 +35,21 @@ qtSettingsDialog::qtSettingsDialog(QWidget *parent)
 	}
 }
 
-qtSettingsDialog::~qtSettingsDialog()
+QtSettingsDialog::~QtSettingsDialog()
 {
 
 }
 
-void qtSettingsDialog::passchange(){
+void QtSettingsDialog::passchange(){
 	passchanged = true;
 }
 
-void qtSettingsDialog::acceptActivate(){
+void QtSettingsDialog::acceptActivate(){
 	if(!ui.certBox->isChecked()){
 		QMessageBox b(this);
-		b.setText("UNSAFE: This option should be used only on safe networks");
-		b.setInformativeText("You are about to disable Certificate Verification. This allows for easy man-in-the-middle attacks and is effectively as safe as no ecryption!\nONLY use this option on safe and trusted networks.\nIf you get SSL handshake errors, make sure you provided a trustCA.crt first.");
-		QAbstractButton *yes = b.addButton("Yes, I know what I'm doing",QMessageBox::YesRole);
+		b.setText(tr("UNSAFE: This option should be used only on safe networks"));
+		b.setInformativeText(tr("You are about to disable Certificate Verification. This allows for easy man-in-the-middle attacks and is effectively as safe as no ecryption!\nONLY use this option on safe and trusted networks.\nIf you get SSL handshake errors, make sure you provided a trustCA.crt first."));
+		QAbstractButton *yes = b.addButton(tr("Yes, I know what I'm doing"),QMessageBox::YesRole);
 		b.setStandardButtons(QMessageBox::No);
 		b.setDefaultButton(QMessageBox::No);
 		b.setIcon(QMessageBox::Warning);
@@ -60,12 +60,12 @@ void qtSettingsDialog::acceptActivate(){
 	}
 }
 
-void qtSettingsDialog::on_passwordButton_clicked(){
-	qtPasswordChangeDialog d(this);
+void QtSettingsDialog::on_passwordButton_clicked(){
+	QtPasswordChangeDialog d(this);
 	d.exec();
 }
 
-void qtSettingsDialog::accept(){
+void QtSettingsDialog::accept(){
 	bool restart = false;
 	int rc;
 

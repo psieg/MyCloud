@@ -13,13 +13,13 @@
 #include "mc_filter.h"
 #include "mc_crypt.h"
 
-class qtSyncDialog : public QDialog
+class QtSyncDialog : public QDialog
 {
 	Q_OBJECT
 
 public:
-	qtSyncDialog(QWidget *parent = 0, int editID = -1);
-	~qtSyncDialog();
+	QtSyncDialog(QWidget *parent = 0, int editID = -1);
+	~QtSyncDialog();
 
 public slots:
 	void accept();
@@ -47,7 +47,7 @@ private:
 	void listFilters();
 	void listFilters_actual();
 
-	Ui::qtSyncDialog ui;
+	Ui::QtSyncDialog ui;
 	QWidget *myparent;
 	int syncID;
 	std::vector<mc_sync> srvsynclist;
