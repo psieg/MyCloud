@@ -86,6 +86,12 @@
     <CustomBuild Include="..\..\src\QtClient\qtGeneralFilterDialog.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtPasswordChangeDialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtPasswordChangeDialog.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\sqlite-amalgamation\sqlite3.h">
@@ -262,6 +268,15 @@
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\qrc_qtClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_qtPasswordChangeDialog.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_qtPasswordChangeDialog.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QtClient\qtPasswordChangeDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

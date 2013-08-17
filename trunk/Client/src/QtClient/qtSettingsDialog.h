@@ -4,6 +4,7 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QMessageBox>
 #include "ui_qtSettingsDialog.h"
+#include "qtPasswordChangeDialog.h"
 #include "mc.h" //wether MC_WATCHMODE is defined
 #include "mc_db.h"
 
@@ -28,6 +29,8 @@ public slots:
 private slots:
 	void passchange();
 	void acceptActivate();
+
+	void on_passwordButton_clicked();
 
 private:
 	Ui::qtSettingsDialog ui;
