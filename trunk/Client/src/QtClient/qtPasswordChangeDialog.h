@@ -1,7 +1,8 @@
-#ifndef qtPasswordChangeDialog_H
-#define qtPasswordChangeDialog_H
+#ifndef QTPASSWORDCHANGEIDALOG_H
+#define QTPASSWORDCHANGEIDALOG_H
 
 #include <QtWidgets/QDialog>
+#include <QtWidgets/QMessageBox>
 #include <QtGui/QShowEvent>
 #include "ui_qtPasswordChangeDialog.h"
 #include "mc_db.h"
@@ -9,13 +10,13 @@
 #include "mc_filter.h"
 #include "mc_types.h"
 
-class qtPasswordChangeDialog : public QDialog
+class QtPasswordChangeDialog : public QDialog
 {
 	Q_OBJECT
 
 public:
-	qtPasswordChangeDialog(QWidget *parent);
-	~qtPasswordChangeDialog();
+	QtPasswordChangeDialog(QWidget *parent);
+	~QtPasswordChangeDialog();
 
 public slots:
 	void accept();
@@ -29,11 +30,12 @@ protected:
 
 private:
 
-	Ui::qtPasswordChangeDialog ui;
+	Ui::QtPasswordChangeDialog ui;
 	QtNetworkPerformer *performer;
 	mc_buf netibuf,netobuf;
 	mc_status s;
+	int64 authtime;
 
 };
 
-#endif // qtPasswordChangeDialog_H
+#endif // QTPASSWORDCHANGEIDALOG_H

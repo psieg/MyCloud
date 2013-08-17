@@ -1,6 +1,6 @@
 #include "qtFilterDialog.h"
 
-qtFilterDialog::qtFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, int syncID, int editID)
+QtFilterDialog::QtFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, int syncID, int editID)
 	: QDialog(parent)
 {
 	ui.setupUi(this);
@@ -15,11 +15,11 @@ qtFilterDialog::qtFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, 
 	ui.sendLabel->setVisible(false);
 }
 
-qtFilterDialog::~qtFilterDialog()
+QtFilterDialog::~QtFilterDialog()
 {
 }
 
-void qtFilterDialog::showEvent(QShowEvent *event){
+void QtFilterDialog::showEvent(QShowEvent *event){
 	int rc;
 
 	if(filter.id != -1){
@@ -34,14 +34,14 @@ void qtFilterDialog::showEvent(QShowEvent *event){
 	QDialog::showEvent(event);
 }
 
-void qtFilterDialog::accept(){
+void QtFilterDialog::accept(){
 	mc_sync_ctx ctx;
 	string cleanrule;
 	int rc;
 	if(!ui.filesBox->isChecked() && !ui.directoriesBox->isChecked()){
-		QMessageBox b(myparent);
-		b.setText("No match type set");
-		b.setInformativeText("Please choose wether the filter should match files, directories or both.");
+		QMessageBox b(this);
+		b.setText(tr("No match type set"));
+		b.setInformativeText(tr("Please choose wether the filter should match files, directories or both."));
 		b.setStandardButtons(QMessageBox::Ok);
 		b.setDefaultButton(QMessageBox::Ok);
 		b.setIcon(QMessageBox::Warning);
@@ -49,9 +49,9 @@ void qtFilterDialog::accept(){
 		return;
 	}
 	if(ui.valueEdit->text().length() == 0){
-		QMessageBox b(myparent);
-		b.setText("No value set");
-		b.setInformativeText("Please set a value to match against.");
+		QMessageBox b(this);
+		b.setText(tr("No value set"));
+		b.setInformativeText(tr("Please set a value to match against."));
 		b.setStandardButtons(QMessageBox::Ok);
 		b.setDefaultButton(QMessageBox::Ok);
 		b.setIcon(QMessageBox::Warning);
@@ -94,7 +94,7 @@ void qtFilterDialog::accept(){
 	//replyReceived does the accept
 }
 
-void qtFilterDialog::replyReceived(int rc){
+void QtFilterDialog::replyReceived(int rc){
 	int id = filter.id;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
 	if(rc){
@@ -133,11 +133,11 @@ void qtFilterDialog::replyReceived(int rc){
 }
 
 
-void qtFilterDialog::on_typeBox_currentIndexChanged(int index){
+void QtFilterDialog::on_typeBox_currentIndexChanged(int index){
 	ui.browseButton->setEnabled(indexToType(index) == MC_FILTERT_MATCH_PATH);
 }
 
-void qtFilterDialog::on_browseButton_clicked(){
+void QtFilterDialog::on_browseButton_clicked(){
 	mc_sync_db s;
 	QFileDialog d(this);
 	int rc;
@@ -157,7 +157,7 @@ void qtFilterDialog::on_browseButton_clicked(){
 	};
 }
 
-int qtFilterDialog::typeToIndex(MC_FILTERTYPE type){
+int QtFilterDialog::typeToIndex(MC_FILTERTYPE type){
 	switch(type){
 		case MC_FILTERT_MATCH_NAME:
 			return 0;
@@ -180,7 +180,7 @@ int qtFilterDialog::typeToIndex(MC_FILTERTYPE type){
 	}
 }
 
-MC_FILTERTYPE qtFilterDialog::indexToType(int index){
+MC_FILTERTYPE QtFilterDialog::indexToType(int index){
 	switch(index){
 		case 0:
 			return MC_FILTERT_MATCH_NAME;

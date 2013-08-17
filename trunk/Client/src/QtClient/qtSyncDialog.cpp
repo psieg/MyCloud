@@ -1,7 +1,7 @@
-#include "qtSyncDialog.h"
-#include "qtClient.h"
+#include "QtSyncDialog.h"
+#include "QtClient.h"
 
-qtSyncDialog::qtSyncDialog(QWidget *parent, int editID)
+QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	: QDialog(parent)
 {
 	ui.setupUi(this);
@@ -17,7 +17,7 @@ qtSyncDialog::qtSyncDialog(QWidget *parent, int editID)
 	ui.fetchFilterLabel->setVisible(false);
 	ui.needSubscribeLabel->setVisible(false);
 	ui.sendLabel->setVisible(false);
-	connect(ui.filterTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
+	connect(ui.filterTable,SIGNAL(itemActivated(QtableWidgetItem*)),ui.editButton,SLOT(click()));
 	myparent = parent;
 	syncID = editID;
 	dbindex = -1;
@@ -29,12 +29,12 @@ qtSyncDialog::qtSyncDialog(QWidget *parent, int editID)
 	loadcompleted = false;
 }
 
-qtSyncDialog::~qtSyncDialog()
+QtSyncDialog::~QtSyncDialog()
 {
 	if(performer) delete performer;
 }
 
-void qtSyncDialog::showEvent(QShowEvent *event){
+void QtSyncDialog::showEvent(QShowEvent *event){
 	mc_status s;
 	int rc;
 
@@ -52,14 +52,14 @@ void qtSyncDialog::showEvent(QShowEvent *event){
 		b.exec();
 		reject();
 		return;
-	} else {
-		QString _url = "https://";
-		_url.append(s.url.c_str());
-		_url.append("/bin.php");
-		performer = new QtNetworkPerformer(_url,"trustCA.crt",s.acceptallcerts,true);
-		SetBuf(&netibuf);
-		SetBuf(&netobuf);
 	}
+
+	QString _url = "https://";
+	_url.append(s.url.c_str());
+	_url.append("/bin.php");
+	performer = new QtNetworkPerformer(_url,"trustCA.crt",s.acceptallcerts,true);
+	SetBuf(&netibuf);
+	SetBuf(&netobuf);
 		
 	connect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
 	srv_auth_async(&netibuf,&netobuf,performer,s.uname,s.passwd,&authtime);
@@ -67,7 +67,7 @@ void qtSyncDialog::showEvent(QShowEvent *event){
 	QDialog::showEvent(event);
 }
 
-void qtSyncDialog::authed(int rc){
+void QtSyncDialog::authed(int rc){
 	int64 dummy;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
 	if(rc){
@@ -79,8 +79,8 @@ void qtSyncDialog::authed(int rc){
 	if(rc){
 		if((rc) == MC_ERR_TIMEDIFF){	
 			QMessageBox b(myparent);
-			b.setText("Time difference too high");
-			b.setInformativeText("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually.");
+			b.setText(tr("Time difference too high"));
+			b.setInformativeText(tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."));
 			b.setStandardButtons(QMessageBox::Ok);
 			b.setDefaultButton(QMessageBox::Ok);
 			b.setIcon(QMessageBox::Warning);
@@ -94,7 +94,7 @@ void qtSyncDialog::authed(int rc){
 	
 }
 
-void qtSyncDialog::syncListReceived(int rc){
+void QtSyncDialog::syncListReceived(int rc){
 	std::list<mc_sync> list;
 	std::list<mc_sync_db> sl;
 	int i;
@@ -146,7 +146,7 @@ void qtSyncDialog::syncListReceived(int rc){
 		ui.globalButton->setEnabled(true); //might cause simultaneous use of performer but only if user wants it to
 		ui.nameBox->setFocus();
 	} else {
-		QMessageBox b(myparent);
+		QMessageBox b(this);
 		b.setText(tr("No Sync available on server"));
 		b.setInformativeText(tr("There are no syncs on the server, you have to set them up on the server first."));
 		b.setStandardButtons(QMessageBox::Ok);
@@ -158,7 +158,7 @@ void qtSyncDialog::syncListReceived(int rc){
 	}
 }
 
-void qtSyncDialog::filterListReceived(int rc){
+void QtSyncDialog::filterListReceived(int rc){
 	std::list<mc_filter> list;
 	mc_sync_ctx ctx;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
@@ -200,7 +200,7 @@ void qtSyncDialog::filterListReceived(int rc){
 }
 
 
-void qtSyncDialog::deleteReceived(int rc){
+void QtSyncDialog::deleteReceived(int rc){
 	std::list<mc_filter> list;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(deleteReceived(int)));
 	if(rc) {
@@ -241,7 +241,7 @@ void qtSyncDialog::deleteReceived(int rc){
 	listFilters();
 }
 
-void qtSyncDialog::accept(){
+void QtSyncDialog::accept(){
 	int rc;
 	int maxprio=0;
 	QByteArray ckey;
@@ -249,7 +249,7 @@ void qtSyncDialog::accept(){
 	mc_sync_db newsync;
 
 	if(ui.pathEdit->text().length() == 0){
-		QMessageBox b(myparent);
+		QMessageBox b(this);
 		b.setText(tr("No path specified"));
 		b.setInformativeText(tr("Please specify where the files are to be synced."));
 		b.setStandardButtons(QMessageBox::Ok);
@@ -292,7 +292,7 @@ void qtSyncDialog::accept(){
 			if (hexMatcher.exactMatch(ui.keyEdit->text())){
 				ckey = QByteArray::fromHex(ui.keyEdit->text().toLatin1());
 			} else {
-				QMessageBox b(myparent);
+				QMessageBox b(this);
 				b.setText(tr("Please enter a valid 256-bit key in hex format"));
 				b.setInformativeText(tr("Alternatively, you can leave the field empty to generate a new key, if you don't have one yet."));
 				b.setStandardButtons(QMessageBox::Ok);
@@ -304,7 +304,7 @@ void qtSyncDialog::accept(){
 		} else {
 			ckey = QByteArray(32,'\0');
 			if(crypt_randkey((unsigned char*)ckey.data())){
-				QMessageBox b(myparent);
+				QMessageBox b(this);
 				b.setText(tr("Can't generate keys atm"));
 				b.setInformativeText(tr("Please enter the CryptKey for this sync."));
 				b.setStandardButtons(QMessageBox::Ok);
@@ -314,7 +314,7 @@ void qtSyncDialog::accept(){
 				return;
 			} else {
 				ui.keyEdit->setText(ckey.toHex());
-				QMessageBox b(myparent);
+				QMessageBox b(this);
 				b.setText(tr("New Key generated"));
 				b.setInformativeText(tr("A new key has been generated. Make a copy and store it in a safe place so you can enter it on other computers"));
 				b.setStandardButtons(QMessageBox::Ok);
@@ -344,11 +344,11 @@ void qtSyncDialog::accept(){
 	QDialog::accept();
 }
 
-void qtSyncDialog::reject(){
+void QtSyncDialog::reject(){
 	QDialog::reject();
 }
 
-void qtSyncDialog::on_browseButton_clicked(){
+void QtSyncDialog::on_browseButton_clicked(){
 	QFileDialog d(this);
 	d.setFileMode(QFileDialog::Directory);
 	d.setNameFilter(tr("Directories"));
@@ -358,15 +358,15 @@ void qtSyncDialog::on_browseButton_clicked(){
 	};
 }
 
-void qtSyncDialog::on_nameBox_currentIndexChanged(int index){
+void QtSyncDialog::on_nameBox_currentIndexChanged(int index){
 	ui.keyEdit->setEnabled(srvsynclist[index].crypted);
 	filldbdata();
 }
 
 
-void qtSyncDialog::on_addButton_clicked(){
+void QtSyncDialog::on_addButton_clicked(){
 	int rc;
-	qtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id);
+	QtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id);
 	d.exec();
 
 	//filterversion updated
@@ -379,7 +379,7 @@ void qtSyncDialog::on_addButton_clicked(){
 	listFilters();
 }
 
-void qtSyncDialog::on_removeButton_clicked(){
+void QtSyncDialog::on_removeButton_clicked(){
 	const int index = ui.filterTable->selectedItems().at(0)->row();
 	ui.filterTable->setEnabled(false);
 	ui.addButton->setEnabled(false);
@@ -391,10 +391,10 @@ void qtSyncDialog::on_removeButton_clicked(){
 	srv_delfilter_async(&netibuf,&netobuf,performer,&filterlist[index]);
 }
 
-void qtSyncDialog::on_editButton_clicked(){
+void QtSyncDialog::on_editButton_clicked(){
 	int rc;
 	const int index = ui.filterTable->selectedItems().at(0)->row();
-	qtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id,filterlist[index].id);
+	QtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id,filterlist[index].id);
 	d.exec();
 	
 	//filterversion updated
@@ -407,7 +407,7 @@ void qtSyncDialog::on_editButton_clicked(){
 	ui.filterTable->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.filterTable->columnCount()-1),true);
 }
 
-void qtSyncDialog::on_filterTable_itemSelectionChanged(){
+void QtSyncDialog::on_filterTable_itemSelectionChanged(){
 	if(ui.filterTable->selectedItems().length() == 0){
 		ui.removeButton->setEnabled(false);
 		ui.editButton->setEnabled(false);
@@ -417,7 +417,7 @@ void qtSyncDialog::on_filterTable_itemSelectionChanged(){
 	}
 }
 
-void qtSyncDialog::on_globalButton_clicked(){
+void QtSyncDialog::on_globalButton_clicked(){
 	bool refresh = true;
 	//check wether a refresh from server is needed
 	for(mc_sync_db& d : dbsynclist){
@@ -430,11 +430,11 @@ void qtSyncDialog::on_globalButton_clicked(){
 		}
 		if(!refresh) break;
 	}
-	qtGeneralFilterDialog d(this,performer,&netibuf,&netobuf,refresh);
+	QtGeneralFilterDialog d(this,performer,&netibuf,&netobuf,refresh);
 	d.exec();
 }
 
-void qtSyncDialog::filldbdata(){
+void QtSyncDialog::filldbdata(){
 	int i;
 	int sid = srvsynclist[ui.nameBox->currentIndex()].id;
 	if(loadcompleted){
@@ -470,7 +470,7 @@ void qtSyncDialog::filldbdata(){
 	}
 }
 
-void qtSyncDialog::listFilters(){
+void QtSyncDialog::listFilters(){
 	std::list<mc_filter> fl;
 	
 	if(dbsynclist[dbindex].filterversion < srvsynclist[ui.nameBox->currentIndex()].filterversion){		
@@ -484,7 +484,7 @@ void qtSyncDialog::listFilters(){
 	}
 }
 
-void qtSyncDialog::listFilters_actual(){
+void QtSyncDialog::listFilters_actual(){
 	std::list<mc_filter> fl;
 	int rc;
 	rc = db_list_filter_sid(&fl,dbsynclist[dbindex].id);

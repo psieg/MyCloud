@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qtSyncDialog</class>
- <widget class="QDialog" name="qtSyncDialog">
+ <class>QtSyncDialog</class>
+ <widget class="QDialog" name="QtSyncDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -397,7 +397,7 @@ Hit OK to subscribe</string>
   <connection>
    <sender>okButton</sender>
    <signal>clicked()</signal>
-   <receiver>qtSyncDialog</receiver>
+   <receiver>QtSyncDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -413,7 +413,7 @@ Hit OK to subscribe</string>
   <connection>
    <sender>cancelButton</sender>
    <signal>clicked()</signal>
-   <receiver>qtSyncDialog</receiver>
+   <receiver>QtSyncDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

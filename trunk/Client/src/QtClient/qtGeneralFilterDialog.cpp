@@ -1,6 +1,6 @@
 #include "qtGeneralFilterDialog.h"
 
-qtGeneralFilterDialog::qtGeneralFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, bool needrefresh)
+QtGeneralFilterDialog::QtGeneralFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, bool needrefresh)
 	: QDialog(parent)
 {
 	ui.setupUi(this);
@@ -22,11 +22,11 @@ qtGeneralFilterDialog::qtGeneralFilterDialog(QWidget *parent, QtNetworkPerformer
 	directory = QIcon(":/Resources/directory.png");
 }
 
-qtGeneralFilterDialog::~qtGeneralFilterDialog()
+QtGeneralFilterDialog::~QtGeneralFilterDialog()
 {
 }
 
-void qtGeneralFilterDialog::showEvent(QShowEvent *event){
+void QtGeneralFilterDialog::showEvent(QShowEvent *event){
 	int rc;
 	if(refresh){
 		connect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
@@ -39,7 +39,7 @@ void qtGeneralFilterDialog::showEvent(QShowEvent *event){
 	QDialog::showEvent(event);
 }
 
-void qtGeneralFilterDialog::filterListReceived(int rc){
+void QtGeneralFilterDialog::filterListReceived(int rc){
 	std::list<mc_filter> list;
 	mc_sync_db s;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
@@ -67,11 +67,11 @@ void qtGeneralFilterDialog::filterListReceived(int rc){
 	listFilters();
 }
 
-void qtGeneralFilterDialog::accept(){
+void QtGeneralFilterDialog::accept(){
 	QDialog::accept();
 }
 
-void qtGeneralFilterDialog::listFilters(){
+void QtGeneralFilterDialog::listFilters(){
 	std::list<mc_filter> fl;
 	int rc;
 	rc = db_list_filter_sid(&fl,0);

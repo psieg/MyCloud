@@ -1,5 +1,5 @@
-#ifndef QTFilterDialog_H
-#define QTFilterDialog_H
+#ifndef QTFILTERDIALOG_H
+#define QTFILTERDIALOG_H
 
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QMessageBox>
@@ -11,13 +11,13 @@
 #include "mc_types.h"
 #include "mc_crypt.h"
 
-class qtFilterDialog : public QDialog
+class QtFilterDialog : public QDialog
 {
 	Q_OBJECT
 
 public:
-	qtFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, int syncID, int editID = -1);
-	~qtFilterDialog();
+	QtFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, int syncID, int editID = -1);
+	~QtFilterDialog();
 
 public slots:
 	void accept();
@@ -36,7 +36,7 @@ private:
 	MC_FILTERTYPE indexToType(int index);
 
 
-	Ui::qtFilterDialog ui;
+	Ui::QtFilterDialog ui;
 	QWidget *myparent;
 	QtNetworkPerformer *performer;
 	mc_buf *netibuf,*netobuf;
@@ -45,4 +45,4 @@ private:
 
 };
 
-#endif // QTFilterDialog_H
+#endif // QTFILTERDIALOG_H

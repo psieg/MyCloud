@@ -9,13 +9,13 @@
 #include "mc_db.h"
 
 
-class qtSettingsDialog : public QDialog
+class QtSettingsDialog : public QDialog
 {
 	Q_OBJECT
 
 public:
-	qtSettingsDialog(QWidget *parent = 0);
-	~qtSettingsDialog();
+	QtSettingsDialog(QWidget *parent = 0);
+	~QtSettingsDialog();
 
 	enum DialogCode {
 		Rejected = 0,
@@ -33,7 +33,7 @@ private slots:
 	void on_passwordButton_clicked();
 
 private:
-	Ui::qtSettingsDialog ui;
+	Ui::QtSettingsDialog ui;
 	mc_status s;
 	bool passchanged;
 };

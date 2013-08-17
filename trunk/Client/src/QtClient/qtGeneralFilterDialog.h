@@ -1,5 +1,5 @@
-#ifndef qtGeneralFilterDialog_H
-#define qtGeneralFilterDialog_H
+#ifndef QTGENERALFILTERDIALOG_H
+#define QTGENERALFILTERDIALOG_H
 
 #include <QtWidgets/QDialog>
 #include <QtGui/QShowEvent>
@@ -9,13 +9,13 @@
 #include "mc_filter.h"
 #include "mc_types.h"
 
-class qtGeneralFilterDialog : public QDialog
+class QtGeneralFilterDialog : public QDialog
 {
 	Q_OBJECT
 
 public:
-	qtGeneralFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, bool needrefresh);
-	~qtGeneralFilterDialog();
+	QtGeneralFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, bool needrefresh);
+	~QtGeneralFilterDialog();
 
 public slots:
 	void accept();
@@ -29,7 +29,7 @@ protected:
 private:
 	void listFilters();
 
-	Ui::qtGeneralFilterDialog ui;
+	Ui::QtGeneralFilterDialog ui;
 	QWidget *myparent;
 	QtNetworkPerformer *performer;
 	mc_buf *netibuf,*netobuf;
@@ -39,4 +39,4 @@ private:
 
 };
 
-#endif // qtGeneralFilterDialog_H
+#endif // QTGENERALFILTERDIALOG_H

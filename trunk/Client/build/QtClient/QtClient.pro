@@ -48,6 +48,7 @@ FORMS += ../../src/QtClient/qtClient.ui \
          ../../src/QtClient/qtConflictDialog.ui \
          ../../src/QtClient/qtFilterDialog.ui \
          ../../src/QtClient/qtGeneralFilterDialog.ui \
+         ../../src/QtClient/qtPasswordChangeDialog.ui \
          ../../src/QtClient/qtSettingsDialog.ui \
          ../../src/QtClient/qtSyncDialog.ui
 RESOURCES += ../../src/QtClient/qtClient.qrc

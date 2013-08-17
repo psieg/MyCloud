@@ -448,7 +448,7 @@ void QtClient::on_pushButton2_clicked(){
 }
 
 void QtClient::on_addButton_clicked(){
-	qtSyncDialog d(this);	
+	QtSyncDialog d(this);	
 	d.exec();
 
 	listSyncs();
@@ -556,15 +556,15 @@ void QtClient::on_downButton_clicked(){
 
 void QtClient::on_editButton_clicked(){
 	int index = ui.syncTable->selectedItems().at(0)->row();
-	qtSyncDialog d(this,synclist[index].id);
+	QtSyncDialog d(this,synclist[index].id);
 	d.exec();
 	listSyncs();
 	ui.syncTable->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.syncTable->columnCount()-1),true);
 }
 
 void QtClient::on_settingsButton_clicked(){
-	qtSettingsDialog d(this);
-	if (d.exec() == qtSettingsDialog::NeedRestart){
+	QtSettingsDialog d(this);
+	if (d.exec() == QtSettingsDialog::NeedRestart){
 		if(worker.isRunning()){
 			QMessageBox b(this);
 			b.setText(tr("Changing the settings requires restarting the Sync"));

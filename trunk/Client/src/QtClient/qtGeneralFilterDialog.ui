@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>qtGeneralFilterDialog</class>
- <widget class="QDialog" name="qtGeneralFilterDialog">
+ <class>QtGeneralFilterDialog</class>
+ <widget class="QDialog" name="QtGeneralFilterDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -143,7 +143,7 @@ files that often cause problems, e.g. with permissions</string>
   <connection>
    <sender>okButton</sender>
    <signal>clicked()</signal>
-   <receiver>qtGeneralFilterDialog</receiver>
+   <receiver>QtGeneralFilterDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
