@@ -60,8 +60,18 @@ void qtSettingsDialog::acceptActivate(){
 	}
 }
 
+void qtSettingsDialog::on_passwordButton_clicked(){
+	qtPasswordChangeDialog d(this);
+	d.exec();
+}
+
 void qtSettingsDialog::accept(){
 	bool restart = false;
+	int rc;
+
+	rc = db_select_status(&s);
+	if(rc) reject();
+
 	if(passchanged || ui.urlEdit->text() != s.url.c_str() || ui.nameEdit->text() != s.uname.c_str() 
 		|| ui.watchmodeBox->isChecked() != (s.watchmode > 0) || abs(ui.sleeptimeSpin->value()) != abs(s.watchmode)){
 		//"restart" required

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>422</width>
-    <height>240</height>
+    <width>428</width>
+    <height>246</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -33,27 +33,30 @@
       <string>Server</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Username</string>
-        </property>
-       </widget>
+      <item row="0" column="1" colspan="4">
+       <widget class="QLineEdit" name="urlEdit"/>
       </item>
-      <item row="2" column="0" colspan="4">
-       <widget class="QCheckBox" name="certBox">
-        <property name="text">
-         <string>accept all Server Certificates</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
+      <item row="1" column="4">
        <widget class="QLineEdit" name="passEdit">
         <property name="inputMethodHints">
          <set>Qt::ImhHiddenText|Qt::ImhNoAutoUppercase|Qt::ImhNoPredictiveText|Qt::ImhSensitiveData</set>
         </property>
         <property name="echoMode">
          <enum>QLineEdit::Password</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Server URL</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Username</string>
         </property>
        </widget>
       </item>
@@ -64,16 +67,20 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1" colspan="3">
-       <widget class="QLineEdit" name="urlEdit"/>
-      </item>
       <item row="1" column="1">
        <widget class="QLineEdit" name="nameEdit"/>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
+      <item row="2" column="0" colspan="2">
+       <widget class="QCheckBox" name="certBox">
         <property name="text">
-         <string>Server URL</string>
+         <string>accept all Server Certificates</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="2" colspan="3">
+       <widget class="QPushButton" name="passwordButton">
+        <property name="text">
+         <string>change Password</string>
         </property>
        </widget>
       </item>
@@ -210,7 +217,6 @@
   <tabstop>urlEdit</tabstop>
   <tabstop>nameEdit</tabstop>
   <tabstop>passEdit</tabstop>
-  <tabstop>certBox</tabstop>
   <tabstop>sleeptimeSpin</tabstop>
   <tabstop>watchmodeBox</tabstop>
   <tabstop>okButton</tabstop>

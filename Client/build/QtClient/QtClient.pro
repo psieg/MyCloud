@@ -39,6 +39,7 @@ HEADERS += ../../src/mycloud/Client.h \
            ../../src/QtClient/qtConflictDialog.h \
            ../../src/QtClient/qtFilterDialog.h \
            ../../src/QtClient/qtGeneralFilterDialog.h \
+           ../../src/QtClient/qtPasswordChangeDialog.h \
            ../../src/QtClient/qtSettingsDialog.h \
            ../../src/QtClient/qtSyncDialog.h \
            ../../src/QtClient/qtUpdateChecker.h \
@@ -68,6 +69,7 @@ SOURCES += ../../src/mycloud/Client.cpp \
            ../../src/QtClient/qtConflictDialog.cpp \
            ../../src/QtClient/qtFilterDialog.cpp \
            ../../src/QtClient/qtGeneralFilterDialog.cpp \
+           ../../src/QtClient/qtPasswordChangeDialog.cpp \
            ../../src/QtClient/qtSettingsDialog.cpp \
            ../../src/QtClient/qtSyncDialog.cpp \
            ../../src/QtClient/qtUpdateChecker.cpp \
