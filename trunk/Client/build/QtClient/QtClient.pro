@@ -39,6 +39,7 @@ HEADERS += ../../src/mycloud/Client.h \
            ../../src/QtClient/qtConflictDialog.h \
            ../../src/QtClient/qtFilterDialog.h \
            ../../src/QtClient/qtGeneralFilterDialog.h \
+           ../../src/QtClient/qtNewSyncDialog.h \
            ../../src/QtClient/qtPasswordChangeDialog.h \
            ../../src/QtClient/qtSettingsDialog.h \
            ../../src/QtClient/qtSyncDialog.h \
@@ -48,6 +49,7 @@ FORMS += ../../src/QtClient/qtClient.ui \
          ../../src/QtClient/qtConflictDialog.ui \
          ../../src/QtClient/qtFilterDialog.ui \
          ../../src/QtClient/qtGeneralFilterDialog.ui \
+         ../../src/QtClient/qtNewSyncDialog.ui \
          ../../src/QtClient/qtPasswordChangeDialog.ui \
          ../../src/QtClient/qtSettingsDialog.ui \
          ../../src/QtClient/qtSyncDialog.ui
@@ -70,6 +72,7 @@ SOURCES += ../../src/mycloud/Client.cpp \
            ../../src/QtClient/qtConflictDialog.cpp \
            ../../src/QtClient/qtFilterDialog.cpp \
            ../../src/QtClient/qtGeneralFilterDialog.cpp \
+           ../../src/QtClient/qtNewSyncDialog.cpp \
            ../../src/QtClient/qtPasswordChangeDialog.cpp \
            ../../src/QtClient/qtSettingsDialog.cpp \
            ../../src/QtClient/qtSyncDialog.cpp \

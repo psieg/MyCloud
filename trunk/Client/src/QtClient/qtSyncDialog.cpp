@@ -16,8 +16,9 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	ui.filterTable->horizontalHeader()->setSectionResizeMode(3,QHeaderView::Stretch);
 	ui.fetchFilterLabel->setVisible(false);
 	ui.needSubscribeLabel->setVisible(false);
+	ui.deleteLabel->setVisible(false);
 	ui.sendLabel->setVisible(false);
-	connect(ui.filterTable,SIGNAL(itemActivated(QtableWidgetItem*)),ui.editButton,SLOT(click()));
+	connect(ui.filterTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
 	myparent = parent;
 	syncID = editID;
 	dbindex = -1;
@@ -25,6 +26,7 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	icon = QIcon(":/Resources/icon.png");
 	lock = QIcon(":/Resources/lock.png");
 	file = QIcon(":/Resources/file.png");
+	add = QIcon(":/Resources/add.png");
 	directory = QIcon(":/Resources/directory.png");
 	loadcompleted = false;
 }
@@ -78,7 +80,7 @@ void QtSyncDialog::authed(int rc){
 	rc = srv_auth_process(&netobuf,&authtime,&dummy);
 	if(rc){
 		if((rc) == MC_ERR_TIMEDIFF){	
-			QMessageBox b(myparent);
+			QMessageBox b(this);
 			b.setText(tr("Time difference too high"));
 			b.setInformativeText(tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."));
 			b.setStandardButtons(QMessageBox::Ok);
@@ -125,6 +127,8 @@ void QtSyncDialog::syncListReceived(int rc){
 			}
 			i++;
 		}
+		ui.nameBox->addItem(add,tr("New..."));
+		ui.keyEdit->setEnabled(srvsynclist[0].crypted);
 
 		//populate db list
 		rc = db_list_sync(&sl);
@@ -348,6 +352,18 @@ void QtSyncDialog::reject(){
 	QDialog::reject();
 }
 
+void QtSyncDialog::on_deleteButton_clicked(){
+	QMessageBox b(this);
+	b.setText(tr("Are you sure you want to delete the Sync?"));
+	b.setInformativeText(tr("It will be entirely deleted on the Server! Hit OK to delete."));
+	b.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+	b.setDefaultButton(QMessageBox::Ok);
+	b.setIcon(QMessageBox::Warning);
+	if(b.exec() == QMessageBox::Ok){
+		//TODO:delete the stuff
+	}
+}
+
 void QtSyncDialog::on_browseButton_clicked(){
 	QFileDialog d(this);
 	d.setFileMode(QFileDialog::Directory);
@@ -359,8 +375,19 @@ void QtSyncDialog::on_browseButton_clicked(){
 }
 
 void QtSyncDialog::on_nameBox_currentIndexChanged(int index){
-	ui.keyEdit->setEnabled(srvsynclist[index].crypted);
-	filldbdata();
+	if(loadcompleted){
+		if(index == ui.nameBox->count()-1){
+			ui.deleteButton->setEnabled(false);
+			QtNewSyncDialog d(this,performer,&netibuf,&netobuf);
+			if(d.exec()){
+				//TODO: add new sync to list and set focus
+			}
+		} else {
+			ui.deleteButton->setEnabled(true);
+			ui.keyEdit->setEnabled(srvsynclist[index].crypted);
+			filldbdata();
+		}
+	}
 }
 
 

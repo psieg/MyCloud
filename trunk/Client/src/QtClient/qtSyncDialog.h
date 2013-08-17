@@ -8,6 +8,7 @@
 #include "ui_qtSyncDialog.h"
 #include "qtFilterDialog.h"
 #include "qtGeneralFilterDialog.h"
+#include "qtNewSyncDialog.h"
 #include "mc_db.h"
 #include "mc_srv.h"
 #include "mc_filter.h"
@@ -31,6 +32,7 @@ private slots:
 	void filterListReceived(int);
 	void deleteReceived(int);
 
+	void on_deleteButton_clicked();
 	void on_browseButton_clicked();
 	void on_nameBox_currentIndexChanged(int);
 	void on_addButton_clicked();
@@ -56,7 +58,7 @@ private:
 	QtNetworkPerformer *performer;
 	mc_buf netibuf,netobuf;
 	int64 authtime;
-	QIcon icon,lock,file,directory;
+	QIcon icon,lock,file,directory,add;
 	int dbindex;
 	bool loadcompleted;
 	int deletingfilterid;

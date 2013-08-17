@@ -58,7 +58,7 @@ void QtPasswordChangeDialog::authed(int rc){
 		return;
 	}
 	
-	ui.statusLabel->setText(tr("<i>Sending request...</i>"));
+	ui.statusLabel->setText(tr("<i>sending request...</i>"));
 	QDialog::accept();
 }
 void QtPasswordChangeDialog::replyReceived(int rc){

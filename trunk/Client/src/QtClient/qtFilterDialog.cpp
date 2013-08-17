@@ -100,12 +100,12 @@ void QtFilterDialog::replyReceived(int rc){
 	if(rc){
 		reject();
 		return;
-	} else {
-		rc = srv_putfilter_process(netobuf,&filter.id);
-		if(rc){
-			reject();
-			return;
-		}
+	}
+
+	rc = srv_putfilter_process(netobuf,&filter.id);
+	if(rc){
+		reject();
+		return;
 	}
 
 	if(id == -1) rc = db_insert_filter(&filter);
