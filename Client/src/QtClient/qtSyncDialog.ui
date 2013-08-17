@@ -26,14 +26,14 @@
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="1">
+     <item row="1" column="4">
       <widget class="QLineEdit" name="pathEdit">
        <property name="enabled">
         <bool>false</bool>
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
+     <item row="1" column="5">
       <widget class="QToolButton" name="browseButton">
        <property name="enabled">
         <bool>false</bool>
@@ -43,7 +43,32 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="0" column="4">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Local Path</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QToolButton" name="deleteButton">
+       <property name="icon">
+        <iconset resource="qtClient.qrc">
+         <normaloff>:/Resources/remove.png</normaloff>:/Resources/remove.png</iconset>
+       </property>
+       <property name="autoRaise">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="3">
       <widget class="QComboBox" name="nameBox">
        <property name="enabled">
         <bool>false</bool>
@@ -86,17 +111,10 @@
        </layout>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="label_2">
+     <item row="0" column="1" colspan="2">
+      <widget class="QLabel" name="deleteLabel">
        <property name="text">
-        <string>Local Path</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Name</string>
+        <string>&lt;i&gt;sending request...&lt;/i&gt;</string>
        </property>
       </widget>
      </item>

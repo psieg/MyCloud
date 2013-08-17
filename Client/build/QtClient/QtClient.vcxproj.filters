@@ -74,12 +74,6 @@
     <CustomBuild Include="..\..\src\mycloud\mc_watch.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\QtClient\qtFilterDialog.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\..\src\QtClient\qtFilterDialog.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="..\..\src\QtClient\qtGeneralFilterDialog.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
@@ -91,6 +85,18 @@
     </CustomBuild>
     <CustomBuild Include="..\..\src\QtClient\qtPasswordChangeDialog.h">
       <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtNewSyncDialog.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtNewSyncDialog.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtFilterDialog.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\QtClient\qtFilterDialog.ui">
+      <Filter>Form Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -138,6 +144,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\mycloud\mc_version.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_qtFilterDialog.h">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -252,12 +261,6 @@
     <ClCompile Include="..\..\src\QtClient\qtFilterDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_qtFilterDialog.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_qtFilterDialog.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\QtClient\qtGeneralFilterDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -278,6 +281,21 @@
     </ClCompile>
     <ClCompile Include="..\..\src\QtClient\qtPasswordChangeDialog.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_qtNewSyncDialog.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_qtNewSyncDialog.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\QtClient\qtNewSyncDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_qtFilterDialog.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_qtFilterDialog.cpp">
+      <Filter>Generated Files\Release</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
