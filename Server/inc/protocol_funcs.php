@@ -21,6 +21,17 @@ function unpack_auth($fdesc){
 	return array($user,$pass,$clientver);
 }
 
+function unpack_createsync($fdesc){
+	$data = unpack("C1crypted/l1len",fread($fdesc,5));
+	$crypted = ($data['crypted'] != 0);
+	$name = fread($fdesc,$data['len']);
+	return array($crypted,$name);
+}
+
+function unpack_delsync($fdesc){
+	return unpack("l1sid",fread($fdesc,4))['sid'];
+}
+
 function unpack_listfilters($fdesc){
 	return unpack("l1sid",fread($fdesc,4))['sid'];
 
@@ -148,6 +159,10 @@ function pack_synclist($list){
 			pack("l1C1",$sync[2],$sync[3]).$sync[4];
 	}
 	return $r;
+}
+
+function pack_syncid($sid){
+	return pack("l2",MC_SRVSTAT_SYNCID,$sid);
 }
 
 function pack_filterlist($list){
