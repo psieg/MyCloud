@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>291</width>
-    <height>71</height>
+    <width>336</width>
+    <height>88</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -24,26 +24,39 @@
     <normaloff>:/Resources/icon.png</normaloff>:/Resources/icon.png</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
+   <item row="2" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
       <string>Name</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="1" colspan="3">
+   <item row="2" column="1" colspan="3">
     <widget class="QLineEdit" name="nameEdit"/>
    </item>
-   <item row="1" column="0" colspan="2">
+   <item row="3" column="0" colspan="2">
     <widget class="QCheckBox" name="encryptedBox">
      <property name="text">
       <string>encrypted</string>
      </property>
+     <property name="icon">
+      <iconset resource="qtClient.qrc">
+       <normaloff>:/Resources/lock.png</normaloff>:/Resources/lock.png</iconset>
+     </property>
     </widget>
    </item>
-   <item row="1" column="2">
+   <item row="3" column="2">
     <layout class="QGridLayout">
-     <property name="margin">
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
       <number>0</number>
      </property>
      <item row="0" column="0">
@@ -53,19 +66,32 @@
        </property>
       </widget>
      </item>
-	 <item row="0" column="0">
+     <item row="0" column="0">
       <widget class="QLabel" name="sendLabel">
        <property name="text">
         <string>&lt;i&gt;sending request...&lt;/i&gt;</string>
        </property>
-	  </widget>
-	 </item>
-	</layout>
+      </widget>
+     </item>
+    </layout>
    </item>
-   <item row="1" column="3">
+   <item row="3" column="3">
     <widget class="QPushButton" name="cancelButton">
      <property name="text">
       <string>Cancel</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="4">
+    <widget class="QLabel" name="label_2">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>To create a new Sync choose a Name and whether to encrypt files</string>
      </property>
     </widget>
    </item>

@@ -468,7 +468,7 @@ void QtClient::on_removeButton_clicked(){
 	if(b.exec() == QMessageBox::Ok){
 		
 		if(worker.isRunning()){
-		QMessageBox b2(this);
+			QMessageBox b2(this);
 			b2.setText(tr("Worker stop required"));
 			b2.setInformativeText(tr("Deleting the sync requires the worker to be stopped."));
 			b2.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);

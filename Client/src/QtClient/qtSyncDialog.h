@@ -9,6 +9,7 @@
 #include "qtFilterDialog.h"
 #include "qtGeneralFilterDialog.h"
 #include "qtNewSyncDialog.h"
+#include "mc_workerthread.h"
 #include "mc_db.h"
 #include "mc_srv.h"
 #include "mc_filter.h"
@@ -30,7 +31,8 @@ private slots:
 	void authed(int);
 	void syncListReceived(int);
 	void filterListReceived(int);
-	void deleteReceived(int);
+	void filterDeleteReceived(int);
+	void syncDeleteReceived(int);
 
 	void on_deleteButton_clicked();
 	void on_browseButton_clicked();
@@ -48,6 +50,8 @@ private:
 	void filldbdata();
 	void listFilters();
 	void listFilters_actual();
+	void startOver();
+	void disableAll();
 
 	Ui::QtSyncDialog ui;
 	QWidget *myparent;

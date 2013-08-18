@@ -73,6 +73,10 @@ int srv_auth_async(mc_buf *ibuf, mc_buf* obuf, QtNetworkPerformer *perf,
 int srv_auth_process(mc_buf *obuf, int64 *ltimea, int64 *basedate);
 int srv_listsyncs_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf);
 int srv_listsyncs_process(mc_buf *obuf, list<mc_sync> *l);
+int srv_createsync_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& name, bool crypted);
+int srv_createsync_process(mc_buf *obuf, int *id);
+int srv_delsync_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int id);
+int srv_delsync_process(mc_buf *obuf);
 int srv_listfilters_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int sid);
 int srv_listfilters_process(mc_buf *obuf, list<mc_filter> *l);
 int srv_putfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_filter *filter);

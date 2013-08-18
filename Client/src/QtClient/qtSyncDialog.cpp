@@ -144,21 +144,24 @@ void QtSyncDialog::syncListReceived(int rc){
 		
 		ui.fetchSyncLabel->setVisible(false);
 		ui.nameBox->setEnabled(true);
+		ui.deleteButton->setEnabled(true);
 		ui.pathEdit->setEnabled(true);
 		ui.browseButton->setEnabled(true);
 		ui.okButton->setEnabled(true);
 		ui.globalButton->setEnabled(true); //might cause simultaneous use of performer but only if user wants it to
 		ui.nameBox->setFocus();
 	} else {
-		QMessageBox b(this);
-		b.setText(tr("No Sync available on server"));
-		b.setInformativeText(tr("There are no syncs on the server, you have to set them up on the server first."));
-		b.setStandardButtons(QMessageBox::Ok);
-		b.setDefaultButton(QMessageBox::Ok);
-		b.setIcon(QMessageBox::Warning);
-		b.exec();
-		reject();
-		return;
+		//Directly pop the "new" dialog
+		ui.fetchSyncLabel->setVisible(false);
+		QtNewSyncDialog d(this,performer,&netibuf,&netobuf);
+		if(d.exec()){
+			startOver();
+		} else {
+			//When the new dialog is rejected, this dialog is rejected too
+			//Otherwise the user ends up in a Loop
+			reject();
+		}
+
 	}
 }
 
@@ -203,10 +206,9 @@ void QtSyncDialog::filterListReceived(int rc){
 	listFilters();
 }
 
-
-void QtSyncDialog::deleteReceived(int rc){
+void QtSyncDialog::filterDeleteReceived(int rc){
 	std::list<mc_filter> list;
-	disconnect(performer,SIGNAL(finished(int)),this,SLOT(deleteReceived(int)));
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(filterDeleteReceived(int)));
 	if(rc) {
 		reject();
 		return;
@@ -243,6 +245,69 @@ void QtSyncDialog::deleteReceived(int rc){
 	ui.removeButton->setEnabled(true);
 	ui.editButton->setEnabled(true);
 	listFilters();
+}
+
+void QtSyncDialog::syncDeleteReceived(int rc){
+	const int sid = srvsynclist[ui.nameBox->currentIndex()].id;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(syncDeleteReceived(int)));
+	if(rc) {
+		reject();
+		return;
+	}
+
+	rc = srv_delsync_process(&netobuf);
+	if(rc){
+		reject();
+		return;
+	}
+
+	ui.deleteLabel->setText(tr("<i>deleting locally...</i>"));
+
+
+	std::list<mc_file> l;
+	std::list<mc_file>::iterator lit,lend;
+	rc = db_list_file_parent(&l, -sid);
+	if(rc){
+		reject();
+		return;
+	}
+	lit = l.begin();
+	lend = l.end();
+	rc = db_execstr("BEGIN TRANSACTION");
+	if(rc){
+		reject();
+		return;
+	}
+
+	while(lit != lend){
+		QApplication::processEvents();
+		rc = purge(&*lit,NULL);
+		if(rc){
+			reject();
+			return;
+		}
+		++lit;
+	}
+	rc = db_execstr("COMMIT");
+	if(rc){
+		reject();
+		return;
+	}
+	rc = db_delete_filter_sid(sid);
+	if(rc){
+		reject();
+		return;
+	}
+
+	rc = db_delete_sync(sid);
+	if(rc){
+		reject();
+		return;
+	}
+
+
+	ui.deleteLabel->setVisible(false);
+	startOver();
 }
 
 void QtSyncDialog::accept(){
@@ -353,6 +418,8 @@ void QtSyncDialog::reject(){
 }
 
 void QtSyncDialog::on_deleteButton_clicked(){
+	const int sid = srvsynclist[ui.nameBox->currentIndex()].id;
+	bool cando = true;
 	QMessageBox b(this);
 	b.setText(tr("Are you sure you want to delete the Sync?"));
 	b.setInformativeText(tr("It will be entirely deleted on the Server! Hit OK to delete."));
@@ -360,7 +427,29 @@ void QtSyncDialog::on_deleteButton_clicked(){
 	b.setDefaultButton(QMessageBox::Ok);
 	b.setIcon(QMessageBox::Warning);
 	if(b.exec() == QMessageBox::Ok){
-		//TODO:delete the stuff
+		if(QtWorkerThread::instance()->isRunning()){
+			QMessageBox b2(this);
+			b2.setText(tr("Worker stop required"));
+			b2.setInformativeText(tr("Deleting the sync requires the worker to be stopped."));
+			b2.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+			b2.setDefaultButton(QMessageBox::Ok);
+			b2.setIcon(QMessageBox::Warning);
+			if(b2.exec() == QMessageBox::Ok){
+				if(QtWorkerThread::instance()->isRunning()){
+					MC_INF("Stopping Worker");
+					QtWorkerThread::instance()->quit();
+				}
+			} else {
+				cando = false;
+			}
+		}
+		if(cando){
+			ui.deleteLabel->setVisible(true);
+			ui.deleteLabel->setText(tr("<i>sending request...</i>"));
+			disableAll();
+			connect(performer,SIGNAL(finished(int)),this,SLOT(syncDeleteReceived(int)));
+			srv_delsync_async(&netibuf,&netobuf,performer,sid);
+		}
 	}
 }
 
@@ -377,11 +466,10 @@ void QtSyncDialog::on_browseButton_clicked(){
 void QtSyncDialog::on_nameBox_currentIndexChanged(int index){
 	if(loadcompleted){
 		if(index == ui.nameBox->count()-1){
-			ui.deleteButton->setEnabled(false);
 			QtNewSyncDialog d(this,performer,&netibuf,&netobuf);
-			if(d.exec()){
-				//TODO: add new sync to list and set focus
-			}
+			d.exec();
+			//Refresh listing
+			startOver();
 		} else {
 			ui.deleteButton->setEnabled(true);
 			ui.keyEdit->setEnabled(srvsynclist[index].crypted);
@@ -414,7 +502,7 @@ void QtSyncDialog::on_removeButton_clicked(){
 	ui.editButton->setEnabled(false);
 	ui.sendLabel->setVisible(true);
 	deletingfilterid = filterlist[index].id;
-	connect(performer,SIGNAL(finished(int)),this,SLOT(deleteReceived(int)));
+	connect(performer,SIGNAL(finished(int)),this,SLOT(filterDeleteReceived(int)));
 	srv_delfilter_async(&netibuf,&netobuf,performer,&filterlist[index]);
 }
 
@@ -463,7 +551,7 @@ void QtSyncDialog::on_globalButton_clicked(){
 
 void QtSyncDialog::filldbdata(){
 	int i;
-	int sid = srvsynclist[ui.nameBox->currentIndex()].id;
+	const int sid = srvsynclist[ui.nameBox->currentIndex()].id;
 	if(loadcompleted){
 		i = 0;		
 		for(mc_sync_db& s : dbsynclist){
@@ -554,4 +642,31 @@ void QtSyncDialog::listFilters_actual(){
 					
 		ui.filterTable->setItem(ui.filterTable->rowCount()-1,3,new QTableWidgetItem(f.rule.c_str()));
 	}
+}
+
+void QtSyncDialog::startOver(){
+	loadcompleted = false;
+	ui.fetchSyncLabel->setVisible(true);
+	ui.nameBox->clear();
+	ui.pathEdit->clear();
+	ui.keyEdit->clear();
+	ui.filterTable->clearContents();
+	disableAll();
+	connect(performer,SIGNAL(finished(int)),this,SLOT(syncListReceived(int)));
+	srv_listsyncs_async(&netibuf,&netobuf,performer);
+}
+
+void QtSyncDialog::disableAll(){
+	ui.nameBox->setEnabled(false);
+	ui.deleteButton->setEnabled(false);
+	ui.pathEdit->setEnabled(false);
+	ui.browseButton->setEnabled(false);
+	ui.keyEdit->setEnabled(false);
+	ui.okButton->setEnabled(false);
+	ui.globalButton->setEnabled(false); 
+	ui.addButton->setEnabled(false);
+	ui.editButton->setEnabled(false);
+	ui.removeButton->setEnabled(false);
+	ui.filterTable->setEnabled(false);
+	ui.needSubscribeLabel->setVisible(false);
 }

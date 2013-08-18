@@ -5,7 +5,7 @@ QtFilterDialog::QtFilterDialog(QWidget *parent, QtNetworkPerformer *parentperf, 
 {
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-	setFixedSize(sizeHint());
+	setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 	myparent = parent;
 	performer = parentperf;
 	netibuf = parentibuf;

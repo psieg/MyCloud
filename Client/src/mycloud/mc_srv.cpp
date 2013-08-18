@@ -331,34 +331,6 @@ int _srv_open(const string& url, const string& certfile, const string& user, con
 	SetBuf(&ibuf);
 	SetBuf(&obuf);
 
-	/* Set for all queries */
-	/*curl_global_init(CURL_GLOBAL_DEFAULT);
-	curl = curl_easy_init();
-	rc = curl_easy_setopt(curl,CURLOPT_USERAGENT,"MyCloud Client");
-	MC_CHKERR_MSG(rc,"setopt failed");
-	crc = curl_easy_setopt(curl,CURLOPT_CAINFO,certfile.c_str());
-	MC_CHKERR_MSG(crc,"setopt failed");
-	crc = curl_easy_setopt(curl,CURLOPT_ERRORBUFFER,&errbuf);
-	MC_CHKERR_MSG(crc,"setopt failed");
-	crc = curl_easy_setopt(curl,CURLOPT_WRITEFUNCTION,WriteMemoryCallback);
-	MC_CHKERR_MSG(crc,"setopt failed");
-#ifdef MC_QTCLIENT
-	crc = curl_easy_setopt(curl,CURLOPT_PROGRESSFUNCTION,WriteProgressCallback);
-	MC_CHKERR_MSG(crc,"setopt failed");
-	//crc = curl_easy_setopt(curl,CURLOPT_NOPROGRESS,1);
-	//MC_CHKERR_MSG(crc,"setopt failed");
-#endif
-	//crc = curl_easy_setopt(curl,CURLOPT_WRITEDATA, (void*) &obuf);
-	//MC_CHKERR_MSG(crc,"setopt failed");
-	crc = curl_easy_setopt(curl,CURLOPT_URL,_url.c_str());
-	MC_CHKERR_MSG(crc,"setopt failed");
-	headers = curl_slist_append(headers, "Content-Type: application/octet-stream");
-	headers = curl_slist_append(headers, "Connection: keep-alive"); //Though not explicitly it seems to be on by default
-	headers = curl_slist_append(headers, "Keep-Alive:300");
-	crc = curl_easy_setopt(curl,CURLOPT_HTTPHEADER,headers);
-	MC_CHKERR_MSG(crc,"setopt failed");
-	crc = curl_easy_setopt(curl,CURLOPT_POST,1);
-	MC_CHKERR_MSG(crc,"setopt failed");*/
 	
 	if(!QSslSocket::supportsSsl()) MC_ERR_MSG(MC_ERR_NETWORK,"No SSL Sockets supported");
 
@@ -505,6 +477,33 @@ int srv_listsyncs_process(mc_buf *obuf, list<mc_sync> *l){
 
 	unpack_synclist(obuf,l);
 	return 0;
+}
+
+
+int srv_createsync_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& name, bool crypted){
+	MC_DBGL("Creating new sync " << name << " (async)");
+	srv_mutex.lock();
+	pack_createsync(ibuf,authtoken,name,crypted);
+	srv_mutex.unlock();
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_createsync_process(mc_buf *obuf, int *id){
+	int rc;
+	rc = srv_eval(MC_SRVSTAT_SYNCID,-1,obuf);
+	MC_CHKERR(rc);
+
+	unpack_syncid(obuf,id);
+	return 0;
+}
+int srv_delsync_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int id){
+	MC_DBGL("Deleting sync " << id << " (async)");
+	srv_mutex.lock();
+	pack_delsync(ibuf,authtoken,id);
+	srv_mutex.unlock();
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_delsync_process(mc_buf *obuf){
+	return srv_eval(MC_SRVSTAT_OK,-1,obuf);
 }
 
 SAFEFUNC2(srv_listfilters,list<mc_filter> *l, int sid,l,sid)
