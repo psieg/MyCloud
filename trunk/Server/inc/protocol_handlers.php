@@ -13,6 +13,64 @@ function handle_listsyncs($ibuf,$uid){
 	return pack_synclist($l);
 }
 
+function handle_createsync($ibuf,$uid){
+	global $mysqli;
+	$qry = unpack_createsync($ibuf);
+	//check whether there already is a Sync with that name
+	$q = $mysqli->query("SELECT id FROM mc_syncs WHERE LOWER(name) = LOWER('".esc($qry[1])."') AND uid = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	if($q->num_rows > 0){
+		$res = $q->fetch_row();
+		return pack_exists($res[0]);
+	}
+	//create new
+	$q = $mysqli->query("INSERT INTO mc_syncs (uid,name,filterversion,crypted) VALUES (".$uid.", '".esc($qry[1])."',1,".($qry[0]?1:0).")");
+	if(!$q) return pack_interror($mysqli->error);
+	$sid = $mysqli->insert_id;
+
+	$q = $mysqli->query("SELECT name FROM mc_users WHERE id = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	$res = $q->fetch_row();
+
+	$full = MC_FS_BASEDIR."/".$res[0]."/".$qry[1];
+	$rc = mkdir($full);
+	if(!$rc) return pack_interror("Failed to create directory");
+
+	return pack_syncid($sid);
+}
+
+function handle_delsync($ibuf,$uid){
+	global $mysqli;
+	$id = unpack_delsync($ibuf);
+	//check whether it existse
+	$q = $mysqli->query("SELECT id,name FROM mc_syncs WHERE id = ".$id." AND uid = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
+	$res = $q->fetch_row();
+	$name = $res[1];
+
+	//delete all files
+	$q = $mysqli->query("DELETE FROM mc_files WHERE sid = ".$id);
+	if(!$q) return pack_interror($mysqli->error);
+
+	$q = $mysqli->query("SELECT name FROM mc_users WHERE id = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	$res = $q->fetch_row();
+
+	$rc = rmrdir(MC_FS_BASEDIR."/".$res[0]."/".$name);
+	if(!$rc) return pack_interror("Failed to remove files");
+
+	//delete all filters
+	$q = $mysqli->query("DELETE FROM mc_filters WHERE sid = ".$id);
+	if(!$q) return pack_interror($mysqli->error);
+
+	//delete sync itself
+	$q = $mysqli->query("DELETE FROM mc_syncs WHERE id = ".$id);
+	if(!$q) return pack_interror($mysqli->error);
+
+	return pack_code(MC_SRVSTAT_OK);
+}
+
 function handle_listfilters($ibuf,$uid){
 	global $mysqli;
 	$sid = unpack_listfilters($ibuf);
@@ -167,13 +225,15 @@ function handle_putfile($ibuf,$uid){
 			if(!$q) return pack_interror($mysqli->error);
 			if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 			$res = $q->fetch_row();
+			$sid = $res[0];
 		} else {
-			$q = $mysqli->query("SELECT id,is_dir,status FROM mc_files WHERE id = ".$qry['parent']." AND uid = ".$uid);
+			$q = $mysqli->query("SELECT id,sid,is_dir,status FROM mc_files WHERE id = ".$qry['parent']." AND uid = ".$uid);
 			if(!$q) return pack_interror($mysqli->error);
 			if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 			$res = $q->fetch_row();
-			if($res[1] != 1) return pack_code(MC_SRVSTAT_BADQRY); //parent must of course point to a dir
-			if($res[2] != MC_FILESTAT_COMPLETE) return pack_code(MC_SRVSTAT_BADQRY); //parent must not be deleted or anything
+			if($res[2] != 1) return pack_code(MC_SRVSTAT_BADQRY); //parent must of course point to a dir
+			if($res[3] != MC_FILESTAT_COMPLETE) return pack_code(MC_SRVSTAT_BADQRY); //parent must not be deleted or anything
+			$sid = $res[1];
 		}
 
 		//Verify file does not exist already
@@ -182,8 +242,8 @@ function handle_putfile($ibuf,$uid){
 		$res = $q->fetch_row();
 		if($res) return pack_exists($res[0]);
 
-		$q = $mysqli->query("INSERT INTO mc_files (uid,name,ctime,mtime,size,is_dir,parent,hash,status) VALUES ".
-			"(".$uid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
+		$q = $mysqli->query("INSERT INTO mc_files (uid,sid,name,ctime,mtime,size,is_dir,parent,hash,status) VALUES ".
+			"(".$uid.", ".$sid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
 			($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".
 			($qry['is_dir']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
 		if(!$q) return pack_interror($mysqli->error);
@@ -479,6 +539,7 @@ function handle_purgefile($ibuf,$uid){
 	$id = unpack_purgefile($ibuf);
 	$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$id." AND uid = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
+	if($q->num_rows != 0) return pack_code(MC_SRVSTAT_NOTEMPTY);
 
 	$q = $mysqli->query("SELECT status,parent FROM mc_files WHERE id = ".$id." AND uid = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);

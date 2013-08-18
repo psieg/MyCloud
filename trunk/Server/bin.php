@@ -72,10 +72,13 @@ if($ready){
 					$uid = $uid[0];
 					switch($qrycode){
 						case MC_SRVQRY_LISTSYNCS:
-							#$q = mysql_query("SELECT id,name FROM mc_syncs WHERE uid = (SELECT id FROM mc_users WHERE authtoken)
-							#pack_syncslist($syncs);
 							$res = handle_listsyncs($ibuf,$uid);
-							//$res = pack_code(MC_SRVSTAT_SYNCLIST);
+							break;
+						case MC_SRVQRY_CREATESYNC:
+							$res = handle_createsync($ibuf,$uid);
+							break;
+						case MC_SRVQRY_DELSYNC:
+							$res = handle_delsync($ibuf,$uid);
 							break;
 						case MC_SRVQRY_LISTFILTERS:
 							$res = handle_listfilters($ibuf,$uid);

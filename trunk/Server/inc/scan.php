@@ -3,7 +3,7 @@
 require_once 'funcs.php';
 require_once 'const.php';
 
-function rscan2($uid,$parentid,$path){
+function rscan2($uid,$sid,$parentid,$path){
 	global $mysqli;
 	$q = $mysqli->query("SELECT id,name,is_dir,hash FROM mc_files WHERE parent = ".$parentid);
 	if(!$q){ echo "Error: ".$mysqli->error; return; }
@@ -14,12 +14,12 @@ function rscan2($uid,$parentid,$path){
 			//Clear inconsistent results and start over
 			$q2 = $mysqli->query("DELETE FROM mc_files WHERE parent = ".$parentid);
 			if(!$q2){ echo "Error: ".$mysqli->error; return; }
-			return rscan2($uid,$parentid,$path);
+			return rscan2($uid,$sid,$parentid,$path);
 		}else { //All known, add/check hashes
 			foreach($db as $d){
 				if($d[3] === NULL){
 					if($d[2]){
-						 rscan2($uid,$d[0],$path.'/'.$d[1]);
+						 rscan2($uid,$sid,$d[0],$path.'/'.$d[1]);
 						$h = directoryHash($d[0]);
 					} else {
 						$h = md5_file($path.'/'.$d[1],true);
@@ -36,12 +36,12 @@ function rscan2($uid,$parentid,$path){
 			if($f == "." || $f == "..") continue;
 			$info = stat($path.'/'.$f);
 			$is_dir = ($info['mode'] & 0170000) == 040000;		/* no such thing as ctime on unix*/
-			$q = $mysqli->query("INSERT INTO mc_files (uid,name,ctime,mtime,size,is_dir,parent,status) VALUES ".				/* Assumption - can only hope */
-			"(".$uid.", '".esc($f)."', ".$info['mtime'].", ".$info['mtime'].", ".($is_dir?0:$info['size']).", ".($is_dir?1:0).", ".$parentid.", ".MC_FILESTAT_COMPLETE.")");
+			$q = $mysqli->query("INSERT INTO mc_files (uid,sid,name,ctime,mtime,size,is_dir,parent,status) VALUES ".				/* Assumption - can only hope */
+			"(".$uid.", ".$sid.", '".esc($f)."', ".$info['mtime'].", ".$info['mtime'].", ".($is_dir?0:$info['size']).", ".($is_dir?1:0).", ".$parentid.", ".MC_FILESTAT_COMPLETE.")");
 			if(!$q){ echo "Error: ".$mysqli->error; break; }
 		}
 		echo "scan:".$path."\n";
-		return rscan2($uid,$parentid,$path);
+		return rscan2($uid,$sid,$parentid,$path);
 	}
 }
 
@@ -51,7 +51,7 @@ function scan2($path){
 	if(!$q){ echo "Error: ".$mysqli->error; return; }
 	$syncs = $q->fetch_all();
 	foreach($syncs as $sync){
-		rscan2($sync[1],-$sync[0],$path.'/'.$sync[3].'/'.$sync[2]);
+		rscan2($sync[1],$sync[0],-$sync[0],$path.'/'.$sync[3].'/'.$sync[2]);
 		$h = directoryHash(-$sync[0]);
 		$q2 = $mysqli->query("UPDATE mc_syncs SET hash = '".esc($h)."' WHERE id = ".$sync[0]);
 		if(!$q2){ echo "Error: ".$mysqli->error; break; }
