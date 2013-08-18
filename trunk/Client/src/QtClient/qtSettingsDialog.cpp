@@ -7,7 +7,7 @@ QtSettingsDialog::QtSettingsDialog(QWidget *parent)
 
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-	setFixedSize(sizeHint());
+	setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 	
 	connect(ui.passEdit,SIGNAL(textEdited(const QString &)),this,SLOT(passchange()));
 	connect(ui.certBox,SIGNAL(pressed()),this,SLOT(acceptActivate()));

@@ -5,7 +5,7 @@ QtNewSyncDialog::QtNewSyncDialog(QWidget *parent, QtNetworkPerformer *parentperf
 {
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
-	setFixedSize(sizeHint());
+	setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 	myparent = parent;
 	performer = parentperf;
 	netibuf = parentibuf;
@@ -35,10 +35,14 @@ void QtNewSyncDialog::accept(){
 	}
 	
 	sync.id = MC_SYNCID_NONE;
+	sync.crypted = ui.encryptedBox->isChecked();
+	sync.filterversion = 0;
+	sync.name = qPrintable(ui.nameEdit->text());
+	memset(sync.hash,0,16);
 	
 
-	//connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
-	//srv_putfilter_async(netibuf,netobuf,performer,&filter);
+	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
+	srv_createsync_async(netibuf,netobuf,performer,sync.name,sync.crypted);
 
 	
 	ui.nameEdit->setEnabled(false);
@@ -56,18 +60,11 @@ void QtNewSyncDialog::replyReceived(int rc){
 		return;
 	}
 
-	/*rc = srv_putfilter_process(netobuf,&filter.id);
+	rc = srv_createsync_process(netobuf,&sync.id);
 	if(rc){
 		reject();
 		return;
 	}
 
-	if(id == -1) rc = db_insert_filter(&filter);
-	else rc = db_update_filter(&filter);
-	if(rc){
-		reject();
-		return;
-	}*/
-	
 	QDialog::accept();
 }

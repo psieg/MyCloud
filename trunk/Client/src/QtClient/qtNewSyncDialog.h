@@ -33,7 +33,7 @@ private:
 	QWidget *myparent;
 	QtNetworkPerformer *performer;
 	mc_buf *netibuf,*netobuf;
-	mc_sync_db sync;
+	mc_sync sync;
 
 };
 

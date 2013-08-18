@@ -6,6 +6,7 @@ QtPasswordChangeDialog::QtPasswordChangeDialog(QWidget *parent)
 	int rc;
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+	setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 	ui.statusLabel->setText("");
 
 	rc = db_select_status(&s);

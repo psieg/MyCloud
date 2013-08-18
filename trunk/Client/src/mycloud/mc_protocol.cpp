@@ -39,6 +39,32 @@ void pack_listsyncs(mc_buf *buf, unsigned char authtoken[16]){
 	buf->used = sizeof(int)+16;
 }
 
+void pack_createsync(mc_buf *buf, unsigned char authtoken[16], const string& name, bool crypted){
+	int num = MC_SRVQRY_CREATESYNC;
+	const size_t bufsize = 2*sizeof(int)+sizeof(char)+16+name.length();
+	MatchBuf(buf,bufsize);
+	memcpy(&buf->mem[0],&num,sizeof(int));
+	memcpy(&buf->mem[sizeof(int)],authtoken,16);
+	
+	memcpy(&buf->mem[sizeof(int)+16],&crypted,sizeof(char));
+	num = name.length();
+	memcpy(&buf->mem[sizeof(int)+sizeof(char)+16],&num,sizeof(int));
+	memcpy(&buf->mem[2*sizeof(int)+sizeof(char)+16],name.c_str(),num);
+
+	buf->used = bufsize;
+}
+
+void pack_delsync(mc_buf *buf, unsigned char authtoken[16], int id){
+	const int num = MC_SRVQRY_DELSYNC;
+	MatchBuf(buf,2*sizeof(int)+16);
+	memcpy(&buf->mem[0],&num,sizeof(int));
+	memcpy(&buf->mem[sizeof(int)],authtoken,16);
+
+	memcpy(&buf->mem[sizeof(int)+16],&id,sizeof(int));
+	buf->used = 2*sizeof(int)+16;
+
+}
+
 void pack_listfilters(mc_buf *buf, unsigned char authtoken[16], int syncid){
 	const int num = MC_SRVQRY_LISTFILTERS;
 	MatchBuf(buf,2*sizeof(int)+16);
@@ -289,6 +315,14 @@ void unpack_synclist(mc_buf *buf, list<mc_sync> *l){
 			index += 16;
 			l->push_back(item);
 		}
+	} catch (...) {
+		throw MC_ERR_PROTOCOL;
+	}
+}
+
+void unpack_syncid(mc_buf *buf,  int *id){
+	try {
+		memcpy(id,&buf->mem[sizeof(int)],sizeof(int));
 	} catch (...) {
 		throw MC_ERR_PROTOCOL;
 	}

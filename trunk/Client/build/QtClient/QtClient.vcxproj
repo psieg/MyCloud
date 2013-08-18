@@ -31,7 +31,6 @@
     <ClInclude Include="..\..\src\mycloud\mc_types.h" />
     <ClInclude Include="..\..\src\mycloud\mc_version.h" />
     <ClInclude Include="..\..\src\mycloud\mc_walk.h" />
-    <ClInclude Include="GeneratedFiles\ui_qtFilterDialog.h" />
     <CustomBuild Include="..\..\src\QtClient\qtNewSyncDialog.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Moc%27ing qtNewSyncDialog.h...</Message>

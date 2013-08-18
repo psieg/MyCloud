@@ -145,9 +145,6 @@
     <ClInclude Include="..\..\src\mycloud\mc_version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_qtFilterDialog.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GeneratedFiles\Debug\moc_qtClient.cpp">
@@ -270,9 +267,6 @@
     <ClCompile Include="GeneratedFiles\Release\moc_qtGeneralFilterDialog.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_qtClient.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_qtPasswordChangeDialog.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
@@ -296,6 +290,9 @@
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_qtFilterDialog.cpp">
       <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\qrc_qtClient.cpp">
+      <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

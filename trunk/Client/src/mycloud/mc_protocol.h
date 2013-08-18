@@ -56,6 +56,8 @@ typedef int MC_SRVSTATUS;
 void pack_code(mc_buf *buf, int code);
 void pack_auth(mc_buf *buf, string user, string passwd);
 void pack_listsyncs(mc_buf *buf, unsigned char authtoken[16]);
+void pack_createsync(mc_buf *buf, unsigned char authtoken[16], const string& name, bool crypted);
+void pack_delsync(mc_buf *buf, unsigned char authtoken[16], int id);
 void pack_listfilters(mc_buf *buf, unsigned char authtoken[16], int syncid);
 void pack_putfilter(mc_buf *buf, unsigned char authtoken[16], mc_filter *filter);
 void pack_delfilter(mc_buf *buf, unsigned char authtoken[16], int id);
@@ -73,6 +75,7 @@ void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db
 /* These functions fill the params with the response buffer's contents */
 void unpack_authed(mc_buf *buf, unsigned char authtoken[16], int64 *time, int64 *basedate, int *version);
 void unpack_synclist(mc_buf *buf, list<mc_sync> *l);
+void unpack_syncid(mc_buf *buf,  int *id);
 void unpack_filterlist(mc_buf *buf, list<mc_filter> *l);
 void unpack_filterid(mc_buf *buf, int *id);
 void unpack_dirlist(mc_buf *buf, list<mc_file> *l);
