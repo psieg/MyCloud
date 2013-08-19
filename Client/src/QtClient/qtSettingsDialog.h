@@ -7,6 +7,13 @@
 #include "qtPasswordChangeDialog.h"
 #include "mc.h" //wether MC_WATCHMODE is defined
 #include "mc_db.h"
+#ifdef MC_OS_WIN
+#include <QtCore/QSettings>
+#include <QtCore/QDir>
+#define MC_AUTOSTARTNAME	"MyCloud Client"
+#define MC_STARTUP_KEY		"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
+#endif
+
 
 
 class QtSettingsDialog : public QDialog
@@ -31,8 +38,12 @@ private slots:
 	void acceptActivate();
 
 	void on_passwordButton_clicked();
+#ifdef MC_OS_WIN
+	void on_startupBox_clicked(bool);
+#endif
 
 private:
+
 	Ui::QtSettingsDialog ui;
 	mc_status s;
 	bool passchanged;
