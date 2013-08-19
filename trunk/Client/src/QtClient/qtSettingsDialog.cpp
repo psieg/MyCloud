@@ -16,6 +16,7 @@ QtSettingsDialog::QtSettingsDialog(QWidget *parent)
 #ifdef MC_WATCHMODE
 	ui.watchmodeBox->setEnabled(true);
 #endif
+
 	rc = db_select_status(&s);
 	if(!rc){
 		ui.urlEdit->setText(QString(s.url.c_str()));
@@ -23,6 +24,7 @@ QtSettingsDialog::QtSettingsDialog(QWidget *parent)
 		if(s.passwd != "") ui.passEdit->setText(tr("*****"));
 		passchanged = false;
 		ui.certBox->setChecked(s.acceptallcerts);
+		if(s.url.length() != 0 && s.passwd.length() != 0) ui.passwordButton->setEnabled(true);
 		if(s.watchmode > 0){
 			ui.watchmodeBox->setChecked(true);
 			ui.sleeptimeSpin->setValue(s.watchmode);
