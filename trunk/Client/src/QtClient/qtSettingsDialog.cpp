@@ -35,6 +35,19 @@ QtSettingsDialog::QtSettingsDialog(QWidget *parent)
 		if(s.updatecheck >= 0) ui.updateBox->setChecked(true);
 		else ui.updateBox->setChecked(false);
 	}
+
+#ifdef MC_OS_WIN	
+	QSettings reg(MC_STARTUP_KEY,QSettings::NativeFormat);
+	const QString installedPath = reg.value(MC_AUTOSTARTNAME,"").toString();
+	const QString myPath = "\""+QDir::toNativeSeparators(QApplication::applicationFilePath())+"\" -startup";
+	if(installedPath == myPath){
+		ui.startupBox->setChecked(true);
+	} else { //set but not to this app
+		ui.startupBox->setChecked(false);
+	}
+#else
+	ui.startupBox->setEnabled(false);
+#endif
 }
 
 QtSettingsDialog::~QtSettingsDialog()
@@ -66,6 +79,32 @@ void QtSettingsDialog::on_passwordButton_clicked(){
 	QtPasswordChangeDialog d(this);
 	d.exec();
 }
+
+#ifdef MC_OS_WIN
+void QtSettingsDialog::on_startupBox_clicked(bool checked){
+	QSettings reg(MC_STARTUP_KEY,QSettings::NativeFormat);
+	const QString installedPath = reg.value(MC_AUTOSTARTNAME,"").toString();
+	const QString myPath = "\""+QDir::toNativeSeparators(QApplication::applicationFilePath())+"\" -startup";
+	if(checked){
+		if(installedPath != "" && installedPath != myPath){
+			QMessageBox b(this);
+			b.setText(tr("Other Path configured"));
+			b.setInformativeText(tr("It seems another Instance is already configured for automatic Startup. The currently set path is \"") + installedPath + tr("\".\nHit OK to overwrite."));
+			b.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+			b.setDefaultButton(QMessageBox::Ok);
+			b.setIcon(QMessageBox::Warning);
+			if(b.exec() != QMessageBox::Ok){
+				ui.startupBox->setChecked(false);
+				return;
+			}
+		}
+		reg.setValue(MC_AUTOSTARTNAME, myPath);
+	} else {
+		QSettings reg(MC_STARTUP_KEY,QSettings::NativeFormat);
+		reg.remove(MC_AUTOSTARTNAME);
+	}
+}
+#endif
 
 void QtSettingsDialog::accept(){
 	bool restart = false;
