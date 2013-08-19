@@ -580,7 +580,6 @@ function handle_notifychange($ibuf,$uid){
 	$s = "";
 	foreach(array_keys($list) as $sid) $s .= $sid.",";
 	$s = substr($s,0,strlen($s)-1);
-//	return pack_interror($s); 
 
 	while(time(NULL) - $t < 30){
 		$q = $mysqli->query("SELECT id,hash FROM mc_syncs WHERE id IN (".$s.") ORDER BY id");
@@ -594,5 +593,13 @@ function handle_notifychange($ibuf,$uid){
 	}
 	return pack_code(MC_SRVSTAT_NOCHANGE);
 }
+
+function handle_passchange($ibuf,$uid){
+	global $mysqli;
+	$newpass = unpack_passchange($ibuf);
+	//If we get here, the user is authenticated, no need for old password
+	$q = $mysqli->query("UPDATE mc_users SET password = '".esc(generatehash($newpass))."' WHERE id = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	return pack_code(MC_SRVSTAT_OK);
+}
 ?>
-<?php

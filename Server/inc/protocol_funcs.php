@@ -131,6 +131,11 @@ function unpack_notifychange($fdesc){
 	return $l;
 }
 
+function unpack_passchange($fdesc){
+	$len = unpack("l1len",fread($fdesc,4))['len'];
+	return fread($fdesc,$len);
+}
+
 
 function pack_code($code){
 	return pack("l1",$code);
