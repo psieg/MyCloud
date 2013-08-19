@@ -277,6 +277,19 @@ void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db
 	buf->used = sizeof(int)+16+l->size()*(sizeof(int)+16);
 }
 
+void pack_passchange(mc_buf *buf, unsigned char authtoken[16], const string& newpass){
+	int num = MC_SRVQRY_PASSCHANGE;
+	MatchBuf(buf,2*sizeof(int)+16+newpass.length());
+	memcpy(&buf->mem[0],&num,sizeof(int));
+	memcpy(&buf->mem[sizeof(int)],authtoken,16);
+
+	num = newpass.length();
+	memcpy(&buf->mem[sizeof(int)+16],&num,sizeof(int));
+	memcpy(&buf->mem[2*sizeof(int)+16],newpass.c_str(),num);
+
+	buf->used = 2*sizeof(int)+16+newpass.length();
+}
+
 
 /* These functions fill the params with the response buffer's contents 
 *	Offset is always sizeof(int) as the server status code does not matter to us */

@@ -79,6 +79,9 @@
       </item>
       <item row="2" column="2" colspan="3">
        <widget class="QPushButton" name="passwordButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>change Password</string>
         </property>

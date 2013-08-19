@@ -7,7 +7,7 @@ QtPasswordChangeDialog::QtPasswordChangeDialog(QWidget *parent)
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 	setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
-	ui.statusLabel->setText("");
+	ui.statusLabel->setVisible(false);
 
 	rc = db_select_status(&s);
 	if(!rc){
@@ -44,9 +44,14 @@ void QtPasswordChangeDialog::authed(int rc){
 			b.setIcon(QMessageBox::Warning);
 			b.exec();
 			//no reject here
+			ui.oldEdit->setEnabled(true);
+			ui.new1Edit->setEnabled(true);
+			ui.new2Edit->setEnabled(true);
+			ui.statusLabel->setVisible(false);
+			ui.okButton->setVisible(true);
 			return;
 		}
-		if(rc == MC_ERR_TIMEDIFF){	
+		if(rc == MC_ERR_TIMEDIFF){
 			QMessageBox b(this);
 			b.setText(tr("Time difference too high"));
 			b.setInformativeText(tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."));
@@ -60,37 +65,79 @@ void QtPasswordChangeDialog::authed(int rc){
 	}
 	
 	ui.statusLabel->setText(tr("<i>sending request...</i>"));
-	QDialog::accept();
+	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
+	srv_passchange_async(&netibuf,&netobuf,performer,qPrintable(ui.new1Edit->text()));
 }
 void QtPasswordChangeDialog::replyReceived(int rc){
-	/*std::list<mc_filter> list;
-	mc_sync_db s;
-	disconnect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
 	if(rc) {
 		reject();
 		return;
 	}
 
-	rc = srv_listfilters_process(netobuf,&list);
+	rc = srv_passchange_process(&netobuf);
 	if(rc){
 		reject();
 		return;
 	}
 
-	//global filters not encrypted
+	rc = db_select_status(&s);
+	if(rc){
+		reject();
+		return;
+	}
 
-	rc = update_filters(0,&list);
+	s.passwd = qPrintable(ui.new1Edit->text());
+
+	rc = db_update_status(&s);
 	if(rc){
 		reject();
 		return;
 	}
 	
-	ui.fetchFilterLabel->setVisible(false);
-	ui.filterTable->setEnabled(true);
-	listFilters()*/
+	QMessageBox b(this);
+	b.setText(tr("Password change successful"));
+	b.setInformativeText(tr("The new password has been saved."));
+	b.setStandardButtons(QMessageBox::Ok);
+	b.setDefaultButton(QMessageBox::Ok);
+	b.setIcon(QMessageBox::Information);
+	b.exec();
+	QDialog::accept();
 }
 
 void QtPasswordChangeDialog::accept(){
+	if(ui.new1Edit->text() != ui.new2Edit->text()){
+		QMessageBox b(this);
+		b.setText(tr("Passwords don't match"));
+		b.setInformativeText(tr("Make sure the new passwords match."));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Critical);
+		b.exec();
+		return;
+	}
+	if(ui.new1Edit->text().length() == 0){
+		QMessageBox b(this);
+		b.setText(tr("Password can't be empty"));
+		b.setInformativeText(tr("Please choss a secure password."));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Critical);
+		b.exec();
+		return;
+	}
+	if(ui.new1Edit->text().length() < 7){
+		QMessageBox b(this);
+		b.setText(tr("Insecure Password"));
+		b.setInformativeText(tr("Short passwords are insecure! Hit cancel to abort."));
+		b.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Warning);
+		if(b.exec() != QMessageBox::Ok)
+			return;
+	}
+
+
 	QString _url = "https://";
 	_url.append(s.url.c_str());
 	_url.append("/bin.php");
@@ -99,8 +146,12 @@ void QtPasswordChangeDialog::accept(){
 	SetBuf(&netobuf);
 		
 	connect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
-	srv_auth_async(&netibuf,&netobuf,performer,s.uname,s.passwd,&authtime);
+	srv_auth_async(&netibuf,&netobuf,performer,s.uname,qPrintable(ui.oldEdit->text()),&authtime);
+	ui.oldEdit->setEnabled(false);
+	ui.new1Edit->setEnabled(false);
+	ui.new2Edit->setEnabled(false);
 	ui.okButton->setVisible(false);
-	ui.statusLabel->setText(tr("<i>Authenticating...</i>"));
+	ui.statusLabel->setVisible(true);
+	ui.statusLabel->setText(tr("<i>authenticating...</i>"));
 	//QDialog::accept();
 }

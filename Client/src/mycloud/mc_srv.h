@@ -85,4 +85,6 @@ int srv_delfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc
 int srv_delfilter_process(mc_buf *obuf);
 int srv_notifychange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_sync_db> *l);
 int srv_notifychange_process(mc_buf *obuf, int *id);
+int srv_passchange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& newpass);
+int srv_passchange_process(mc_buf *obuf);
 #endif /* MC_SRV_H */

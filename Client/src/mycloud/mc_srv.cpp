@@ -832,3 +832,15 @@ int srv_notifychange_process(mc_buf *obuf, int *id){
 	unpack_change(obuf,id);
 	return 0;
 }
+
+
+int srv_passchange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& newpass){
+	MC_DBGL("Changing password (async)");
+	srv_mutex.lock();
+	pack_passchange(ibuf,authtoken,newpass);
+	srv_mutex.unlock();
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_passchange_process(mc_buf *obuf){	
+	return srv_eval(MC_SRVSTAT_OK,-1,obuf);
+}

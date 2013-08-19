@@ -3,8 +3,8 @@
 #include "mc.h"
 /* This unit defines the Codes used in our protocol and functions to pack/unpack messages */
 
-#define MC_CLIENT_PROTOCOL_VERSION		7
-#define MC_MIN_SERVER_PROTOCOL_VERSION	7
+#define MC_CLIENT_PROTOCOL_VERSION		8
+#define MC_MIN_SERVER_PROTOCOL_VERSION	8
 
 typedef int MC_SRVQUERY;
 #define MC_SRVQRY_STATUS		100	// What's your status
@@ -24,7 +24,8 @@ typedef int MC_SRVQUERY;
 #define MC_SRVQRY_PATCHFILE		412	// Patch the metaddata of a file
 #define MC_SRVQRY_DELFILE		413	// Delete a file
 #define MC_SRVQRY_PURGEFILE		420	// Purge this file (it's been hit by an ignore list)
-#define MC_SRVQRY_NOTIYCHANGE	500 // Return when something changes or after timeout
+#define MC_SRVQRY_NOTIYCHANGE	500	// Return when something changes or after timeout
+#define MC_SRVQRY_PASSCHANGE	600	// Change password to X
 
 typedef int MC_SRVSTATUS; 
 #define MC_SRVSTAT_OK			100	// I'm good / Query successful
@@ -71,6 +72,7 @@ void pack_delfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 mtime)
 void pack_getmeta(mc_buf *buf, unsigned char authtoken[16], int id);
 void pack_purgefile(mc_buf *buf, unsigned char authtoken[16], int id);
 void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db> *l);
+void pack_passchange(mc_buf *buf, unsigned char authtoken[16], const string& newpass);
 
 /* These functions fill the params with the response buffer's contents */
 void unpack_authed(mc_buf *buf, unsigned char authtoken[16], int64 *time, int64 *basedate, int *version);
