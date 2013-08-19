@@ -64,6 +64,7 @@ if($ready){
 		case MC_SRVQRY_GETMETA:
 		case MC_SRVQRY_PURGEFILE:
 		case MC_SRVQRY_NOTIFYCHANGE:
+		case MC_SRVQRY_PASSCHANGE:
 			try {
 				$token = unpack_token($ibuf);
 				$q = $mysqli->query("SELECT id FROM mc_users WHERE token = '".esc($token)."' AND lastseen >= ".(time()-MC_SESS_EXPIRE)." AND lastregen >= ".(time()-MC_TOKEN_REGEN));
@@ -118,6 +119,9 @@ if($ready){
 							break;
 						case MC_SRVQRY_NOTIFYCHANGE:
 							$res = handle_notifychange($ibuf,$uid);
+							break;
+						case MC_SRVQRY_PASSCHANGE:
+							$res = handle_passchange($ibuf,$uid);
 							break;
 						default:
 							$res = pack_interror("Not Implemented");

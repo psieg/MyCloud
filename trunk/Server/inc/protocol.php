@@ -1,5 +1,5 @@
 <?php
-define('MC_SERVER_PROTOCOL_VERSION',7);
+define('MC_SERVER_PROTOCOL_VERSION',8);
 define('MC_MIN_CLIENT_PROTOCOL_VERSION',7);
 
 define("MC_SRVQRY_STATUS",		100);	// What's your status
@@ -20,6 +20,7 @@ define("MC_SRVQRY_PATCHFILE",	412);	// Patch the metaddata of a file
 define("MC_SRVQRY_DELFILE",		413);	// Delete a file
 define("MC_SRVQRY_PURGEFILE",	420);	// Purge this file (it's been hit by an ignore list)
 define("MC_SRVQRY_NOTIFYCHANGE",500);	// Return when something changes or after timeout
+define("MC_SRVQRY_PASSCHANGE",	600);	// Change password to X
 
 define("MC_SRVSTAT_OK",			100);	// I'm good / Query successful
 define("MC_SRVSTAT_AUTHED",		101);	// QRY_AUTH succeeded, here's your AuthToken
