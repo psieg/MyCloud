@@ -1,5 +1,6 @@
 #include "qtClient.h"
 #include <QtWidgets/QApplication>
+#include <QtCore/QDir>
 #include "qdebugstream.h"
 #include "mc_db.h"
 #include "mc_crypt.h"
@@ -16,7 +17,11 @@ int main(int argc, char *argv[])
 #endif
 	QApplication a(argc, argv);
 	a.setQuitOnLastWindowClosed(false);
-	if(argc>1 && strcmp(argv[1],"-startup") == 0) d = 15; else d = 0;
+	if(argc>1 && strcmp(argv[1],"-startup") == 0){ 
+		d = 15; 
+		//On -startup set working directory to own, as Windows starts us at System32
+		QDir::setCurrent(QApplication::applicationDirPath());
+	} else d = 0;
 
 	QtClient w(NULL,d);
 	QDebugStream qout(std::cout, &w);

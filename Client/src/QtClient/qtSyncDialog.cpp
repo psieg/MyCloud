@@ -52,7 +52,7 @@ void QtSyncDialog::showEvent(QShowEvent *event){
 		b.setDefaultButton(QMessageBox::Ok);
 		b.setIcon(QMessageBox::Warning);
 		b.exec();
-		reject();
+		QMetaObject::invokeMethod(this,"reject",Qt::QueuedConnection);
 		return;
 	}
 
