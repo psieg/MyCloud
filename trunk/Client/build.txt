@@ -18,6 +18,9 @@ For Qt Release:
 Use qt.conf + directory structure from Qt/, copy Qt Libraries + Platform dlls
 Use msvc*.dll from Microsoft.VC110.CRT
 
+Code Signing (Windows):
+"C:\Program Files (x86)\Windows Kits\8.0\bin\x64\signtool.exe" sign /f "D:\Projekte\C++\MyCloudClient\signcert.pfx" /p ***** D:\Desktop\rel\QtClient.exe
+
 For linux:
 1. Get Qt5 and openssl via package manager
 2. Extract sqlite (or get and link against?)
