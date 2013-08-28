@@ -32,7 +32,7 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	connect(this,SIGNAL(_notifyIOEnd(int)),this,SLOT(__notifyIOEnd(int)),Qt::QueuedConnection);
 	connect(this,SIGNAL(_notifyIOStart(int)),this,SLOT(__notifyIOStart(int)),Qt::QueuedConnection);
 #endif
-	connect(this,SIGNAL(_notifyProgress(int,int)),this,SLOT(__notifyProgress(int,int)),Qt::QueuedConnection);
+	connect(this,SIGNAL(_notifyProgress(qint64,qint64)),this,SLOT(__notifyProgress(qint64,qint64)),Qt::QueuedConnection);
 	connect(this,SIGNAL(_notifySubProgress(double,double)),this,SLOT(__notifySubProgress(double,double)),Qt::QueuedConnection);
 
 	connect(ui.syncTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
@@ -236,7 +236,7 @@ void QtClient::notifyIOStart(int evt){
 		emit _notifyIOStart(evt);
 }
 #endif
-void QtClient::notifyProgress(int value, int total)
+void QtClient::notifyProgress(qint64 value, qint64 total)
 {
 	emit _notifyProgress(value,total);
 }
@@ -361,7 +361,7 @@ void QtClient::__notifyIOStart(int evt){
 #endif
 }
 
-void QtClient::__notifyProgress(int value, int total)
+void QtClient::__notifyProgress(qint64 value, qint64 total)
 {
 	int percent;
 	progressBase = value;

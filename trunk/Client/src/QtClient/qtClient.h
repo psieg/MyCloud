@@ -33,7 +33,7 @@ signals:
 	void _notifyIOEnd(int evt);
 	void _notifyIOStart(int evt);
 //#endif
-	void _notifyProgress(int value, int total);
+	void _notifyProgress(qint64 value, qint64 total);
 	void _notifySubProgress(double value, double total);
 
 public:	
@@ -48,7 +48,7 @@ public:
 	void notifyIOEnd(int evt);
 	void notifyIOStart(int evt);
 #endif
-	void notifyProgress(int value, int total);
+	void notifyProgress(qint64 value, qint64 total);
 	void notifySubProgress(double value, double total);
 	static int execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible);
 
@@ -73,7 +73,7 @@ private slots:
 	void __notifyIOEnd(int evt);
 	void __notifyIOStart(int evt);
 //#endif
-	void __notifyProgress(int value, int total);
+	void __notifyProgress(qint64 value, qint64 total);
 	void __notifySubProgress(double value, double total);
 	int _execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible);
 	void on_quitButton_clicked();
