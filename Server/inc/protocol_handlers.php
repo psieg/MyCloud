@@ -203,11 +203,15 @@ function handle_getoffset($ibuf,$uid){
 	//if($res[5] != MC_FILESTAT_INCOMPLETE_UP) return pack_code(MC_SRVSTAT_BADQRY); //Offset only relevant for incomplete files
 	
 	$filedata = filedata($res[0],$res[2],$res[3]);
-	$fdesc = fopen($filedata[0],"rb");
-	if(!$fdesc) return pack_interror("Failed to open file");
-	fseek($fdesc,0,SEEK_END);
-	$offset = ftell($fdesc);
-	fclose($fdesc);
+	if(file_exists($filedata[0])){
+		$fdesc = fopen($filedata[0],"rb");
+		if(!$fdesc) return pack_interror("Failed to open file");
+		fseek($fdesc,0,SEEK_END);
+		$offset = ftell($fdesc);
+		fclose($fdesc);
+	} else {
+		$offset = 0;
+	}
 
 	return pack_offset($offset);
 	
@@ -268,7 +272,7 @@ function handle_putfile($ibuf,$uid){
 		$oldfiledata = filedata($qry['id'],$res[0],$res[1]);
 
 
-		if(($qry['parent'] != $res[1]) || ($qry['name'] != $res[0])){ //If it's a move (=parent change)
+		if(($qry['parent'] != $res[1]) || (strtolower($qry['name']) != strtolower($res[0]))){ //If it's a move (=parent change)
 			if($qry['is_dir']) $qry['hash'] = "\xd4\x1d\x8c\xd9\x8f\x00\xb2\x04\xe9\x80\x09\x98\xec\xf8\x42\x7e"; //empty md5
 			//Verify parent
 			if($qry['parent'] != $res[1]){
@@ -297,7 +301,7 @@ function handle_putfile($ibuf,$uid){
 		
 			return pack_interror("This is a move. You don't want that.");
 	
-			$rc = rename($oldfiledata[0],$filedata[1]);
+			$rc = rename($oldfiledata[0],$filedata[0]);
 			if(!$rc) return pack_interror("Failed to rename file");
 
 			$q = $mysqli->query("UPDATE mc_files SET status = ".MC_FILESTAT_MOVED." ".
@@ -314,6 +318,29 @@ function handle_putfile($ibuf,$uid){
 					($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".MC_FILESTAT_INCOMPLETE_UP." )");
 			if(!$q) return pack_interror($mysqli->error);
 			$fid = $mysqli->insert_id;
+		} else if ($qry['name'] != $res[0]){ // case change
+			$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
+			if($qry['is_dir'])
+				$q = $mysqli->query("UPDATE mc_files SET name = '".esc($qry['name'])."', ".
+					"ctime = ".$qry['ctime'].", ".
+					"mtime = ".$qry['mtime'].", size = ".$qry['size'].", ".
+					"is_dir = ".($qry['is_dir']?1:0).", ".
+					"status = ".MC_FILESTAT_COMPLETE." ".
+					"WHERE id = ".$qry['id']." AND uid = ".$uid);
+			else
+				$q = $mysqli->query("UPDATE mc_files SET name = '".esc($qry['name'])."', ".
+					"ctime = ".$qry['ctime'].", ".
+					"mtime = ".$qry['mtime'].", size = ".$qry['size'].", ".
+					"is_dir = ".($qry['is_dir']?1:0).", hash = '".esc($qry['hash'])."', ".
+					"status = ".MC_FILESTAT_INCOMPLETE_UP." ".
+					"WHERE id = ".$qry['id']." AND uid = ".$uid);
+			if(!$q) return pack_interror($mysqli->error);
+			$fid = $qry['id'];
+			
+			if(file_exists($oldfiledata[0])){
+				$rc = rename($oldfiledata[0],$filedata[0]);
+				if(!$rc) return pack_interror("Failed to rename file");			
+			}
 		} else { //Just a content change
 			$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
 			if($qry['is_dir'])
@@ -357,10 +384,10 @@ function handle_putfile($ibuf,$uid){
 			"WHERE id = ".$fid." AND uid = ".$uid);
 	}
 	
-	if(isset($oldfiledata) && ($oldfiledata[1] != $filedata[1])){
-		$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$oldfiledata[1]);
-		if(!$q) return pack_interror($mysqli->error);
-	}
+	//if(isset($oldfiledata) && ($oldfiledata[1] != $filedata[1])){
+	//	$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$oldfiledata[1]);
+	//	if(!$q) return pack_interror($mysqli->error);
+	//}
 
 	updateHash($fid);	
 
@@ -417,7 +444,7 @@ function handle_patchfile($ibuf,$uid){
 	$res = $q->fetch_row();
 	$oldfiledata = filedata($qry['id'],$res[0],$res[1]);
 
-	if(($qry['parent'] != $res[1]) || (strcasecmp($qry['name'],$res[0]) != 0)){ //If it's a move (=parent change)
+	if(($qry['parent'] != $res[1]) || strtolower($qry['name']) != strtolower($res[0])){ //If it's a move (=parent change)
 		return pack_interror("Not Implemented / tested: ".$qry['name']."/".$res[0]);
 
 		//Verify parent
@@ -447,7 +474,7 @@ function handle_patchfile($ibuf,$uid){
 	
 		return pack_interror("This is a move. You don't want that.");	
 
-		$rc = rename($oldfiledata[0],$filedata[1]);
+		$rc = rename($oldfiledata[0],$filedata[0]);
 		if(!$rc) return pack_interror("Failed to rename file");
 
 		$q = $mysqli->query("UPDATE mc_files SET status = ".MC_FILESTAT_MOVED." ".
@@ -459,19 +486,21 @@ function handle_patchfile($ibuf,$uid){
 			($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".
 			($qry['size']==$qry['blocksize']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
 		if(!$q) return pack_interror($mysqli->error);
+	} else if($qry['name'] != $res[0]){ // case change
+		$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
+		if(($res[3] != MC_FILESTAT_DELETED) && file_exists($oldfiledata[0])){
+			$rc = rename($oldfiledata[0],$filedata[0]);
+			if(!$rc) return pack_interror("Failed to rename file");
+		}
 	} else {
 		$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
-		if($res[2] && $res[3] != MC_FILESTAT_DELETED){
-			$rc = mkdir($filedata[0]);
-			if(!$rc) return pack_interror("Failed to create directory");			
-		}
 	}
 	$q = $mysqli->query("UPDATE mc_files SET name = '".esc($qry['name'])."', ctime = ".$qry['ctime'].", ".
 			"mtime = ".$qry['mtime'].", parent = ".$qry['parent']." ".
 			"WHERE id = ".$qry['id']." AND uid = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
-
-	if($res[3] =! MC_FILESTAT_DELETED){
+		
+	if($res[3] != MC_FILESTAT_DELETED){
 		$rc = touch($filedata[0],$qry['mtime']);
 		if(!$rc) return pack_interror("Failed to set mtime");
 	}
