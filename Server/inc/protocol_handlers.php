@@ -272,7 +272,7 @@ function handle_putfile($ibuf,$uid){
 		$oldfiledata = filedata($qry['id'],$res[0],$res[1]);
 
 
-		if(($qry['parent'] != $res[1]) || (strtolower($qry['name']) != strtolower($res[0]))){ //If it's a move (=parent change)
+		if($qry['parent'] != $res[1]){ //If it's a move (=parent change)
 			if($qry['is_dir']) $qry['hash'] = "\xd4\x1d\x8c\xd9\x8f\x00\xb2\x04\xe9\x80\x09\x98\xec\xf8\x42\x7e"; //empty md5
 			//Verify parent
 			if($qry['parent'] != $res[1]){
@@ -318,8 +318,14 @@ function handle_putfile($ibuf,$uid){
 					($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".MC_FILESTAT_INCOMPLETE_UP." )");
 			if(!$q) return pack_interror($mysqli->error);
 			$fid = $mysqli->insert_id;
-		} else if ($qry['name'] != $res[0]){ // case change
+		} else if ($qry['name'] != $res[0]){ // local rename / case change
 			$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
+			//make sure target does not exists yet
+			$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND uid = ".$uid." AND name = '".esc($qry['name'])."'");
+			if(!$q) return pack_interror($mysqli->error);
+			$res = $q->fetch_row();
+			if($res) pack_exists($res[0]);
+
 			if($qry['is_dir'])
 				$q = $mysqli->query("UPDATE mc_files SET name = '".esc($qry['name'])."', ".
 					"ctime = ".$qry['ctime'].", ".
@@ -444,7 +450,7 @@ function handle_patchfile($ibuf,$uid){
 	$res = $q->fetch_row();
 	$oldfiledata = filedata($qry['id'],$res[0],$res[1]);
 
-	if(($qry['parent'] != $res[1]) || strtolower($qry['name']) != strtolower($res[0])){ //If it's a move (=parent change)
+	if($qry['parent'] != $res[1]){ //If it's a move (=parent change)
 		return pack_interror("Not Implemented / tested: ".$qry['name']."/".$res[0]);
 
 		//Verify parent
@@ -486,9 +492,16 @@ function handle_patchfile($ibuf,$uid){
 			($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".
 			($qry['size']==$qry['blocksize']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
 		if(!$q) return pack_interror($mysqli->error);
-	} else if($qry['name'] != $res[0]){ // case change
+	} else if($qry['name'] != $res[0]){ // local rename / case change
 		$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
-		if(($res[3] != MC_FILESTAT_DELETED) && file_exists($oldfiledata[0])){
+		$status = $res[3];
+		//make sure target does not exists yet
+		$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND uid = ".$uid." AND name = '".esc($qry['name'])."'");
+		if(!$q) return pack_interror($mysqli->error);
+		$res = $q->fetch_row();
+		if($res) pack_exists($res[0]);
+
+		if(($status != MC_FILESTAT_DELETED) && file_exists($oldfiledata[0])){
 			$rc = rename($oldfiledata[0],$filedata[0]);
 			if(!$rc) return pack_interror("Failed to rename file");
 		}
