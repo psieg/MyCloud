@@ -13,12 +13,12 @@ size_t choosebufsize(size_t fsize){
 	// Determine buffer size
 	if (fsize < 1024) return 512; // < 1KB => 512B
 	else if (fsize < 10240) return 1024; // < 10KB => 1KB
-	else if (fsize < 1048576) return 10240; // < 100KB => 10KB
+	else if (fsize < 102400) return 10240; // < 100KB => 10KB
 	else if (fsize < 1048576) return 131072; // < 1MB => 128KB
 	else if (fsize < 10485760) return 1048576; // < 10MB => 1MB
 	else if (fsize < 104857600) return 10485760; // < 100MB => 10MB
-	else if (fsize < 1073741824) return 104857600;// < 1GB => 100MB
-	else return 1073741824;
+	else /*if (fsize < 1073741824)*/ return 104857600;// < 1GB => 100MB
+	//else return 1073741824; //dont allocate 1gig
 }
 
 /* Convert binary MD5 to hex string */
