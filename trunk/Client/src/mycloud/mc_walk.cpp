@@ -557,7 +557,12 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				if(srv->status == MC_FILESTAT_COMPLETE){
 					if(db->size == srv->size && srv->size == fs->size && memcmp(db->hash,srv->hash,16) == 0){
 						if(fs->mtime == db->mtime && db->mtime ==  srv->mtime)
-							{} //Nothing to do
+							if(db->name.compare(srv->name)) //case changed remotely
+								return download(ctx,path,fs,db,srv,hashstr);
+							else if(fs->name.compare(db->name)) //case changed locally
+								return upload(ctx,path,fs,db,srv,hashstr);
+							else
+								{} //Nothing to do
 						else if(fs->mtime > db->mtime || db->mtime > srv->mtime)
 							return upload(ctx,path,fs,db,srv,hashstr);
 						else //fs->mtime < db->mtime || db->mtime < srv->mtime

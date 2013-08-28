@@ -196,7 +196,8 @@ int download_dir(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc_
 	if(!fs){
 		rc = fs_mkdir(fpath);
 		MC_CHKERR(rc);
-	}			
+	}
+
 	if(recursive){
 		if(db && memcmp(serverhash,db->hash,16) == 0)
 			*rrc = walk_nochange(ctx,rpath,srv->id,srv->hash);
@@ -295,6 +296,14 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 	fpath.assign(ctx->sync->path).append(rpath);
 
 	if(srv->is_dir) { memcpy(serverhash,srv->hash,16); memset(srv->hash,0,16); } //Server (directory)hashes are never saved
+
+	if(fs && fs->name.compare(srv->name)){//case change
+		string fpathold;
+		fpathold.assign(ctx->sync->path).append(path).append(fs->name);
+		rc = fs_rename(fpathold,fpath);
+		MC_CHKERR(rc);
+		fs->name = srv->name;
+	}
 
 	if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 		MC_INF("Not downloading file " << srv->id << ": " << printname(srv) << ", file is not complete");
@@ -456,11 +465,10 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 
 	if(srv == NULL){
 		newdb->id = MC_FILEID_NONE;
-		//cryptname will be generated
 	} else {
 		newdb->id = srv->id;
-		newdb->cryptname = srv->cryptname;
 	}
+	//cryptname will be generated
 	newdb->name = fs->name;
 	newdb->ctime = fs->ctime;
 	newdb->mtime = fs->mtime;
@@ -568,10 +576,14 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 	
 	rc = upload_checkmodified(&cctx, fpath, fs, srv, hash, &modified);
 	MC_CHKERR(rc);
+	
+	db->name = fs->name; // case change
+	db->cryptname = ""; //regenerate cryptname	
+	db->mtime = fs->mtime;
+	db->ctime = fs->ctime;
+	db->size = fs->size;
 
 	if(!modified){
-		db->mtime = fs->mtime;
-		db->ctime = fs->ctime;
 
 		rc = db_update_file(db);
 		MC_CHKERR(rc);
@@ -589,10 +601,7 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				rc = srv_delfile(srv);
 				MC_CHKERR(rc);
 			}
-
-			db->mtime = fs->mtime;
-			db->ctime = fs->ctime;
-			db->size = fs->size;
+			
 			db->status = MC_FILESTAT_COMPLETE;
 
 			rc = db_update_file(db);
@@ -610,9 +619,7 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 			MC_CHKERR(rc);
 		} else { // !fs->is_dir
 			if(!srv->is_dir){
-				db->mtime = fs->mtime;
-				db->ctime = fs->ctime;
-				db->size = fs->size;
+
 				db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
 
 							
@@ -630,9 +637,7 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				MC_CHKERR(rc);
 			} else { // srv->is_dir
 				MC_DBG("Replacing a dir with a file");
-				db->mtime = fs->mtime;
-				db->ctime = fs->ctime;
-				db->size = fs->size;
+
 				db->status = MC_FILESTAT_COMPLETE;
 				db->is_dir = true;
 
@@ -676,10 +681,7 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 		rc = db_delete_file(db->id); //old ID is most likely void, let server generate new
 		MC_CHKERR(rc);
 		db->id = MC_FILEID_NONE;
-		db->name = fs->name;
-		db->ctime = fs->ctime;
-		db->mtime = fs->mtime;
-		db->size = fs->size;
+
 		db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
 		memcpy(db->hash,hash,16);
 
@@ -783,7 +785,7 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 				crypt_filestring(ctx,db,hashstr);
 			}
 		} else { // fs != NULL
-			MC_INF("Uploading file " << db->id << ": " << printname(db));
+			MC_INF("Uploading file " << db->id << ": " << printname(fs));
 			rpath.append(db->name);
 			fpath.append(rpath);
 			
