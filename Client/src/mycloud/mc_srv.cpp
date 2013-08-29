@@ -715,7 +715,7 @@ int _srv_addfile(int id, int64 offset, int64 blocksize, FILE *fdesc, unsigned ch
 	pack_addfile(&ibuf,authtoken,id,offset,blocksize,hash);
 
 	MatchBuf(&ibuf,ibuf.used+blocksize);
-	//fseek(fdesc,offset,SEEK_SET); //Normally we loop this function anyway
+	//fs_fseek(fdesc,offset,SEEK_SET); //Normally we loop this function anyway
 	if(blocksize != 0){
 		MC_NOTIFYIOSTART(MC_NT_FS);
 		read = fread(ibuf.mem+ibuf.used,blocksize,1,fdesc);

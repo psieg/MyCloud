@@ -32,9 +32,27 @@ FILE* fs_fopen(const string& filename, const string& mode){
 	return _wfsopen(utf8_to_unicode(filename).c_str(),utf8_to_unicode(mode).c_str(),_SH_DENYNO);
 
 }
+int fs_fseek(FILE *f, int64 offset, int origin){
+	return _fseeki64(f,offset,origin);
+}
+int64 fs_ftell(FILE *f){
+	return _ftelli64(f);
+}
+int fs_fclose(FILE *f){
+	return fclose(f);
+}
 #else
 FILE* fs_fopen(const string& filename, const string& mode){
 	return fopen(filename.c_str(),mode.c_str());
+}
+int fs_fseek(FILE *f, int64 offset, int origin){
+	return fseeko(f,offset,origin);
+}
+int64 fs_ftell(FILE *f){
+	return ftello(f);
+}
+int fs_fclose(FILE *f){
+	return fclose(f);
 }
 #endif
 
@@ -84,7 +102,7 @@ int fs_filemd5(unsigned char hash[16], const string& fpath, size_t fsize){
 	
 	rc = fs_filemd5(hash,fsize,fdesc);
 
-	fclose(fdesc);
+	fs_fclose(fdesc);
 
 	return rc;
 }
@@ -371,7 +389,7 @@ int fs_exists(const string& path){
 
 	f = fs_fopen(path, "rb");
 	if(!f) return false;
-	fclose(f);
+	fs_fclose(f);
 	return true;*/
 	DWORD ftyp = GetFileAttributes(utf8_to_unicode(path).c_str());
 	if (ftyp != INVALID_FILE_ATTRIBUTES)
@@ -387,7 +405,7 @@ int fs_exists(const string& path){
 
 	f = fs_fopen(path, "rb");
 	if(!f) return false;
-	fclose(f);
+	fs_fclose(f);
 	return true;*/
 	struct stat st;
 	return (stat(path.c_str(),&st) == 0);
