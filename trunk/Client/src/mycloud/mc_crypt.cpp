@@ -247,7 +247,7 @@ int crypt_filemd5_new(mc_crypt_ctx *cctx, unsigned char hash[16], const string& 
 	
 		rc = crypt_filemd5_new(cctx,hash,fpath,fsize,fdesc);
 
-		fclose(fdesc);
+		fs_fclose(fdesc);
 		return rc;
 	} else return fs_filemd5(hash,fpath,fsize);
 }
@@ -274,7 +274,7 @@ int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16
 		rc = crypt_filemd5_known(cctx,file,hash,fpath,fdesc);
 		MC_CHKERR_FD(rc,fdesc);
 
-		fclose(fdesc);
+		fs_fclose(fdesc);
 		return rc;
 	} else return fs_filemd5(hash,fpath,file->size);
 }
@@ -348,7 +348,7 @@ int crypt_resumetopos_down(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE
 	if(cctx->ctx->sync->crypted){
 		cctx->f = file;
 		MatchBuf(&cctx->pbuf,MC_RECVBLOCKSIZE);
-		fseek(fdesc,0,SEEK_SET);		
+		fs_fseek(fdesc,0,SEEK_SET);		
 
 		rc = EVP_EncryptInit_ex(eevp,EVP_aes_256_gcm(),NULL,cctx->ctx->sync->cryptkey,cctx->iv+MC_CRYPT_IDOFFSET);
 		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptInit failed");
@@ -378,7 +378,7 @@ int crypt_resumetopos_down(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE
 		EVP_CIPHER_CTX_cleanup(eevp);
 		EVP_CIPHER_CTX_free(eevp);
 
-		fseek(fdesc,0,SEEK_END);
+		fs_fseek(fdesc,0,SEEK_END);
 	} else {
 	}
 	return 0;
@@ -554,7 +554,7 @@ int crypt_resumetopos_up(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE *
 	if(cctx->ctx->sync->crypted){
 		cctx->f = file;
 		MatchBuf(&cctx->pbuf,MC_SENDBLOCKSIZE);
-		fseek(fdesc,0,SEEK_SET);
+		fs_fseek(fdesc,0,SEEK_SET);
 
 
 		while(pos < offset){
@@ -576,7 +576,7 @@ int crypt_resumetopos_up(mc_crypt_ctx *cctx, mc_file *file, int64 offset, FILE *
 			MC_CHECKTERMINATING();
 		}
 	} else {
-		fseek(fdesc,offset,SEEK_SET);
+		fs_fseek(fdesc,offset,SEEK_SET);
 	}
 	return 0;
 }

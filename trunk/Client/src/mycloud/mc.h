@@ -112,7 +112,7 @@ using namespace std;
 #			define MC_ERR_MSG(rc,msg)		{ std::cerr << "<b><u>EE " << msg << " (Code " << rc << ")</u></b>" << std::endl;	\
 												mc_logfile << "EE " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << " (Code " << rc << ")" << std::endl; return rc; }
 			/* closes fd, displays msg and returns rc */
-#			define MC_ERR_MSG_FD(rc,fd,msg)	{ if(fd) fclose(fd); std::cerr << "<b><u>EE " << msg << " (Code " << rc << ")</u></b>" << std::endl;	\
+#			define MC_ERR_MSG_FD(rc,fd,msg)	{ if(fd) fs_fclose(fd); std::cerr << "<b><u>EE " << msg << " (Code " << rc << ")</u></b>" << std::endl;	\
 												mc_logfile << "EE " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << " (Code " << rc << ")" << std::endl; return rc; }
 			/* Checks rc for true, otherwise displays msg and returns rc */
 #			define MC_CHKERR_MSG(rc,msg)	{ if(rc) { std::cerr << "<b><u>EE " << msg << " (Code " << rc << ")</u></b>" << std::endl;	\
@@ -127,7 +127,7 @@ using namespace std;
 			/* displays msg and returns rc */
 #			define MC_ERR_MSG(rc,msg)		{ std::cerr << "<b><u>EE " << msg << " (Code " << rc << ")</u></b>" << std::endl; return rc; }
 			/* closes fd, displays msg and returns rc */
-#			define MC_ERR_MSG_FD(rc,fd,msg)	{ if(fd) fclose(fd); std::cerr << "<b><u>EE " << msg << " (Code " << rc << ")</u></b>" << std::endl; return rc; }
+#			define MC_ERR_MSG_FD(rc,fd,msg)	{ if(fd) fs_fclose(fd); std::cerr << "<b><u>EE " << msg << " (Code " << rc << ")</u></b>" << std::endl; return rc; }
 			/* Checks rc for true, otherwise displays msg and returns rc */
 #			define MC_CHKERR_MSG(rc,msg)	{ if(rc) { std::cerr << "<b><u>EE " << msg << " (Code " << rc << ")</u></b>" << std::endl; return rc; } }
 			/* Checks rc for exp, otherwise displays msg and returns rc */
@@ -141,7 +141,7 @@ using namespace std;
 #			define MC_ERR_MSG(rc,msg)		{ std::cerr << "EE " << msg << " (Code " << rc << ")" << std::endl;	\
 												mc_logfile << "EE " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << " (Code " << rc << ")" << std::endl; return rc; }
 			/* closes fd, displays msg and returns rc */
-#			define MC_ERR_MSG_FD(rc,fd,msg)	{ if(fd) fclose(fd); std::cerr << "EE " << msg << " (Code " << rc << ")" << std::endl;	\
+#			define MC_ERR_MSG_FD(rc,fd,msg)	{ if(fd) fs_fclose(fd); std::cerr << "EE " << msg << " (Code " << rc << ")" << std::endl;	\
 												mc_logfile << "EE " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << " (Code " << rc << ")" << std::endl; return rc; }
 			/* Checks rc for true, otherwise displays msg and returns rc */
 #			define MC_CHKERR_MSG(rc,msg)	{ if(rc) { std::cerr << "EE " << msg << " (Code " << rc << ")" << std::endl;	\
@@ -156,7 +156,7 @@ using namespace std;
 			/* displays msg and returns rc */
 #			define MC_ERR_MSG(rc,msg)		{ std::cerr << "EE " << msg << " (Code " << rc << ")" << std::endl; return rc; }
 			/* closes fd, displays msg and returns rc */
-#			define MC_ERR_MSG_FD(rc,fd,msg)	{ if(fd) fclose(fd); std::cerr << "EE " << msg << " (Code " << rc << ")" << std::endl; return rc; }
+#			define MC_ERR_MSG_FD(rc,fd,msg)	{ if(fd) fs_fclose(fd); std::cerr << "EE " << msg << " (Code " << rc << ")" << std::endl; return rc; }
 			/* Checks rc for true, otherwise displays msg and returns rc */
 #			define MC_CHKERR_MSG(rc,msg)	{ if(rc) { std::cerr << "EE " << msg << " (Code " << rc << ")" << std::endl; return rc; } }
 			/* Checks rc for exp, otherwise displays msg and returns rc */

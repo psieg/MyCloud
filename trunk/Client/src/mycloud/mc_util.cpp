@@ -47,7 +47,6 @@ string BinToHex(const string& data){
 
 /* Calculate MD5 hash of a string */
 int strmd5(unsigned char hash[16], const string& str){
-	int rc;	
 	QByteArray tmp = QCryptographicHash::hash(QByteArray(str.c_str(),str.length()),QCryptographicHash::Md5);
 
 	memcpy(hash,tmp.constData(),sizeof(unsigned char)*16);
