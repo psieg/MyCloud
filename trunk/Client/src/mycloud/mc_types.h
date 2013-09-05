@@ -143,6 +143,7 @@ inline bool compare_hashstr(const string& a, const string& b){ return *((int*)a.
 
 typedef struct _mc_sync {
 	int id;
+	int uid;
 	string name;
 	int filterversion;
 	bool crypted;
@@ -154,6 +155,7 @@ inline bool compare_mc_sync(mc_sync a, mc_sync b){ return a.id < b.id; }
 /* data of sync in db. includes local directory */
 typedef struct _mc_sync_db {
 	int id;
+	int uid;
 	int priority;
 	string name;
 	string path;

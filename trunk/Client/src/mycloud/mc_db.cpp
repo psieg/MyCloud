@@ -16,9 +16,9 @@ sqlite3_stmt *stmt_select_status, *stmt_update_status, \
 /* the respective queries */
 #define QRY_SELECT_STATUS "SELECT locked,action,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion FROM status"
 #define QRY_UPDATE_STATUS "UPDATE status SET locked = ?, action = ?, url = ?, uname = ?, passwd = ?, acceptallcerts = ?, watchmode = ?, basedate = ?, updatecheck = ?, updateversion = ?"
-#define QRY_SELECT_SYNC "SELECT id,priority,name,path,filterversion,crypted,status,lastsync,hash,cryptkey FROM syncs WHERE id = ?"
-#define QRY_LIST_SYNC "SELECT id,priority,name,path,filterversion,crypted,status,lastsync,hash,cryptkey FROM syncs"
-#define QRY_INSERT_SYNC "INSERT INTO syncs (id,priority,name,path,filterversion,crypted,status,lastsync,hash,cryptkey) VALUES (?,?,?,?,?,?,?,?,?,?)"
+#define QRY_SELECT_SYNC "SELECT id,uid,priority,name,path,filterversion,crypted,status,lastsync,hash,cryptkey FROM syncs WHERE id = ?"
+#define QRY_LIST_SYNC "SELECT id,uid,priority,name,path,filterversion,crypted,status,lastsync,hash,cryptkey FROM syncs"
+#define QRY_INSERT_SYNC "INSERT INTO syncs (id,uid,priority,name,path,filterversion,crypted,status,lastsync,hash,cryptkey) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
 #define QRY_UPDATE_SYNC "UPDATE syncs SET priority = ?, name = ?, path = ?, filterversion = ?, crypted = ?, status = ?, lastsync = ?, hash = ?, cryptkey = ? WHERE id = ?"
 #define QRY_DELETE_SYNC "DELETE FROM syncs WHERE id = ?"
 #define QRY_SELECT_FILTER "SELECT id,sid,files,directories,type,rule FROM filters WHERE id = ?"
@@ -139,7 +139,7 @@ int _db_open(const string& fname){
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("INSERT INTO status (locked,action,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion) VALUES (0,0,'','','',0,300,0,0,'')");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
-				rc = _db_execstr("CREATE TABLE syncs (id INTEGER PRIMARY KEY, priority INTEGER NOT NULL, name TEXT UNIQUE NOT NULL, path TEXT NOT NULL, \
+				rc = _db_execstr("CREATE TABLE syncs (id INTEGER PRIMARY KEY, uid INTEGER NOT NULL, priority INTEGER NOT NULL, name TEXT NOT NULL, path TEXT NOT NULL, \
 									filterversion INTEGER NOT NULL, crypted INTEGER NOT NULL, status INTEGER NOT NULL, lastsync INTEGER NOT NULL, hash BLOB, cryptkey BLOB)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("CREATE TABLE filters (id INTEGER PRIMARY KEY, sid INTEGER NOT NULL, files BOOLEAN NOT NULL, directories BOOLEAN NOT NULL, \
@@ -335,15 +335,16 @@ int _db_select_sync(mc_sync_db *var){
 	else if(rc == SQLITE_DONE) return rc; /* Empty result set */
 	else if(rc == SQLITE_ROW){ /* We expect only one result set */
 		var->id = sqlite3_column_int(stmt_select_sync,0);
-		var->priority = sqlite3_column_int(stmt_select_sync,1);
-		var->name.assign((const char*)sqlite3_column_text(stmt_select_sync,2));
-		var->path.assign((const char*)sqlite3_column_text(stmt_select_sync,3));
-		var->filterversion = sqlite3_column_int(stmt_select_sync,4);
-		var->crypted = sqlite3_column_int(stmt_select_sync,5) != 0;
-		var->status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_select_sync,6);
-		var->lastsync = sqlite3_column_int64(stmt_select_sync,7);
-		memcpy(var->hash,sqlite3_column_blob(stmt_select_sync,8),16);
-		memcpy(var->cryptkey,sqlite3_column_blob(stmt_select_sync,9),32);
+		var->uid = sqlite3_column_int(stmt_select_sync,1);
+		var->priority = sqlite3_column_int(stmt_select_sync,2);
+		var->name.assign((const char*)sqlite3_column_text(stmt_select_sync,3));
+		var->path.assign((const char*)sqlite3_column_text(stmt_select_sync,4));
+		var->filterversion = sqlite3_column_int(stmt_select_sync,5);
+		var->crypted = sqlite3_column_int(stmt_select_sync,6) != 0;
+		var->status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_select_sync,7);
+		var->lastsync = sqlite3_column_int64(stmt_select_sync,8);
+		memcpy(var->hash,sqlite3_column_blob(stmt_select_sync,9),16);
+		memcpy(var->cryptkey,sqlite3_column_blob(stmt_select_sync,10),32);
 	}
 	return 0;
 }
@@ -358,15 +359,16 @@ int _db_list_sync(list<mc_sync_db> *l){
 	rc = sqlite3_step(stmt_list_sync);
 	while(rc == SQLITE_ROW){	
 		var.id = sqlite3_column_int(stmt_list_sync,0);
-		var.priority = sqlite3_column_int(stmt_list_sync,1);
-		var.name.assign((const char*)sqlite3_column_text(stmt_list_sync,2));
-		var.path.assign((const char*)sqlite3_column_text(stmt_list_sync,3));
-		var.filterversion = sqlite3_column_int(stmt_list_sync,4);
-		var.crypted = sqlite3_column_int(stmt_list_sync,5) != 0;
-		var.status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_list_sync,6);
-		var.lastsync = sqlite3_column_int64(stmt_list_sync,7);
-		memcpy(var.hash,sqlite3_column_blob(stmt_list_sync,8),16);
-		memcpy(var.cryptkey,sqlite3_column_blob(stmt_list_sync,9),32);
+		var.uid = sqlite3_column_int(stmt_list_sync,1);
+		var.priority = sqlite3_column_int(stmt_list_sync,2);
+		var.name.assign((const char*)sqlite3_column_text(stmt_list_sync,3));
+		var.path.assign((const char*)sqlite3_column_text(stmt_list_sync,4));
+		var.filterversion = sqlite3_column_int(stmt_list_sync,5);
+		var.crypted = sqlite3_column_int(stmt_list_sync,6) != 0;
+		var.status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_list_sync,7);
+		var.lastsync = sqlite3_column_int64(stmt_list_sync,8);
+		memcpy(var.hash,sqlite3_column_blob(stmt_list_sync,9),16);
+		memcpy(var.cryptkey,sqlite3_column_blob(stmt_list_sync,10),32);
 		l->push_back(var);
 		rc = sqlite3_step(stmt_list_sync);
 	}
@@ -383,23 +385,25 @@ int _db_insert_sync(mc_sync_db *var){
 	MC_CHKERR_MSG(rc,"Clear failed");
 	rc = sqlite3_bind_int(stmt_insert_sync,1,var->id);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_insert_sync,2,var->priority);
+	rc = sqlite3_bind_int(stmt_insert_sync,2,var->uid);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_text(stmt_insert_sync,3,var->name.c_str(),var->name.length(),SQLITE_STATIC);
+	rc = sqlite3_bind_int(stmt_insert_sync,3,var->priority);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_text(stmt_insert_sync,4,var->path.c_str(),var->path.length(),SQLITE_STATIC);
+	rc = sqlite3_bind_text(stmt_insert_sync,4,var->name.c_str(),var->name.length(),SQLITE_STATIC);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_insert_sync,5,var->filterversion);
+	rc = sqlite3_bind_text(stmt_insert_sync,5,var->path.c_str(),var->path.length(),SQLITE_STATIC);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_insert_sync,6,var->crypted);
+	rc = sqlite3_bind_int(stmt_insert_sync,6,var->filterversion);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_insert_sync,7,var->status);
+	rc = sqlite3_bind_int(stmt_insert_sync,7,var->crypted);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int64(stmt_insert_sync,8,var->lastsync);
+	rc = sqlite3_bind_int(stmt_insert_sync,8,var->status);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_blob(stmt_insert_sync,9,var->hash,16,SQLITE_STATIC);
+	rc = sqlite3_bind_int64(stmt_insert_sync,9,var->lastsync);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_blob(stmt_insert_sync,10,var->cryptkey,32,SQLITE_STATIC);
+	rc = sqlite3_bind_blob(stmt_insert_sync,10,var->hash,16,SQLITE_STATIC);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_bind_blob(stmt_insert_sync,11,var->cryptkey,32,SQLITE_STATIC);
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_step(stmt_insert_sync);
 	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));

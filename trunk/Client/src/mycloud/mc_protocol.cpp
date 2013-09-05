@@ -316,6 +316,8 @@ void unpack_synclist(mc_buf *buf, list<mc_sync> *l){
 		while(index < buf->used){
 			memcpy(&item.id,&buf->mem[index],sizeof(int));
 			index += sizeof(int);
+			memcpy(&item.uid,&buf->mem[index],sizeof(int));
+			index += sizeof(int);
 			memcpy(&namelen,&buf->mem[index],sizeof(int));
 			index += sizeof(int);
 			item.name.assign(&buf->mem[index],namelen);
