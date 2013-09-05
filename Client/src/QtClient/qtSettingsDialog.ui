@@ -133,6 +133,9 @@
      <property name="text">
       <string>OK</string>
      </property>
+     <property name="default">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
    <item row="1" column="0" colspan="4">
@@ -226,6 +229,8 @@
   <tabstop>certBox</tabstop>
   <tabstop>passwordButton</tabstop>
   <tabstop>sleeptimeSpin</tabstop>
+  <tabstop>watchmodeBox</tabstop>
+  <tabstop>startupBox</tabstop>
   <tabstop>updateBox</tabstop>
   <tabstop>okButton</tabstop>
   <tabstop>cancelButton</tabstop>

@@ -3,8 +3,8 @@
 #include "mc.h"
 /* This unit defines the Codes used in our protocol and functions to pack/unpack messages */
 
-#define MC_CLIENT_PROTOCOL_VERSION		8
-#define MC_MIN_SERVER_PROTOCOL_VERSION	8
+#define MC_CLIENT_PROTOCOL_VERSION		9
+#define MC_MIN_SERVER_PROTOCOL_VERSION	9
 
 typedef int MC_SRVQUERY;
 #define MC_SRVQRY_STATUS		100	// What's your status
