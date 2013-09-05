@@ -160,8 +160,8 @@ function pack_synclist($list){
 	$r = pack("l1",MC_SRVSTAT_SYNCLIST);
 	foreach($list as $sync){
 		if($sync[4] === NULL) $sync[4] = str_repeat("\0",16);
-		$r .= pack("l2",$sync[0],strlen($sync[1])).$sync[1].
-			pack("l1C1",$sync[2],$sync[3]).$sync[4];
+		$r .= pack("l3",$sync[0],$sync[1],strlen($sync[2])).$sync[2].
+			pack("l1C1",$sync[3],$sync[4]).$sync[5];
 	}
 	return $r;
 }

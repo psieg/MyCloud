@@ -5,7 +5,7 @@ require_once 'protocol_funcs.php';
 
 function handle_listsyncs($ibuf,$uid){
 	global $mysqli;
-	$q = $mysqli->query("SELECT id,name,filterversion,crypted,hash FROM mc_syncs WHERE uid = ".$uid);
+	$q = $mysqli->query("SELECT id,uid,name,filterversion,crypted,hash FROM mc_syncs WHERE uid = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
 	$l = $q->fetch_all();
 	//$l = array();
