@@ -249,7 +249,7 @@ function handle_putfile($ibuf,$uid){
 
 		//Verify file does not exist already
 		$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND LOWER(name) = LOWER('".esc($qry['name'])."')".
-			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))"););
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 		if(!$q) return pack_interror($mysqli->error);
 		$res = $q->fetch_row();
 		if($res) return pack_exists($res[0]);
@@ -285,7 +285,7 @@ function handle_putfile($ibuf,$uid){
 			$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
 			//make sure target does not exist yet
 			$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND name = '".esc($qry['name'])."'".
-				" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))"););
+				" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 			if(!$q) return pack_interror($mysqli->error);
 			$res = $q->fetch_row();
 			if($res) pack_exists($res[0]);
@@ -455,7 +455,7 @@ function handle_delfile($ibuf,$uid){
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows != 0) return pack_code(MC_SRVSTAT_NOTEMPTY);
 
-	$q = $mysqli->query("SELECT status FROM mc_files WHERE id = ".$qry[0]
+	$q = $mysqli->query("SELECT status FROM mc_files WHERE id = ".$qry[0].
 		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
