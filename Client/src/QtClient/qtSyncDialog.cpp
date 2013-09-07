@@ -70,14 +70,13 @@ void QtSyncDialog::showEvent(QShowEvent *event){
 }
 
 void QtSyncDialog::authed(int rc){
-	int64 dummy;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
 	if(rc){
 		reject();
 		return;
 	}
 
-	rc = srv_auth_process(&netobuf,&authtime,&dummy);
+	rc = srv_auth_process(&netobuf,&authtime);
 	if(rc){
 		if((rc) == MC_ERR_TIMEDIFF){	
 			QMessageBox b(this);

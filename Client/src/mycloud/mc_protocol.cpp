@@ -293,16 +293,18 @@ void pack_passchange(mc_buf *buf, unsigned char authtoken[16], const string& new
 
 /* These functions fill the params with the response buffer's contents 
 *	Offset is always sizeof(int) as the server status code does not matter to us */
-void unpack_authed(mc_buf *buf, unsigned char authtoken[16], int64 *time, int64 *basedate, int *version){
+void unpack_authed(mc_buf *buf, int *version, unsigned char authtoken[16], int64 *time, int64 *basedate, int *uid){
 	unsigned int index = sizeof(int);
 	try {
+		memcpy(version,&buf->mem[index],sizeof(int));
+		index += sizeof(int);
 		memcpy(authtoken,&buf->mem[index],16);
 		index += sizeof(char)*16;
 		memcpy(time,&buf->mem[index],sizeof(int64));
 		index += sizeof(int64);
 		memcpy(basedate,&buf->mem[index],sizeof(int64));
 		index += sizeof(int64);
-		memcpy(version,&buf->mem[index],sizeof(int));
+		memcpy(uid,&buf->mem[index],sizeof(int));
 	} catch (...) {
 		throw MC_ERR_PROTOCOL;
 	}

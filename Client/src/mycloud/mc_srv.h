@@ -12,10 +12,10 @@
 
 // Functions communicating with the server
 bool srv_isopen();
-int srv_open(const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, bool acceptall = false);
+int srv_open(const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall = false);
 int srv_standby();
 int srv_close();
-int srv_auth(const string& user, const string& passwd, int64 *basedate);
+int srv_auth(const string& user, const string& passwd, int64 *basedate = NULL, int *uid = NULL);
 int srv_timecheck();
 int srv_listsyncs(list<mc_sync> *l);
 int srv_listfilters(list<mc_filter> *l, int sid);
@@ -70,7 +70,7 @@ private:
 //for async use with an external async performer + event loop
 int srv_auth_async(mc_buf *ibuf, mc_buf* obuf, QtNetworkPerformer *perf,
 				   const string& user, const string& passwd, int64 *ltimea);
-int srv_auth_process(mc_buf *obuf, int64 *ltimea, int64 *basedate);
+int srv_auth_process(mc_buf *obuf, int64 *ltimea, int64 *basedate = NULL, int *uid = NULL);
 int srv_listsyncs_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf);
 int srv_listsyncs_process(mc_buf *obuf, list<mc_sync> *l);
 int srv_createsync_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& name, bool crypted);
