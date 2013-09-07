@@ -156,7 +156,8 @@ function handle_delfilter($ibuf,$uid){
 function handle_listdir($ibuf,$uid){
 	global $mysqli;
 	$parent = unpack_listdir($ibuf);
-	$q = $mysqli->query("SELECT id,name,ctime,mtime,size,is_dir,parent,status,hash FROM mc_files WHERE parent = ".$parent." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT id,name,ctime,mtime,size,is_dir,parent,status,hash FROM mc_files WHERE parent = ".$parent.
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 	$l = array();
 	while($r = $q->fetch_row()){ $l[] = $r; }
@@ -167,7 +168,8 @@ function handle_getfile($ibuf,$uid){
 	global $mysqli;
 	$qry = unpack_getfile($ibuf);
 	//Verify the file exists
-	$q = $mysqli->query("SELECT id,is_dir,name,parent,size,status,hash FROM mc_files WHERE id = ".$qry[0]." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT id,is_dir,name,parent,size,status,hash FROM mc_files WHERE id = ".$qry[0].
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$res = $q->fetch_row();
@@ -195,7 +197,8 @@ function handle_getfile($ibuf,$uid){
 function handle_getoffset($ibuf,$uid){
 	global $mysqli;
 	$id = unpack_getoffset($ibuf);
-	$q = $mysqli->query("SELECT id,is_dir,name,parent,size,status FROM mc_files WHERE id = ".$id." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT id,is_dir,name,parent,size,status FROM mc_files WHERE id = ".$id.
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$res = $q->fetch_row();
@@ -225,37 +228,39 @@ function handle_putfile($ibuf,$uid){
 		if($qry['is_dir']) $qry['hash'] = "\xd4\x1d\x8c\xd9\x8f\x00\xb2\x04\xe9\x80\x09\x98\xec\xf8\x42\x7e"; //empty md5
 		//Verify parent
 		if($qry['parent'] < 0){
-			$q = $mysqli->query("SELECT id FROM mc_syncs WHERE id = ".-$qry['parent']." AND uid = ".$uid);
+			$q = $mysqli->query("SELECT id,uid FROM mc_syncs WHERE id = ".-$qry['parent'].
+				" AND (uid = ".$uid." OR id IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 			if(!$q) return pack_interror($mysqli->error);
 			if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 			$res = $q->fetch_row();
 			$sid = $res[0];
+			$parent_uid = $res[1];
 		} else {
-			$q = $mysqli->query("SELECT id,sid,is_dir,status FROM mc_files WHERE id = ".$qry['parent']." AND uid = ".$uid);
+			$q = $mysqli->query("SELECT id,uid,sid,is_dir,status FROM mc_files WHERE id = ".$qry['parent'].
+				" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 			if(!$q) return pack_interror($mysqli->error);
 			if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 			$res = $q->fetch_row();
-			if($res[2] != 1) return pack_code(MC_SRVSTAT_BADQRY); //parent must of course point to a dir
-			if($res[3] != MC_FILESTAT_COMPLETE) return pack_code(MC_SRVSTAT_BADQRY); //parent must not be deleted or anything
-			$sid = $res[1];
+			if($res[3] != 1) return pack_code(MC_SRVSTAT_BADQRY); //parent must of course point to a dir
+			if($res[4] != MC_FILESTAT_COMPLETE) return pack_code(MC_SRVSTAT_BADQRY); //parent must not be deleted or anything
+			$sid = $res[2];
+			$parent_uid = $res[1];
 		}
 
 		//Verify file does not exist already
-		$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND uid = ".$uid." AND LOWER(name) = LOWER('".esc($qry['name'])."')");
+		$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND LOWER(name) = LOWER('".esc($qry['name'])."')".
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))"););
 		if(!$q) return pack_interror($mysqli->error);
 		$res = $q->fetch_row();
 		if($res) return pack_exists($res[0]);
 
+		//uid needs to be from parent as it might not be our sync
 		$q = $mysqli->query("INSERT INTO mc_files (uid,sid,name,ctime,mtime,size,is_dir,parent,hash,status) VALUES ".
-			"(".$uid.", ".$sid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
+			"(".$parent_uid.", ".$sid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
 			($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".
 			($qry['is_dir']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
 		if(!$q) return pack_interror($mysqli->error);
 
-		//return pack_interror("INSERT INTO mc_files(uid,name,ctime,mtime,size,is_dir,parent,hash,status) VALUES ".
-		//	"(".$uid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
-		//	($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".
-		//	($qry['size']==$qry['blocksize']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
 		$fid = $mysqli->insert_id;
 		$filedata = filedata($fid,$qry['name'],$qry['parent']);
 		if($qry['is_dir']){
@@ -264,7 +269,8 @@ function handle_putfile($ibuf,$uid){
 		}
 	} else { //Modification
 		//Source exists?
-		$q = $mysqli->query("SELECT name,parent,is_dir,status FROM mc_files WHERE id = ".$qry['id']." AND uid = ".$uid);
+		$q = $mysqli->query("SELECT name,parent,is_dir,status FROM mc_files WHERE id = ".$qry['id'].
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 		if(!$q) pack_interror($mysqli->error);
 		if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 		$res = $q->fetch_row();
@@ -272,56 +278,14 @@ function handle_putfile($ibuf,$uid){
 		$oldfiledata = filedata($qry['id'],$res[0],$res[1]);
 
 
-		if($qry['parent'] != $res[1]){ //If it's a move (=parent change)
-			if($qry['is_dir']) $qry['hash'] = "\xd4\x1d\x8c\xd9\x8f\x00\xb2\x04\xe9\x80\x09\x98\xec\xf8\x42\x7e"; //empty md5
-			//Verify parent
-			if($qry['parent'] != $res[1]){
-				if($qry['parent'] < 0){
-					$q = $mysqli->query("SELECT id FROM mc_syncs WHERE id = ".-$qry['parent']." AND uid = ".$uid);
-					if(!$q) return pack_interror($mysqli->error);
-					if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
-					$res = $q->fetch_row();
-				} else {
-					$q = $mysqli->query("SELECT id,is_dir,status FROM mc_files WHERE id = ".$qry['parent']." AND uid = ".$uid);
-					if(!$q) return pack_interror($mysqli->error);
-					if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
-					$res = $q->fetch_row();
-					if($res[1] != 1) return pack_code(MC_SRVSTAT_BADQRY); //parent must of course point to a dir
-					if($res[2] != MC_FILESTAT_COMPLETE) return pack_code(MC_SRVSTAT_BADQRY); //parent must not be deleted or anything
-				}
-			}
-
-			//Target exists?
-			$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND uid = ".$uid." AND LOWER(name) = LOWER('".esc($qry['name'])."')");
-			if(!$q) return pack_interror($mysqli->error);
-			$res = $q->fetch_row();
-			if($res) pack_exists($res[0]);
-
-			$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
-		
+		if($qry['parent'] != $res[1]){ //If it's a move (=parent change)		
 			return pack_interror("This is a move. You don't want that.");
 	
-			$rc = rename($oldfiledata[0],$filedata[0]);
-			if(!$rc) return pack_interror("Failed to rename file");
-
-			$q = $mysqli->query("UPDATE mc_files SET status = ".MC_FILESTAT_MOVED." ".
-				"WHERE id = ".$qry['id']." AND uid = ".$uid);
-			if(!$q) return pack_interror($mysqli->error);
-
-			if($qry['is_dir'])
-				$q = $mysqli->query("INSERT INTO mc_files(uid,name,ctime,mtime,size,is_dir,parent,status) VALUES ".
-					"(".$uid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
-					($qry['is_dir']?1:0).", ".$qry['parent'].", '".MC_FILESTAT_COMPLETE." )");
-			else
-				$q = $mysqli->query("INSERT INTO mc_files(uid,name,ctime,mtime,size,is_dir,parent,hash,status) VALUES ".
-					"(".$uid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
-					($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".MC_FILESTAT_INCOMPLETE_UP." )");
-			if(!$q) return pack_interror($mysqli->error);
-			$fid = $mysqli->insert_id;
 		} else if ($qry['name'] != $res[0]){ // local rename / case change
 			$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
-			//make sure target does not exists yet
-			$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND uid = ".$uid." AND name = '".esc($qry['name'])."'");
+			//make sure target does not exist yet
+			$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND name = '".esc($qry['name'])."'".
+				" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))"););
 			if(!$q) return pack_interror($mysqli->error);
 			$res = $q->fetch_row();
 			if($res) pack_exists($res[0]);
@@ -332,14 +296,16 @@ function handle_putfile($ibuf,$uid){
 					"mtime = ".$qry['mtime'].", size = ".$qry['size'].", ".
 					"is_dir = ".($qry['is_dir']?1:0).", ".
 					"status = ".MC_FILESTAT_COMPLETE." ".
-					"WHERE id = ".$qry['id']." AND uid = ".$uid);
+					"WHERE id = ".$qry['id'].
+					" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 			else
 				$q = $mysqli->query("UPDATE mc_files SET name = '".esc($qry['name'])."', ".
 					"ctime = ".$qry['ctime'].", ".
 					"mtime = ".$qry['mtime'].", size = ".$qry['size'].", ".
 					"is_dir = ".($qry['is_dir']?1:0).", hash = '".esc($qry['hash'])."', ".
 					"status = ".MC_FILESTAT_INCOMPLETE_UP." ".
-					"WHERE id = ".$qry['id']." AND uid = ".$uid);
+					"WHERE id = ".$qry['id'].
+					" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 			if(!$q) return pack_interror($mysqli->error);
 			$fid = $qry['id'];
 			
@@ -354,13 +320,15 @@ function handle_putfile($ibuf,$uid){
 					"mtime = ".$qry['mtime'].", size = ".$qry['size'].", ".
 					"is_dir = ".($qry['is_dir']?1:0).", ".
 					"status = ".MC_FILESTAT_COMPLETE." ".
-					"WHERE id = ".$qry['id']." AND uid = ".$uid);
+					"WHERE id = ".$qry['id'].
+					" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 			else
 				$q = $mysqli->query("UPDATE mc_files SET ctime = ".$qry['ctime'].", ".
 					"mtime = ".$qry['mtime'].", size = ".$qry['size'].", ".
 					"is_dir = ".($qry['is_dir']?1:0).", hash = '".esc($qry['hash'])."', ".
 					"status = ".MC_FILESTAT_INCOMPLETE_UP." ".
-					"WHERE id = ".$qry['id']." AND uid = ".$uid);
+					"WHERE id = ".$qry['id'].
+					" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 			if(!$q) return pack_interror($mysqli->error);
 			$fid = $qry['id'];
 		}
@@ -390,15 +358,8 @@ function handle_putfile($ibuf,$uid){
 			"WHERE id = ".$fid." AND uid = ".$uid);
 	}
 	
-	//if(isset($oldfiledata) && ($oldfiledata[1] != $filedata[1])){
-	//	$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$oldfiledata[1]);
-	//	if(!$q) return pack_interror($mysqli->error);
-	//}
-
 	updateHash($fid);	
 
-	//$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$filedata[1]);
-	//if(!$q) return pack_interror($mysqli->error);
 
 	return pack_fileid($fid);
 }
@@ -407,7 +368,8 @@ function handle_addfile($ibuf,$uid){
 	global $mysqli;
 	$qry = unpack_addfile($ibuf);
 	// Verify the file exists
-	$q = $mysqli->query("SELECT name,mtime,size,is_dir,parent,hash FROM mc_files WHERE id = ".$qry[0]." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT name,mtime,size,is_dir,parent,hash FROM mc_files WHERE id = ".$qry[0].
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$res = $q->fetch_row();
@@ -427,7 +389,8 @@ function handle_addfile($ibuf,$uid){
 		if(feof($ibuf) && $readbytes < $qry[2]) return pack_code(MC_SRVSTAT_BADQRY);
 	}
 	if(ftell($fdesc) == $res[2]){
-		$q = $mysqli->query("UPDATE mc_files SET status = ".MC_FILESTAT_COMPLETE." WHERE id = ".$qry[0]." AND uid = ".$uid);
+		$q = $mysqli->query("UPDATE mc_files SET status = ".MC_FILESTAT_COMPLETE." WHERE id = ".$qry[0].
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 		if(!$q) return pack_interror($mysqli->error);
 		updateHash($qry[0]);
 	}
@@ -435,8 +398,6 @@ function handle_addfile($ibuf,$uid){
 	$rc = touch($filedata[0],$res[1]);
 	if(!$rc) return pack_interror("Failed to set mtime");
 
-	//$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$filedata[1]);
-	//if(!$q) return pack_interror($mysqli->error);
 	return pack_code(MC_SRVSTAT_OK);
 }
 
@@ -444,59 +405,21 @@ function handle_patchfile($ibuf,$uid){
 	global $mysqli;
 	$qry = unpack_patchfile($ibuf);
 	//Source exists?
-	$q = $mysqli->query("SELECT name,parent,is_dir,status FROM mc_files WHERE id = ".$qry['id']." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT name,parent,is_dir,status FROM mc_files WHERE id = ".$qry['id'].
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$res = $q->fetch_row();
 	$oldfiledata = filedata($qry['id'],$res[0],$res[1]);
 
 	if($qry['parent'] != $res[1]){ //If it's a move (=parent change)
-		return pack_interror("Not Implemented / tested: ".$qry['name']."/".$res[0]);
-
-		//Verify parent
-		if($qry['parent'] != $res[1]){
-			if($qry['parent'] < 0){
-				$q = $mysqli->query("SELECT id FROM mc_syncs WHERE id = ".-$qry['parent']." AND uid = ".$uid);
-				if(!$q) return pack_interror($mysqli->error);
-				if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
-				$res = $q->fetch_row();
-			} else {
-				$q = $mysqli->query("SELECT id,is_dir,status FROM mc_files WHERE id = ".$qry['parent']." AND uid = ".$uid);
-				if(!$q) return pack_interror($mysqli->error);
-				if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
-				$res = $q->fetch_row();
-				if($res[1] != 1) return pack_code(MC_SRVSTAT_BADQRY); //parent must of course point to a dir
-				if($res[2] != MC_FILESTAT_COMPLETE) return pack_code(MC_SRVSTAT_BADQRY); //parent must not be deleted or anything
-			}
-		}
-
-		//Target exists?
-		$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND uid = ".$uid." AND LOWER(name) = LOWER('".esc($qry['name'])."')");
-		if(!$q) return pack_interror($mysqli->error);
-		$res = $q->fetch_row();
-		if($res) pack_exists($res[0]);
-
-		$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
-	
-		return pack_interror("This is a move. You don't want that.");	
-
-		$rc = rename($oldfiledata[0],$filedata[0]);
-		if(!$rc) return pack_interror("Failed to rename file");
-
-		$q = $mysqli->query("UPDATE mc_files SET status = ".MC_FILESTAT_MOVED." ".
-			"WHERE id = ".$qry['id']." AND uid = ".$uid);
-		if(!$q) return pack_interror($mysqli->error);
-		
-		$q = $mysqli->query("INSERT INTO mc_files(uid,name,ctime,mtime,size,is_dir,parent,hash,status) VALUES ".
-			"(".$uid.", '".esc($qry['name'])."', ".$qry['ctime'].", ".$qry['mtime'].", ".$qry['size'].", ".
-			($qry['is_dir']?1:0).", ".$qry['parent'].", '".esc($qry['hash'])."', ".
-			($qry['size']==$qry['blocksize']?MC_FILESTAT_COMPLETE:MC_FILESTAT_INCOMPLETE_UP)." )");
-		if(!$q) return pack_interror($mysqli->error);
+		return pack_interror("This is a move. You don't want that.");
 	} else if($qry['name'] != $res[0]){ // local rename / case change
 		$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
 		$status = $res[3];
 		//make sure target does not exists yet
-		$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND uid = ".$uid." AND name = '".esc($qry['name'])."'");
+		$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND name = '".esc($qry['name'])."'".
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 		if(!$q) return pack_interror($mysqli->error);
 		$res = $q->fetch_row();
 		if($res) pack_exists($res[0]);
@@ -510,7 +433,8 @@ function handle_patchfile($ibuf,$uid){
 	}
 	$q = $mysqli->query("UPDATE mc_files SET name = '".esc($qry['name'])."', ctime = ".$qry['ctime'].", ".
 			"mtime = ".$qry['mtime'].", parent = ".$qry['parent']." ".
-			"WHERE id = ".$qry['id']." AND uid = ".$uid);
+			"WHERE id = ".$qry['id'].
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 		
 	if($res[3] != MC_FILESTAT_DELETED){
@@ -518,36 +442,33 @@ function handle_patchfile($ibuf,$uid){
 		if(!$rc) return pack_interror("Failed to set mtime");
 	}
 		
-	//if(isset($oldfiledata) && ($oldfiledata[1] != $filedata[1])){
-	//	$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$oldfiledata[1]);
-	//	if(!$q) return pack_interror($mysqli->error);
-	//}
-
 	updateHash($qry['id']);
 
-	//$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$filedata[1]);
-	//if(!$q) return pack_interror($mysqli->error);
 	return pack_code(MC_SRVSTAT_OK);
 }
 
 function handle_delfile($ibuf,$uid){
 	global $mysqli;
 	$qry = unpack_delfile($ibuf);
-	$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry[0]." AND uid = ".$uid." AND status != ".MC_FILESTAT_DELETED);
+	$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry[0]." AND status != ".MC_FILESTAT_DELETED.
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows != 0) return pack_code(MC_SRVSTAT_NOTEMPTY);
 
-	$q = $mysqli->query("SELECT status FROM mc_files WHERE id = ".$qry[0]);
+	$q = $mysqli->query("SELECT status FROM mc_files WHERE id = ".$qry[0]
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$res = $q->fetch_row();
 
 	if($res[0] == MC_FILESTAT_DELETED){
-		$q = $mysqli->query("UPDATE mc_files  SET mtime = ".$qry[1]." WHERE id = ".$qry[0]." AND uid = ".$uid);
+		$q = $mysqli->query("UPDATE mc_files  SET mtime = ".$qry[1]." WHERE id = ".$qry[0].
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 		if(!$q) return pack_interror($mysqli->error);
 	} else {
 		$q = $mysqli->query("UPDATE mc_files SET mtime = ".$qry[1].", status = ".MC_FILESTAT_DELETED." ".
-			"WHERE id = ".$qry[0]." AND uid = ".$uid);
+			"WHERE id = ".$qry[0].
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 		if(!$q) return pack_interror($mysqli->error);
 		$filedata = filedata($qry[0]);
 		if(is_dir($filedata[0])){
@@ -560,8 +481,6 @@ function handle_delfile($ibuf,$uid){
 	}
 	updateHash($qry[0]);
 
-	//$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$filedata[1]);
-	//if(!$q) return pack_interror($mysqli->error);
 	return pack_code(MC_SRVSTAT_OK);
 	
 }
@@ -569,7 +488,8 @@ function handle_delfile($ibuf,$uid){
 function handle_getmeta($ibuf,$uid){
 	global $mysqli;
 	$id = unpack_getmeta($ibuf);
-	$q = $mysqli->query("SELECT id,name,ctime,mtime,size,is_dir,parent,status,hash FROM mc_files WHERE id = ".$id." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT id,name,ctime,mtime,size,is_dir,parent,status,hash FROM mc_files WHERE id = ".$id.
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$f = $q->fetch_row();
@@ -579,11 +499,13 @@ function handle_getmeta($ibuf,$uid){
 function handle_purgefile($ibuf,$uid){
 	global $mysqli;
 	$id = unpack_purgefile($ibuf);
-	$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$id." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$id.
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows != 0) return pack_code(MC_SRVSTAT_NOTEMPTY);
 
-	$q = $mysqli->query("SELECT status,parent FROM mc_files WHERE id = ".$id." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT status,parent FROM mc_files WHERE id = ".$id.
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$res = $q->fetch_row();
@@ -592,7 +514,8 @@ function handle_purgefile($ibuf,$uid){
 
 	$filedata = filedata($id); // must get filedata before dropping the entry
 
-	$q = $mysqli->query("DELETE FROM mc_files WHERE id = ".$id." AND uid = ".$uid);
+	$q = $mysqli->query("DELETE FROM mc_files WHERE id = ".$id.
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
 
 	//If file deletion failed (normally because the file doesnt exist) we want the db entry removed
@@ -608,8 +531,6 @@ function handle_purgefile($ibuf,$uid){
 
 	updateHash($parent);
 
-	//$q = $mysqli->query("UPDATE mc_syncs SET synctime = ".time()." WHERE id = ".$filedata[1]);
-	//if(!$q) return pack_interror($mysqli->error);
 	return pack_code(MC_SRVSTAT_OK);
 }
 
@@ -624,7 +545,9 @@ function handle_notifychange($ibuf,$uid){
 	$s = substr($s,0,strlen($s)-1);
 
 	while(time(NULL) - $t < 30){
-		$q = $mysqli->query("SELECT id,hash FROM mc_syncs WHERE id IN (".$s.") ORDER BY id");
+		$q = $mysqli->query("SELECT id,hash FROM mc_syncs WHERE id IN (".$s.")".
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))".
+			" ORDER BY id");
 		if(!$q) return pack_interror($mysqli->error);
 		while($res = $q->fetch_row()){
 			if($list[$res[0]] != $res[1]) 

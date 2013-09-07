@@ -149,11 +149,13 @@ function pack_exists($id){
 	return pack("l2",MC_SRVSTAT_EXISTS,$id);
 }
 
-function pack_authed($token,$timestamp,$basedate){
-	return pack("l1",MC_SRVSTAT_AUTHED).$token
+function pack_authed($token,$timestamp,$basedate,$uid){
+	return pack("l1",MC_SRVSTAT_AUTHED)
+		.pack("l1",MC_SERVER_PROTOCOL_VERSION)
+		.$token
 		.pack("L2",$timestamp&0xFFFFFFFF,($timestamp&0xFFFFFFFF00000000)>>32)
 		.pack("L2",$basedate&0xFFFFFFFF,($basedate&0xFFFFFFFF00000000)>>32)
-		.pack("l1",MC_SERVER_PROTOCOL_VERSION);
+		.pack("l1",$uid);
 }
 
 function pack_synclist($list){

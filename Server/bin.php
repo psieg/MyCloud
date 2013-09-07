@@ -35,11 +35,11 @@ if($ready){
 				if(crypt($qry[1],$res[1]) == $res[1]){
 					if((time()-$res[4] <= MC_TOKEN_REGEN) && (time()-$res[3] <= MC_SESS_EXPIRE)){
 						$mysqli->query("UPDATE mc_users SET lastseen = ".time()." WHERE id = ".$res[0]);
-						print(pack_authed($res[2],time(),$basedate));
+						print(pack_authed($res[2],time(),$basedate,$res[0]));
 					} else {
 						$newtoken = md5("token".$res[0].time().$res[3].$res[2],true);
 						$mysqli->query("UPDATE mc_users SET token = '".esc($newtoken)."', lastseen = ".time().", lastregen = ".time()." WHERE id = ".$res[0]);
-						print(pack_authed($newtoken,time(),$basedate));
+						print(pack_authed($newtoken,time(),$basedate,$res[0]));
 					}
 				} else {
 					print(pack_code(MC_SRVSTAT_UNAUTH));
