@@ -75,7 +75,7 @@ void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db
 void pack_passchange(mc_buf *buf, unsigned char authtoken[16], const string& newpass);
 
 /* These functions fill the params with the response buffer's contents */
-void unpack_authed(mc_buf *buf, unsigned char authtoken[16], int64 *time, int64 *basedate, int *version);
+void unpack_authed(mc_buf *buf, int *version, unsigned char authtoken[16], int64 *time, int64 *basedate, int *uid);
 void unpack_synclist(mc_buf *buf, list<mc_sync> *l);
 void unpack_syncid(mc_buf *buf,  int *id);
 void unpack_filterlist(mc_buf *buf, list<mc_filter> *l);

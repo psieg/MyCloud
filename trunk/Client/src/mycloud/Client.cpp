@@ -23,7 +23,7 @@ ofstream mc_logfile;
 
 int runmc()
 {
-	int rc,wrc;
+	int rc,wrc,uid;
 	time_t basedate;
 	mc_status status;
 	unsigned char hash[16];
@@ -38,10 +38,11 @@ int runmc()
 				if(status.url == ""){ //TODO: ask
 					MC_ERR_MSG(MC_ERR_NOT_CONFIGURED,"No server configured");
 				}
-				rc = srv_open(status.url,CAFILE,status.uname,status.passwd,&basedate,status.acceptallcerts);
+				rc = srv_open(status.url,CAFILE,status.uname,status.passwd,&basedate,&uid,status.acceptallcerts);
 				if(!rc){
 					try {
 						MC_NOTIFYSTART(MC_NT_CONN,status.url);
+						//TODO: add UId to status and check here
 						if(status.basedate < basedate){
 							if(status.basedate != 0){
 								MC_WRN("Server has newer basedate, resetting");

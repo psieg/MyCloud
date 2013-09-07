@@ -17,10 +17,10 @@ string reauth_user, reauth_pass;
 
 // the internal versions ignore the srv_mutex, only use when the srv_mutex is already held by you
 bool _srv_isopen();
-int _srv_open(const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, bool acceptall = false);
+int _srv_open(const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall = false);
 int _srv_standby();
 int _srv_close();
-int _srv_auth(const string& user, const string& passwd, int64 *basedate);
+int _srv_auth(const string& user, const string& passwd, int64 *basedate, int *uid);
 int _srv_reauth();
 int _srv_timecheck();
 int _srv_listsyncs(list<mc_sync> *l);
@@ -316,9 +316,9 @@ bool srv_isopen(){
 	return rc;
 }
 
-SAFEFUNC6(srv_open,const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, bool acceptall, \
-		  url,certfile,user,passwd,basedate,acceptall)
-int _srv_open(const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, bool acceptall){
+SAFEFUNC7(srv_open,const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall, \
+		  url,certfile,user,passwd,basedate,uid,acceptall)
+int _srv_open(const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall){
 	//CURLcode crc;
 	int rc;
 	//long httpstatus = 0;
@@ -342,7 +342,7 @@ int _srv_open(const string& url, const string& certfile, const string& user, con
 	//MC_DBGL("Server is ready");
 
 	//Authentication and timecheck
-	rc = _srv_auth(user,passwd,basedate);
+	rc = _srv_auth(user,passwd,basedate,uid);
 	if(rc) { _srv_close(); return rc; }
 
 	MC_INF("Server connection established");
@@ -370,12 +370,12 @@ int _srv_close(){
 	return 0;
 }
 
-SAFEFUNC3(srv_auth,const string& user, const string& passwd, int64 *basedate, \
-		  user,passwd,basedate)
-int _srv_auth(const string& user, const string& passwd, int64 *basedate){
+SAFEFUNC4(srv_auth,const string& user, const string& passwd, int64 *basedate, int *uid, \
+		  user,passwd,basedate,uid)
+int _srv_auth(const string& user, const string& passwd, int64 *basedate, int *uid){
 	MC_DBGL("Authenticating on server");
-	int rc,version;
-	int64 rtime,ltimea,ltimeb,diff;
+	int rc,version,localuid;
+	int64 rtime,ltimea,ltimeb,diff,localbasedate;
 	reauth_user = user;
 	reauth_pass = passwd;
 	pack_auth(&ibuf,user,passwd);
@@ -384,12 +384,17 @@ int _srv_auth(const string& user, const string& passwd, int64 *basedate){
 	MC_CHKERR(rc);
 	ltimeb = time(NULL);
 
-	unpack_authed(&obuf,authtoken,&rtime,basedate,&version);
+	if(uid)	
+		if(basedate) unpack_authed(&obuf,&version,authtoken,&rtime,basedate,uid);
+		else unpack_authed(&obuf,&version,authtoken,&rtime,&localbasedate,uid);
+	else 
+		if(basedate) unpack_authed(&obuf,&version,authtoken,&rtime,basedate,&localuid);
+		else unpack_authed(&obuf,&version,authtoken,&rtime,&localbasedate,uid);
+	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
 	MC_DBG("Authenticated, token is " << MD5BinToHex(authtoken));
 	diff = abs((long)(ltimea-rtime));
 	if(diff > MC_MAXTIMEDIFF+((ltimeb-ltimea)/2)) MC_ERR_MSG(MC_ERR_TIMEDIFF,"Timediff too high: " << diff);
 	MC_DBG("Timing good, diff is " << diff);
-	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
 
 	return 0;
 }
@@ -405,27 +410,32 @@ int srv_auth_async(mc_buf *ibuf, mc_buf* obuf, QtNetworkPerformer *perf,
 	*ltimea = time(NULL);
 	return perf->perform(ibuf,obuf,false);
 }
-int srv_auth_process(mc_buf *obuf, int64 *ltimea, int64 *basedate){
-	int rc,version;
-	int64 rtime,ltimeb,diff;
+int srv_auth_process(mc_buf *obuf, int64 *ltimea, int64 *basedate, int *uid){
+	int rc,version,localuid;
+	int64 rtime,ltimeb,diff,localbasedate;
 	rc = srv_eval(MC_SRVSTAT_AUTHED,-1,obuf);
 	MC_CHKERR(rc);
 
 	ltimeb = time(NULL);
-
-	unpack_authed(obuf,authtoken,&rtime,basedate,&version);
+	
+	if(uid)	
+		if(basedate) unpack_authed(obuf,&version,authtoken,&rtime,basedate,uid);
+		else unpack_authed(obuf,&version,authtoken,&rtime,&localbasedate,uid);
+	else 
+		if(basedate) unpack_authed(obuf,&version,authtoken,&rtime,basedate,&localuid);
+		else unpack_authed(obuf,&version,authtoken,&rtime,&localbasedate,&localuid);
+	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
 	MC_DBG("Authenticated, token is " << MD5BinToHex(authtoken));
 	diff = abs((long)(*ltimea-rtime));
 	if(diff > MC_MAXTIMEDIFF+((ltimeb-*ltimea)/2)) MC_ERR_MSG(MC_ERR_TIMEDIFF,"Timediff too high: " << diff);
 	MC_DBG("Timing good, diff is " << diff);
-	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
 
 	return 0;
 }
 
 int _srv_reauth(){
 	MC_INF("Reauthenticating on server");
-	int rc,version;
+	int rc,version,uid;
 	int64 rtime,ltimea,ltimeb,diff,basedate;
 	mc_buf tmpibuf,tmpobuf;
 	SetBuf(&tmpibuf);
@@ -436,14 +446,14 @@ int _srv_reauth(){
 	MC_CHKERR(rc);
 	ltimeb = time(NULL);
 
-	unpack_authed(&tmpobuf,authtoken,&rtime,&basedate,&version);
+	unpack_authed(&tmpobuf,&version,authtoken,&rtime,&basedate,&uid);
 	FreeBuf(&tmpibuf);
 	FreeBuf(&tmpobuf);
+	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
 	MC_DBG("Authenticated, token is " << MD5BinToHex(authtoken));
 	diff = abs((long)(ltimea-rtime));
 	if(diff > MC_MAXTIMEDIFF+((ltimeb-ltimea)/2)) MC_ERR_MSG(MC_ERR_TIMEDIFF,"Timediff too high: " << diff);
 	MC_DBG("Timing good, diff is " << diff);
-	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
 
 	return 0;
 }
