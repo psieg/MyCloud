@@ -546,7 +546,7 @@ function handle_notifychange($ibuf,$uid){
 
 	while(time(NULL) - $t < 30){
 		$q = $mysqli->query("SELECT id,hash FROM mc_syncs WHERE id IN (".$s.")".
-			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))".
+			" AND (uid = ".$uid." OR id IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))".
 			" ORDER BY id");
 		if(!$q) return pack_interror($mysqli->error);
 		while($res = $q->fetch_row()){
