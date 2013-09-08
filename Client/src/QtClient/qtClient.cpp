@@ -12,8 +12,6 @@ QtClient *QtClient::_instance = NULL;
 QtClient::QtClient(QWidget *parent, int autorun)
 	: QMainWindow(parent)
 {
-	mc_status s;
-
 	Q_ASSERT_X((QtClient::_instance == NULL), "QtClient", "There should only be one QtClient Instance");
 	QtClient::_instance = this;
 	uploading = false;
@@ -648,6 +646,10 @@ int QtClient::listSyncs(){
 	int rc;
 	std::list<mc_sync_db> l;
 	std::vector<mc_sync_db>::iterator lit,lend;
+	mc_status s;
+
+	rc = db_select_status(&s);
+	if(rc) return rc;
 
 	rc = db_list_sync(&l);
 	if(rc) return rc;
@@ -664,9 +666,11 @@ int QtClient::listSyncs(){
 	while(lit != lend){
 		ui.syncTable->insertRow(ui.syncTable->rowCount());
 		if(lit->crypted)
-			ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(lock,QString(lit->name.c_str())));
+			if(lit->uid != s.uid) ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(lock,QString(lit->name.c_str())+tr(" (shared)")));
+			else ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(lock,QString(lit->name.c_str())));
 		else
-			ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(icon,QString(lit->name.c_str())));
+			if(lit->uid != s.uid) ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(icon,QString(lit->name.c_str())+tr(" (shared)")));
+			else ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(icon,QString(lit->name.c_str())));
 		ui.syncTable->setItem(ui.syncTable->rowCount()-1,1,new QTableWidgetItem(QString(lit->path.c_str())));
 		ui.syncTable->setItem(ui.syncTable->rowCount()-1,2,new QTableWidgetItem(QString(TimeToString(lit->lastsync).c_str())));
 		switch(lit->status){
