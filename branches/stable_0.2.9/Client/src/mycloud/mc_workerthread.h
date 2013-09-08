@@ -29,15 +29,7 @@ public:
 	};
 
 	void run(){
-		switch(command){
-			case NormalRun:
-				runmc();
-				break;
-			case DeleteSync:
-				break;
-			default:
-				;
-		}
+		runmc();
 	};
 	void quit(){
 		if(this->isRunning()){
@@ -67,8 +59,6 @@ public:
 	static QtWorkerThread* instance(){ return _instance; }
 	static QtWorkerThread *_instance;
 	bool terminating;
-	int command;
-	void* command_param;
 
 };
 

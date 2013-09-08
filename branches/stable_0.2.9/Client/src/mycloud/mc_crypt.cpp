@@ -503,6 +503,16 @@ int crypt_finish_download(mc_crypt_ctx *cctx){
 	return 0;
 }
 
+void crypt_abort_download(mc_crypt_ctx *cctx){
+	if(cctx->ctx->sync->crypted){
+		if(!cctx->f->is_dir && cctx->f->size > 0){
+			EVP_CIPHER_CTX_cleanup(cctx->evp);
+			EVP_CIPHER_CTX_free(cctx->evp);
+			FreeBuf(&cctx->pbuf);
+		}
+	}
+}
+
 
 
 int crypt_init_upload(mc_crypt_ctx *cctx, mc_file *file){
@@ -698,14 +708,22 @@ int crypt_patchfile(mc_crypt_ctx *cctx, const string& path, mc_file *file){
 }
 
 int crypt_finish_upload(mc_crypt_ctx *cctx){
-	int rc = 0;
 	if(cctx->ctx->sync->crypted){
 		if(!cctx->f->is_dir){
 			EVP_CIPHER_CTX_cleanup(cctx->evp);
 			EVP_CIPHER_CTX_free(cctx->evp);
 			FreeBuf(&cctx->pbuf);
 		}
-		return rc;
 	}
 	return 0;
+}
+
+void crypt_abort_upload(mc_crypt_ctx *cctx){
+	if(cctx->ctx->sync->crypted){
+		if(!cctx->f->is_dir){
+			EVP_CIPHER_CTX_cleanup(cctx->evp);
+			EVP_CIPHER_CTX_free(cctx->evp);
+			FreeBuf(&cctx->pbuf);
+		}
+	}
 }

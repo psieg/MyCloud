@@ -184,7 +184,6 @@ void QtClient::closeEvent(QCloseEvent *event)
 
 void QtClient::startNewRun(){
 	ui.textEdit->clear();
-	worker.command = QtWorkerThread::NormalRun;
 	worker.start();
 }
 
