@@ -4,10 +4,10 @@ require_once 'const.php';
 echo "<pre>";
 if(isset($_GET['phase1'])){
 	$queries = array(
-		'CREATE TABLE mc_status (basedate INTEGER)',
-		'CREATE TABLE mc_users (id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL, token BINARY(16), lastseen INTEGER NOT NULL, lastregen INTEGER NOT NULL, UNIQUE(name)) COLLATE utf8_general_ci',
+		'CREATE TABLE mc_status (basedate BIGINT)',
+		'CREATE TABLE mc_users (id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255) NOT NULL, password VARCHAR(255) NOT NULL, token BINARY(16), lastseen BIGINT NOT NULL, lastregen BIGINT NOT NULL, UNIQUE(name)) COLLATE utf8_general_ci',
 		'CREATE TABLE mc_syncs (id INTEGER PRIMARY KEY AUTO_INCREMENT, uid INTEGER NOT NULL, name VARCHAR(255) NOT NULL, filterversion INTEGER NOT NULL, crypted INTEGER NOT NULL, hash BINARY(16)) COLLATE utf8_general_ci',
-		'CREATE TABLE mc_files (id INTEGER PRIMARY KEY AUTO_INCREMENT, uid INTEGER NOT NULL, sid INTEGER NOT NULL, name VARCHAR(511) NOT NULL, ctime INTEGER NOT NULL, mtime INTEGER NOT NULL, size INTEGER NOT NULL, is_dir BOOLEAN NOT NULL, parent INTEGER NOT NULL, status INTEGER NOT NULL, hash BINARY(16), INDEX(parent,uid), INDEX(id,uid)) COLLATE utf8_general_ci',
+		'CREATE TABLE mc_files (id INTEGER PRIMARY KEY AUTO_INCREMENT, uid INTEGER NOT NULL, sid INTEGER NOT NULL, name VARCHAR(511) NOT NULL, ctime BIGINT NOT NULL, mtime BIGINT NOT NULL, size BIGINT NOT NULL, is_dir BOOLEAN NOT NULL, parent INTEGER NOT NULL, status INTEGER NOT NULL, hash BINARY(16), INDEX(parent,uid,sid), INDEX(id,uid)) COLLATE utf8_general_ci',
 		'CREATE TABLE mc_filters (id INTEGER PRIMARY KEY AUTO_INCREMENT, uid INTEGER NOT NULL, sid INTEGER NOT NULL, files INTEGER NOT NULL, directories INTEGER NOT NULL, type INTEGER NOT NULL, rule VARCHAR(255) NOT NULL, comment VARCHAR(255), INDEX(sid,uid)) COLLATE utf8_general_ci',
 		#default filter rules
 		'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,1,'.MC_FILTERT_REGEX_FULLNAME.',".*\\\.mc_conflict\\\.?.*","MyCloud conflicted files")',
