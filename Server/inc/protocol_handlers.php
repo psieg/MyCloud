@@ -5,7 +5,8 @@ require_once 'protocol_funcs.php';
 
 function handle_listsyncs($ibuf,$uid){
 	global $mysqli;
-	$q = $mysqli->query("SELECT id,uid,name,filterversion,crypted,hash FROM mc_syncs WHERE uid = ".$uid);
+	$q = $mysqli->query("SELECT id,uid,name,filterversion,crypted,hash FROM mc_syncs WHERE uid = ".$uid.
+		" OR id IN (SELECT sid FROM mc_shares WHERE uid  = ".$uid.")");
 	if(!$q) return pack_interror($mysqli->error);
 	$l = $q->fetch_all();
 	//$l = array();
@@ -355,7 +356,8 @@ function handle_putfile($ibuf,$uid){
 
 	if($qry['blocksize']==$qry['size']){
 		$q = $mysqli->query("UPDATE mc_files SET status = ".MC_FILESTAT_COMPLETE." ".
-			"WHERE id = ".$fid." AND uid = ".$uid);
+			"WHERE id = ".$fid.
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	}
 	
 	updateHash($fid);	
