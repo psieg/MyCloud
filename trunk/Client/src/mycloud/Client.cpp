@@ -42,37 +42,42 @@ int runmc()
 				if(!rc){
 					try {
 						MC_NOTIFYSTART(MC_NT_CONN,status.url);
-						//TODO: add UId to status and check here
+						if(status.uid != uid){
+							status.uid = uid;							
+							rc = db_update_status(&status);
+							if(rc) throw rc;
+						}
 						if(status.basedate < basedate){
 							if(status.basedate != 0){
 								MC_WRN("Server has newer basedate, resetting");
 								rc = db_execstr("DELETE FROM files");
-								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								if(rc) throw rc;
 								rc = db_execstr("UPDATE syncs SET filterversion = 0");
-								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								if(rc) throw rc;
 								rc = db_execstr("DELETE FROM filters");
-								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								if(rc) throw rc;
 								//Try to recover syncs
 								std::list<mc_sync> srvsyncs;
 								std::list<mc_sync_db> dbsyncs;
 								rc = srv_listsyncs(&srvsyncs);								
-								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								if(rc) throw rc;
 								rc = db_list_sync(&dbsyncs);
-								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								if(rc) throw rc;
 								//we're going to insert new, but for now all IDs must be free
 								rc = db_execstr("DELETE FROM syncs");
-								if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+								if(rc) throw rc;
 								for(mc_sync_db& db : dbsyncs){
 									bool found = false;
 									for(mc_sync& srv : srvsyncs){
 										if(db.name == srv.name){
 											db.id = srv.id;
+											db.uid = srv.uid;
 											db.crypted = srv.crypted;
 											db.filterversion = 0;
 											memset(db.hash,0,16);
 											db.status = MC_SYNCSTAT_UNKOWN;
 											rc = db_insert_sync(&db);
-											if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+											if(rc) throw rc;
 											found = true;
 											break;
 										}
@@ -83,7 +88,7 @@ int runmc()
 							}
 							status.basedate = basedate;
 							rc = db_update_status(&status);
-							if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+							if(rc) throw rc;
 						}
 					
 
@@ -92,9 +97,9 @@ int runmc()
 							mc_sync_ctx context;
 							list<mc_filter> generalfilter,filter;
 							//rc = update_filters(0);
-							//if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+							//if(rc) throw rc;
 							rc = db_list_filter_sid(&generalfilter,0);
-							if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+							if(rc) throw rc;
 
 							//Get list of syncs and compare to local
 							list<mc_sync> srvsyncs;// = list<mc_sync>();
@@ -102,10 +107,10 @@ int runmc()
 							list<mc_sync_db> dbsyncs;// = list<mc_sync_db>();
 							list<mc_sync_db>::iterator dbsyncsit,dbsyncsend;
 							rc = srv_listsyncs(&srvsyncs);
-							if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+							if(rc) throw rc;
 
 							rc = db_list_sync(&dbsyncs);
-							if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+							if(rc) throw rc;
 							if(dbsyncs.size() == 0){
 								MC_ERR_MSG(MC_ERR_NOT_CONFIGURED,"No syncs configured");
 							}
@@ -135,31 +140,31 @@ int runmc()
 										//this will cause multiple download but hopefully happens rarely enough
 										//and is better than adding a fake-sync-0
 										rc = srv_listfilters(&fl,0);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										if(rc) throw rc;
 										//general filters are not encrypted
 										rc = update_filters(0,&fl);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										if(rc) throw rc;
 										generalfilter.clear();
 										rc = db_list_filter_sid(&generalfilter,0);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										if(rc) throw rc;
 
 										fl.clear();
 										rc = srv_listfilters(&fl,dbsyncsit->id);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										if(rc) throw rc;
 										rc = crypt_filterlist_fromsrv(&context,dbsyncsit->name,&fl);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										if(rc) throw rc;
 										rc = update_filters(dbsyncsit->id,&fl);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										if(rc) throw rc;
 										dbsyncsit->filterversion = srvsyncsit->filterversion;
 										rc = db_update_sync(&*dbsyncsit);
-										if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+										if(rc) throw rc;
 									}
 									filter.assign(generalfilter.begin(),generalfilter.end());
 									rc = db_list_filter_sid(&filter,dbsyncsit->id);
-									if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+									if(rc) throw rc;
 									dbsyncsit->status = MC_SYNCSTAT_RUNNING;
 									rc = db_update_sync(&*dbsyncsit);
-									if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+									if(rc) throw rc;
 									MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
 									if(memcmp(dbsyncsit->hash,srvsyncsit->hash,16) == 0){
 										MC_INFL(dbsyncsit->name << " has not been updated on server, walking locally");
@@ -171,7 +176,7 @@ int runmc()
 										//MC_INF("Sync completed (Code " << wrc << ")");
 									}
 									rc = db_select_sync(&*dbsyncsit);
-									if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+									if(rc) throw rc;
 									memcpy(dbsyncsit->hash,hash,16);
 									if(wrc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
 									else if (MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
@@ -179,7 +184,7 @@ int runmc()
 									else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
 									dbsyncsit->lastsync = time(NULL);
 									rc = db_update_sync(&*dbsyncsit);
-									if(rc) { if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
+									if(rc) throw rc;
 									if(wrc == MC_ERR_CRYPTOALERT) 
 										throw MC_ERR_CRYPTOALERT;
 									MC_NOTIFYEND(MC_NT_SYNC);

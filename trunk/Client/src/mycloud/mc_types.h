@@ -84,7 +84,6 @@ enum MC_NOTIFYTYPE : int {
  */
 typedef struct _mc_status {
 	bool locked;
-	int action;
 	string url;
 	string uname;
 	string passwd;
@@ -93,6 +92,7 @@ typedef struct _mc_status {
 	int64 basedate;
 	int64 updatecheck;
 	string updateversion;
+	int uid;
 } mc_status;
 
 enum MC_SYNCSTATUS : int {

@@ -21,6 +21,7 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	connect(ui.filterTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
 	myparent = parent;
 	syncID = editID;
+	myUID = 0; //set on auth
 	dbindex = -1;
 	performer = NULL;
 	icon = QIcon(":/Resources/icon.png");
@@ -70,13 +71,16 @@ void QtSyncDialog::showEvent(QShowEvent *event){
 }
 
 void QtSyncDialog::authed(int rc){
+	int64 basedatedummy;	
+	mc_status s;
+
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
 	if(rc){
 		reject();
 		return;
 	}
 
-	rc = srv_auth_process(&netobuf,&authtime);
+	rc = srv_auth_process(&netobuf,&authtime,&basedatedummy,&myUID);
 	if(rc){
 		if((rc) == MC_ERR_TIMEDIFF){	
 			QMessageBox b(this);
@@ -90,6 +94,22 @@ void QtSyncDialog::authed(int rc){
 		reject();
 		return;
 	}
+
+	//update my UID if incorrect
+	rc = db_select_status(&s);
+	if(rc){
+		reject();
+		return;
+	}
+	if(s.uid != myUID){
+		s.uid = myUID;
+		rc = db_update_status(&s);
+		if(rc){
+			reject();
+			return;
+		}
+	}
+
 	connect(performer,SIGNAL(finished(int)),this,SLOT(syncListReceived(int)));
 	srv_listsyncs_async(&netibuf,&netobuf,performer);
 	
@@ -116,10 +136,14 @@ void QtSyncDialog::syncListReceived(int rc){
 		i = 0;
 		srvsynclist = vector<mc_sync>(list.begin(),list.end());
 		for(mc_sync& s : srvsynclist){
+			QString details;
+
 			if(s.crypted)
-				ui.nameBox->addItem(lock,QString(s.name.c_str())+tr(" (encrypted)"));
+				if(s.uid != myUID) ui.nameBox->addItem(lock,QString(s.name.c_str())+tr(" (shared)"));
+				else ui.nameBox->addItem(lock,QString(s.name.c_str()));
 			else
-				ui.nameBox->addItem(icon,QString(s.name.c_str()));
+				if(s.uid != myUID) ui.nameBox->addItem(icon,QString(s.name.c_str())+tr(" (shared)"));
+				else ui.nameBox->addItem(icon,QString(s.name.c_str()));
 			if(s.id == syncID){
 				//Select the one to edit
 				ui.nameBox->setCurrentIndex(i);
@@ -338,6 +362,7 @@ void QtSyncDialog::accept(){
 		memset(newsync.hash,0,16);
 		newsync.lastsync = 0;
 		newsync.id = srvsynclist[ui.nameBox->currentIndex()].id;
+		newsync.uid = srvsynclist[ui.nameBox->currentIndex()].uid;
 		newsync.name = srvsynclist[ui.nameBox->currentIndex()].name;
 
 		worksync = &newsync;

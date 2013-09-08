@@ -56,6 +56,7 @@ private:
 	Ui::QtSyncDialog ui;
 	QWidget *myparent;
 	int syncID;
+	int myUID;
 	std::vector<mc_sync> srvsynclist;
 	std::vector<mc_sync_db> dbsynclist;
 	std::vector<mc_filter> filterlist;
