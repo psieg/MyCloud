@@ -663,11 +663,11 @@ int QtClient::listSyncs(){
 	while(lit != lend){
 		ui.syncTable->insertRow(ui.syncTable->rowCount());
 		if(lit->crypted)
-			ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(lock,QString(lit->name.c_str())));
+			ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(lock,lit->name.c_str()));
 		else
-			ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(icon,QString(lit->name.c_str())));
-		ui.syncTable->setItem(ui.syncTable->rowCount()-1,1,new QTableWidgetItem(QString(lit->path.c_str())));
-		ui.syncTable->setItem(ui.syncTable->rowCount()-1,2,new QTableWidgetItem(QString(TimeToString(lit->lastsync).c_str())));
+			ui.syncTable->setItem(ui.syncTable->rowCount()-1,0,new QTableWidgetItem(icon,lit->name.c_str()));
+		ui.syncTable->setItem(ui.syncTable->rowCount()-1,1,new QTableWidgetItem(lit->path.c_str()));
+		ui.syncTable->setItem(ui.syncTable->rowCount()-1,2,new QTableWidgetItem(TimeToString(lit->lastsync).c_str()));
 		switch(lit->status){
 			case MC_SYNCSTAT_UNKOWN:
 				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_new,tr("Unknown / Waiting")));

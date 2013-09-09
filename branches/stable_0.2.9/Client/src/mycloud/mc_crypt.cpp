@@ -200,12 +200,19 @@ int crypt_filemd5_actual(mc_crypt_ctx *cctx, size_t fsize, FILE *fdesc, unsigned
 	//rc = EVP_EncryptUpdate(cctx->evp, NULL, &written, cctx->iv, MC_CRYPT_OFFSET);
 	//if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptUpdate failed for AAD");
 	
-	MC_NOTIFYIOSTART(MC_NT_FS);
 	for(i = 0; (i+1)*bufsize<fsize; i++){
+		MC_NOTIFYIOSTART(MC_NT_FS);
 		fread(fbuf,bufsize,1,fdesc);
+		MC_NOTIFYIOEND(MC_NT_FS);
 		
 		rc = EVP_EncryptUpdate(cctx->evp, (unsigned char*)fbuf, &written, (unsigned char*)fbuf,bufsize);
 		if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptUpdate failed");
+
+		if(MC_TERMINATING()){
+			free(fbuf);
+			return MC_ERR_TERMINATING;
+		}
+
 		cry.addData(fbuf,bufsize);
 	}
 
@@ -215,7 +222,6 @@ int crypt_filemd5_actual(mc_crypt_ctx *cctx, size_t fsize, FILE *fdesc, unsigned
 	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptUpdate failed");
 	cry.addData(fbuf,fsize-i*bufsize);
 	
-	MC_NOTIFYIOEND(MC_NT_FS);
 
 	//Get TAG after encryption
 	rc = EVP_EncryptFinal_ex(cctx->evp, NULL, &written);
