@@ -25,36 +25,35 @@
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
-    <layout class="QGridLayout" name="gridLayout">
+    <layout class="QGridLayout" name="gridLayout" columnstretch="1,0,0,0,0">
      <item row="0" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <property name="spacing">
-        <number>0</number>
+      <widget class="QLabel" name="label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
-       <item>
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Name</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="deleteLabel">
-         <property name="text">
-          <string>&lt;i&gt;sending request...&lt;/i&gt;</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </widget>
      </item>
-     <item row="0" column="2">
+     <item row="0" column="1">
+      <widget class="QLabel" name="deleteLabel">
+       <property name="text">
+        <string>&lt;i&gt;sending request...&lt;/i&gt;</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
       <widget class="QLabel" name="label_2">
        <property name="text">
         <string>Local Path</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="1" column="0" colspan="2">
       <widget class="QComboBox" name="nameBox">
        <property name="enabled">
         <bool>false</bool>
@@ -64,6 +63,12 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>0</height>
+        </size>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <property name="leftMargin">
@@ -91,8 +96,8 @@
        </layout>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QToolButton" name="deleteButton">
+     <item row="1" column="2">
+      <widget class="QToolButton" name="deleteSyncButton">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -100,19 +105,25 @@
         <iconset resource="qtClient.qrc">
          <normaloff>:/Resources/remove.png</normaloff>:/Resources/remove.png</iconset>
        </property>
+       <property name="iconSize">
+        <size>
+         <width>16</width>
+         <height>16</height>
+        </size>
+       </property>
        <property name="autoRaise">
         <bool>true</bool>
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
+     <item row="1" column="3">
       <widget class="QLineEdit" name="pathEdit">
        <property name="enabled">
         <bool>false</bool>
        </property>
       </widget>
      </item>
-     <item row="1" column="3">
+     <item row="1" column="4">
       <widget class="QToolButton" name="browseButton">
        <property name="enabled">
         <bool>false</bool>
@@ -145,224 +156,309 @@
     </widget>
    </item>
    <item row="3" column="0">
-    <widget class="QLabel" name="label_4">
-     <property name="text">
-      <string>Filters / Ignore List</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_2">
-     <property name="spacing">
-      <number>0</number>
-     </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,1">
      <item>
-      <layout class="QHBoxLayout" name="horizontalLayout">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="spacing">
+        <number>0</number>
+       </property>
        <item>
-        <widget class="QToolButton" name="addButton">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>Add a Filter</string>
-         </property>
+        <widget class="QLabel" name="label_4">
          <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="qtClient.qrc">
-           <normaloff>:/Resources/add.png</normaloff>:/Resources/add.png</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>24</width>
-           <height>24</height>
-          </size>
-         </property>
-         <property name="autoRaise">
-          <bool>true</bool>
+          <string>Filters / Ignore List</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QToolButton" name="removeButton">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QToolButton" name="addFilterButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Add a Filter</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="qtClient.qrc">
+             <normaloff>:/Resources/add.png</normaloff>:/Resources/add.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="removeFilterButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Remove Filter</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="qtClient.qrc">
+             <normaloff>:/Resources/remove.png</normaloff>:/Resources/remove.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="editFilterButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Edit Filter</string>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="qtClient.qrc">
+             <normaloff>:/Resources/edit.png</normaloff>:/Resources/edit.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="sendLabel">
+           <property name="text">
+            <string>&lt;i&gt;sending request...&lt;/i&gt;</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>100</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QToolButton" name="globalFilterButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">color:blue</string>
+           </property>
+           <property name="text">
+            <string>view global Filters</string>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="filterTable">
          <property name="enabled">
           <bool>false</bool>
          </property>
-         <property name="toolTip">
-          <string>Remove Filter</string>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
          </property>
-         <property name="text">
-          <string/>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::SingleSelection</enum>
          </property>
-         <property name="icon">
-          <iconset resource="qtClient.qrc">
-           <normaloff>:/Resources/remove.png</normaloff>:/Resources/remove.png</iconset>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
          </property>
-         <property name="iconSize">
-          <size>
-           <width>24</width>
-           <height>24</height>
-          </size>
+         <property name="horizontalScrollMode">
+          <enum>QAbstractItemView::ScrollPerPixel</enum>
          </property>
-         <property name="autoRaise">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QToolButton" name="editButton">
-         <property name="enabled">
+         <attribute name="horizontalHeaderDefaultSectionSize">
+          <number>50</number>
+         </attribute>
+         <attribute name="horizontalHeaderHighlightSections">
           <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>Edit Filter</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset resource="qtClient.qrc">
-           <normaloff>:/Resources/edit.png</normaloff>:/Resources/edit.png</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>24</width>
-           <height>24</height>
-          </size>
-         </property>
-         <property name="autoRaise">
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
           <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="sendLabel">
-         <property name="text">
-          <string>&lt;i&gt;sending request...&lt;/i&gt;</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>51</width>
-           <height>27</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QToolButton" name="globalButton">
-         <property name="enabled">
+         </attribute>
+         <attribute name="verticalHeaderVisible">
           <bool>false</bool>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">color:blue</string>
-         </property>
-         <property name="text">
-          <string>view global Filters</string>
-         </property>
-         <property name="autoRaise">
-          <bool>true</bool>
-         </property>
+         </attribute>
+         <attribute name="verticalHeaderDefaultSectionSize">
+          <number>20</number>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>F</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>D</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Type</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Value</string>
+          </property>
+         </column>
+         <layout class="QGridLayout">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="fetchFilterLabel">
+            <property name="text">
+             <string>&lt;i&gt;updating Filters...&lt;/i&gt;</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="needSubscribeLabel">
+            <property name="text">
+             <string>you have to subscribe to the sync to edit filters
+Hit OK to subscribe</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>
      </item>
      <item>
-      <widget class="QTableWidget" name="filterTable">
-       <property name="enabled">
-        <bool>false</bool>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <property name="spacing">
+        <number>0</number>
        </property>
-       <property name="editTriggers">
-        <set>QAbstractItemView::NoEditTriggers</set>
-       </property>
-       <property name="selectionMode">
-        <enum>QAbstractItemView::SingleSelection</enum>
-       </property>
-       <property name="selectionBehavior">
-        <enum>QAbstractItemView::SelectRows</enum>
-       </property>
-       <property name="horizontalScrollMode">
-        <enum>QAbstractItemView::ScrollPerPixel</enum>
-       </property>
-       <attribute name="horizontalHeaderHighlightSections">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="horizontalHeaderStretchLastSection">
-        <bool>true</bool>
-       </attribute>
-       <attribute name="verticalHeaderVisible">
-        <bool>false</bool>
-       </attribute>
-       <attribute name="verticalHeaderDefaultSectionSize">
-        <number>20</number>
-       </attribute>
-       <column>
-        <property name="text">
-         <string>F</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>D</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Type</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Value</string>
-        </property>
-       </column>
-       <layout class="QGridLayout">
-        <property name="leftMargin">
-         <number>0</number>
-        </property>
-        <property name="topMargin">
-         <number>0</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item row="0" column="0">
-         <widget class="QLabel" name="fetchFilterLabel">
-          <property name="text">
-           <string>&lt;i&gt;updating Filters...&lt;/i&gt;</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="needSubscribeLabel">
-          <property name="text">
-           <string>you have to subscribe to the sync to edit filters
-Hit OK to subscribe</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
+       <item>
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Shared To</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QToolButton" name="addShareButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="icon">
+            <iconset resource="qtClient.qrc">
+             <normaloff>:/Resources/add.png</normaloff>:/Resources/add.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="removeShareButton">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="icon">
+            <iconset resource="qtClient.qrc">
+             <normaloff>:/Resources/remove.png</normaloff>:/Resources/remove.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>100</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QListView" name="shareList">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
-   <item row="5" column="0">
+   <item row="4" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <spacer name="horizontalSpacer">
@@ -400,11 +496,13 @@ Hit OK to subscribe</string>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
+  <tabstop>nameBox</tabstop>
+  <tabstop>pathEdit</tabstop>
+  <tabstop>browseButton</tabstop>
   <tabstop>keyEdit</tabstop>
-  <tabstop>addButton</tabstop>
-  <tabstop>removeButton</tabstop>
-  <tabstop>editButton</tabstop>
-  <tabstop>globalButton</tabstop>
+  <tabstop>addFilterButton</tabstop>
+  <tabstop>removeFilterButton</tabstop>
+  <tabstop>editFilterButton</tabstop>
   <tabstop>filterTable</tabstop>
   <tabstop>okButton</tabstop>
   <tabstop>cancelButton</tabstop>

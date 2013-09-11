@@ -18,7 +18,7 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	ui.needSubscribeLabel->setVisible(false);
 	ui.deleteLabel->setVisible(false);
 	ui.sendLabel->setVisible(false);
-	connect(ui.filterTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editButton,SLOT(click()));
+	connect(ui.filterTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editFilterButton,SLOT(click()));
 	myparent = parent;
 	syncID = editID;
 	myUID = 0; //set on auth
@@ -167,11 +167,11 @@ void QtSyncDialog::syncListReceived(int rc){
 		
 		ui.fetchSyncLabel->setVisible(false);
 		ui.nameBox->setEnabled(true);
-		ui.deleteButton->setEnabled(true);
+		ui.deleteSyncButton->setEnabled(true);
 		ui.pathEdit->setEnabled(true);
 		ui.browseButton->setEnabled(true);
 		ui.okButton->setEnabled(true);
-		ui.globalButton->setEnabled(true); //might cause simultaneous use of performer but only if user wants it to
+		ui.globalFilterButton->setEnabled(true); //might cause simultaneous use of performer but only if user wants it to
 		ui.nameBox->setFocus();
 	} else {
 		//Directly pop the "new" dialog
@@ -225,7 +225,7 @@ void QtSyncDialog::filterListReceived(int rc){
 
 	ui.fetchFilterLabel->setVisible(false);
 	ui.filterTable->setEnabled(true);
-	ui.addButton->setEnabled(true);
+	ui.addFilterButton->setEnabled(true);
 	listFilters();
 }
 
@@ -264,9 +264,9 @@ void QtSyncDialog::filterDeleteReceived(int rc){
 
 	ui.sendLabel->setVisible(false);
 	ui.filterTable->setEnabled(true);
-	ui.addButton->setEnabled(true);
-	ui.removeButton->setEnabled(true);
-	ui.editButton->setEnabled(true);
+	ui.addFilterButton->setEnabled(true);
+	ui.removeFilterButton->setEnabled(true);
+	ui.editFilterButton->setEnabled(true);
 	listFilters();
 }
 
@@ -441,7 +441,7 @@ void QtSyncDialog::reject(){
 	QDialog::reject();
 }
 
-void QtSyncDialog::on_deleteButton_clicked(){
+void QtSyncDialog::on_deleteSyncButton_clicked(){
 	const int sid = srvsynclist[ui.nameBox->currentIndex()].id;
 	bool cando = true;
 	QMessageBox b(this);
@@ -495,7 +495,7 @@ void QtSyncDialog::on_nameBox_currentIndexChanged(int index){
 			//Refresh listing
 			startOver();
 		} else {
-			ui.deleteButton->setEnabled(true);
+			ui.deleteSyncButton->setEnabled(true);
 			ui.keyEdit->setEnabled(srvsynclist[index].crypted);
 			filldbdata();
 		}
@@ -503,7 +503,7 @@ void QtSyncDialog::on_nameBox_currentIndexChanged(int index){
 }
 
 
-void QtSyncDialog::on_addButton_clicked(){
+void QtSyncDialog::on_addFilterButton_clicked(){
 	int rc;
 	QtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id);
 	d.exec();
@@ -518,19 +518,19 @@ void QtSyncDialog::on_addButton_clicked(){
 	listFilters();
 }
 
-void QtSyncDialog::on_removeButton_clicked(){
+void QtSyncDialog::on_removeFilterButton_clicked(){
 	const int index = ui.filterTable->selectedItems().at(0)->row();
 	ui.filterTable->setEnabled(false);
-	ui.addButton->setEnabled(false);
-	ui.removeButton->setEnabled(false);
-	ui.editButton->setEnabled(false);
+	ui.addFilterButton->setEnabled(false);
+	ui.removeFilterButton->setEnabled(false);
+	ui.editFilterButton->setEnabled(false);
 	ui.sendLabel->setVisible(true);
 	deletingfilterid = filterlist[index].id;
 	connect(performer,SIGNAL(finished(int)),this,SLOT(filterDeleteReceived(int)));
 	srv_delfilter_async(&netibuf,&netobuf,performer,&filterlist[index]);
 }
 
-void QtSyncDialog::on_editButton_clicked(){
+void QtSyncDialog::on_editFilterButton_clicked(){
 	int rc;
 	const int index = ui.filterTable->selectedItems().at(0)->row();
 	QtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id,filterlist[index].id);
@@ -548,15 +548,15 @@ void QtSyncDialog::on_editButton_clicked(){
 
 void QtSyncDialog::on_filterTable_itemSelectionChanged(){
 	if(ui.filterTable->selectedItems().length() == 0){
-		ui.removeButton->setEnabled(false);
-		ui.editButton->setEnabled(false);
+		ui.removeFilterButton->setEnabled(false);
+		ui.editFilterButton->setEnabled(false);
 	} else {
-		ui.removeButton->setEnabled(true);
-		ui.editButton->setEnabled(true);
+		ui.removeFilterButton->setEnabled(true);
+		ui.editFilterButton->setEnabled(true);
 	}
 }
 
-void QtSyncDialog::on_globalButton_clicked(){
+void QtSyncDialog::on_globalFilterButton_clicked(){
 	bool refresh = true;
 	//check wether a refresh from server is needed
 	for(mc_sync_db& d : dbsynclist){
@@ -590,9 +590,13 @@ void QtSyncDialog::filldbdata(){
 				}
 				//Filters
 				ui.filterTable->setEnabled(true);
-				ui.addButton->setEnabled(true);
+				ui.addFilterButton->setEnabled(true);
 				ui.needSubscribeLabel->setVisible(false);
 				listFilters();
+				//Shares
+				ui.shareList->setEnabled(true);
+				//ui.addShareButton->setEnabled(true);
+				//ui.removeShareButton->setEnabled(true);
 				return;
 			}
 			i++;
@@ -604,7 +608,7 @@ void QtSyncDialog::filldbdata(){
 		ui.filterTable->clearContents();
 		ui.filterTable->setRowCount(0);
 		ui.filterTable->setEnabled(false);
-		ui.addButton->setEnabled(false);
+		ui.addFilterButton->setEnabled(false);
 		ui.needSubscribeLabel->setVisible(true);
 	}
 }
@@ -614,7 +618,7 @@ void QtSyncDialog::listFilters(){
 	
 	if(dbsynclist[dbindex].filterversion < srvsynclist[ui.nameBox->currentIndex()].filterversion){		
 		ui.filterTable->setEnabled(false);
-		ui.addButton->setEnabled(false);
+		ui.addFilterButton->setEnabled(false);
 		ui.fetchFilterLabel->setVisible(true);
 		connect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
 		srv_listfilters_async(&netibuf,&netobuf,performer,dbsynclist[dbindex].id);
@@ -682,15 +686,18 @@ void QtSyncDialog::startOver(){
 
 void QtSyncDialog::disableAll(){
 	ui.nameBox->setEnabled(false);
-	ui.deleteButton->setEnabled(false);
+	ui.deleteSyncButton->setEnabled(false);
 	ui.pathEdit->setEnabled(false);
 	ui.browseButton->setEnabled(false);
 	ui.keyEdit->setEnabled(false);
 	ui.okButton->setEnabled(false);
-	ui.globalButton->setEnabled(false); 
-	ui.addButton->setEnabled(false);
-	ui.editButton->setEnabled(false);
-	ui.removeButton->setEnabled(false);
+	ui.globalFilterButton->setEnabled(false); 
+	ui.addFilterButton->setEnabled(false);
+	ui.editFilterButton->setEnabled(false);
+	ui.removeFilterButton->setEnabled(false);
 	ui.filterTable->setEnabled(false);
 	ui.needSubscribeLabel->setVisible(false);
+	ui.shareList->setEnabled(false);
+	ui.addShareButton->setEnabled(false);
+	ui.removeShareButton->setEnabled(false);
 }
