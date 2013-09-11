@@ -34,14 +34,14 @@ private slots:
 	void filterDeleteReceived(int);
 	void syncDeleteReceived(int);
 
-	void on_deleteButton_clicked();
+	void on_deleteSyncButton_clicked();
 	void on_browseButton_clicked();
 	void on_nameBox_currentIndexChanged(int);
-	void on_addButton_clicked();
-	void on_removeButton_clicked();
-	void on_editButton_clicked();
+	void on_addFilterButton_clicked();
+	void on_removeFilterButton_clicked();
+	void on_editFilterButton_clicked();
 	void on_filterTable_itemSelectionChanged();
-	void on_globalButton_clicked();
+	void on_globalFilterButton_clicked();
 
 protected:
 	void showEvent(QShowEvent *event);
