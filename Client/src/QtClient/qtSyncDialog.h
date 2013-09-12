@@ -31,6 +31,7 @@ private slots:
 	void authed(int);
 	void syncListReceived(int);
 	void filterListReceived(int);
+	void globalFilterListReceived(int);
 	void filterDeleteReceived(int);
 	void syncDeleteReceived(int);
 
