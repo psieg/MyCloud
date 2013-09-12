@@ -507,6 +507,10 @@ void QtClient::on_removeButton_clicked(){
 			rc = db_delete_filter_sid(sid);
 			if(rc) setStatus(tr("Error"),"",icon_err);
 
+
+			rc = db_delete_filter_sid(sid);
+			if(rc) setStatus(tr("Error"),"",icon_err);
+
 			rc = db_delete_sync(sid);
 			if(rc) setStatus(tr("Error"),"",icon_err);
 			listSyncs();

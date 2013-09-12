@@ -167,7 +167,7 @@ void QtSyncDialog::syncListReceived(int rc){
 		
 		ui.fetchSyncLabel->setVisible(false);
 		ui.nameBox->setEnabled(true);
-		ui.deleteSyncButton->setEnabled(true);
+		//ui.deleteSyncButton->setEnabled(true); //dnamebox->indexchanged
 		ui.pathEdit->setEnabled(true);
 		ui.browseButton->setEnabled(true);
 		ui.okButton->setEnabled(true);
@@ -186,6 +186,27 @@ void QtSyncDialog::syncListReceived(int rc){
 		}
 
 	}
+}
+
+void QtSyncDialog::globalFilterListReceived(int rc){
+	std::list<mc_filter> list;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(globalFilterListReceived(int)));
+	
+	rc = srv_listfilters_process(&netobuf,&list);
+	if(rc){
+		reject();
+		return;
+	}
+
+	rc = update_filters(0,&list);
+	if(rc){
+		reject();
+		return;
+	}
+	
+	connect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
+	srv_listfilters_async(&netibuf,&netobuf,performer,dbsynclist[dbindex].id);
+		
 }
 
 void QtSyncDialog::filterListReceived(int rc){
@@ -264,9 +285,11 @@ void QtSyncDialog::filterDeleteReceived(int rc){
 
 	ui.sendLabel->setVisible(false);
 	ui.filterTable->setEnabled(true);
-	ui.addFilterButton->setEnabled(true);
-	ui.removeFilterButton->setEnabled(true);
-	ui.editFilterButton->setEnabled(true);
+	if(dbsynclist[dbindex].uid == myUID){
+		ui.addFilterButton->setEnabled(true);
+		ui.removeFilterButton->setEnabled(true);
+		ui.editFilterButton->setEnabled(true);
+	}
 	listFilters();
 }
 
@@ -495,7 +518,9 @@ void QtSyncDialog::on_nameBox_currentIndexChanged(int index){
 			//Refresh listing
 			startOver();
 		} else {
-			ui.deleteSyncButton->setEnabled(true);
+			if(srvsynclist[index].uid == myUID){
+				ui.deleteSyncButton->setEnabled(true);
+			}
 			ui.keyEdit->setEnabled(srvsynclist[index].crypted);
 			filldbdata();
 		}
@@ -551,8 +576,10 @@ void QtSyncDialog::on_filterTable_itemSelectionChanged(){
 		ui.removeFilterButton->setEnabled(false);
 		ui.editFilterButton->setEnabled(false);
 	} else {
-		ui.removeFilterButton->setEnabled(true);
-		ui.editFilterButton->setEnabled(true);
+		if(dbsynclist[dbindex].uid == myUID){
+			ui.removeFilterButton->setEnabled(true);
+			ui.editFilterButton->setEnabled(true);
+		}
 	}
 }
 
@@ -590,7 +617,9 @@ void QtSyncDialog::filldbdata(){
 				}
 				//Filters
 				ui.filterTable->setEnabled(true);
-				ui.addFilterButton->setEnabled(true);
+				if(s.uid == myUID){
+					ui.addFilterButton->setEnabled(true);
+				}
 				ui.needSubscribeLabel->setVisible(false);
 				listFilters();
 				//Shares
@@ -610,6 +639,9 @@ void QtSyncDialog::filldbdata(){
 		ui.filterTable->setEnabled(false);
 		ui.addFilterButton->setEnabled(false);
 		ui.needSubscribeLabel->setVisible(true);
+		ui.shareList->setEnabled(false);
+		ui.addShareButton->setEnabled(false);
+		ui.removeShareButton->setEnabled(false);
 	}
 }
 
@@ -620,8 +652,8 @@ void QtSyncDialog::listFilters(){
 		ui.filterTable->setEnabled(false);
 		ui.addFilterButton->setEnabled(false);
 		ui.fetchFilterLabel->setVisible(true);
-		connect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
-		srv_listfilters_async(&netibuf,&netobuf,performer,dbsynclist[dbindex].id);
+		connect(performer,SIGNAL(finished(int)),this,SLOT(globalFilterListReceived(int)));
+		srv_listfilters_async(&netibuf,&netobuf,performer,0); //global, will then call sync-specific
 	} else {
 		listFilters_actual();
 	}
