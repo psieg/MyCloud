@@ -79,7 +79,9 @@ function handle_listfilters($ibuf,$uid){
 	if($sid == 0){
 		$q = $mysqli->query("SELECT id,sid,files,directories,type,rule FROM mc_filters WHERE sid = ".$sid); //." AND (uid = ".$uid." OR uid = 0)"); //no user-global syncs
 	} else {
-		$q = $mysqli->query("SELECT id,sid,files,directories,type,rule FROM mc_filters WHERE sid = ".$sid." AND uid = ".$uid);
+		$q = $mysqli->query("SELECT id,sid,files,directories,type,rule FROM mc_filters WHERE sid = ".$sid.
+			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
+
 	}
 	if(!$q) return pack_interror($mysqli->error);
 	$l = array();
