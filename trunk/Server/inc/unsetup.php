@@ -5,6 +5,7 @@ if(isset($unsetup_confirm)){
 	$mysqli->query("DROP TABLE IF EXISTS mc_syncs");
 	$mysqli->query("DROP TABLE IF EXISTS mc_files");
 	$mysqli->query("DROP TABLE IF EXISTS mc_filters");
+	$mysqli->query("DROP TABLE IF EXISTS mc_shares");
 	#exec("rm -r data/user/Cloud/*");
 } else {
 	echo "NOT unsetup";

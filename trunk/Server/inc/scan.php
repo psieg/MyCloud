@@ -64,8 +64,8 @@ function sscan($uid,$path){
 	$l = scandir($path);
 	foreach($l as $s){
 		if(is_dir($path.'/'.$s) && $s != "." && $s != ".."){
-			echo "INSERT INTO mc_syncs (uid,name,filterversion,crypted) VALUES ('".$uid."','".esc($s)."',1,0)"."\n";
-			$q = $mysqli->query("INSERT INTO mc_syncs (uid,name,filterversion,crypted) VALUES ('".$uid."','".esc($s)."',1,0)");
+			echo "INSERT INTO mc_syncs (uid,name,filterversion,shareversion,crypted) VALUES ('".$uid."','".esc($s)."',1,1,0)"."\n";
+			$q = $mysqli->query("INSERT INTO mc_syncs (uid,name,filterversion,shareversion,crypted) VALUES ('".$uid."','".esc($s)."',1,1,0)");
 			if(!$q){ echo "Error: ".$mysqli->error; break; }
 			echo "Sync added: ".$s." (".$mysqli->insert_id.")\n";
 			//fscan($uid,-$mysqli->insert_id,$path.'/'.$s);
