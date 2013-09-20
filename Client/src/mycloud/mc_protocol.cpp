@@ -326,6 +326,8 @@ void unpack_synclist(mc_buf *buf, list<mc_sync> *l){
 			index += namelen;
 			memcpy(&item.filterversion,&buf->mem[index],sizeof(int));
 			index += sizeof(int);
+			memcpy(&item.shareversion,&buf->mem[index],sizeof(int));
+			index += sizeof(int);
 			item.crypted = buf->mem[index] != 0;
 			index += sizeof(char);
 			memcpy(&item.hash,&buf->mem[index],16);

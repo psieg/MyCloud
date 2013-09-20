@@ -146,6 +146,7 @@ typedef struct _mc_sync {
 	int uid;
 	string name;
 	int filterversion;
+	int shareversion;
 	bool crypted;
 	unsigned char hash[16];
 } mc_sync;
@@ -160,6 +161,7 @@ typedef struct _mc_sync_db {
 	string name;
 	string path;
 	int filterversion;
+	int shareversion;
 	bool crypted;
 	MC_SYNCSTATUS status;
 	int64 lastsync;
@@ -177,6 +179,12 @@ typedef struct _mc_filter {
 	MC_FILTERTYPE type;
 	string rule;
 } mc_filter;
+
+typedef struct _mc_share {
+	int sid;
+	int uid;
+	string uname; //not on server but we don't need a user table here
+} mc_share;
 
 
 typedef struct _mc_sync_ctx {

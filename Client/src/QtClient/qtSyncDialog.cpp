@@ -167,7 +167,7 @@ void QtSyncDialog::syncListReceived(int rc){
 		
 		ui.fetchSyncLabel->setVisible(false);
 		ui.nameBox->setEnabled(true);
-		//ui.deleteSyncButton->setEnabled(true); //dnamebox->indexchanged
+		ui.deleteSyncButton->setEnabled(true);
 		ui.pathEdit->setEnabled(true);
 		ui.browseButton->setEnabled(true);
 		ui.okButton->setEnabled(true);
@@ -382,6 +382,7 @@ void QtSyncDialog::accept(){
 
 		newsync.priority = maxprio+1;
 		newsync.filterversion = 0;
+		newsync.shareversion = 0;
 		memset(newsync.hash,0,16);
 		newsync.lastsync = 0;
 		newsync.id = srvsynclist[ui.nameBox->currentIndex()].id;

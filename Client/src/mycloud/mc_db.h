@@ -28,6 +28,11 @@ int db_update_filter(mc_filter *var);
 int db_delete_filter(int id);
 int db_delete_filter_sid(int sid);
 
+int db_list_share_sid(list<mc_share> *l, int sid);
+int db_insert_share(mc_share *var);
+int db_delete_share(mc_share *var);
+int db_delete_share_sid(int sid);
+
 int db_select_file_name(mc_file *var);
 int db_select_file_id(mc_file *var);
 int db_list_file_parent(list<mc_file> *l, int parent);
