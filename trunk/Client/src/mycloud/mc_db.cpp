@@ -12,21 +12,30 @@ QMutex db_mutex;
 sqlite3_stmt *stmt_select_status, *stmt_update_status, \
 				*stmt_select_sync, *stmt_list_sync, *stmt_insert_sync, *stmt_update_sync, *stmt_delete_sync, \
 				*stmt_select_filter, *stmt_list_filter_sid, *stmt_insert_filter, *stmt_update_filter, *stmt_delete_filter, *stmt_delete_filter_sid, \
+				*stmt_list_share_sid, *stmt_insert_share, *stmt_delete_share, *stmt_delete_share_sid, \
 				*stmt_select_file_name, *stmt_select_file_id, *stmt_list_file_parent, *stmt_insert_file, *stmt_update_file, *stmt_delete_file;
 /* the respective queries */
 #define QRY_SELECT_STATUS "SELECT locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,uid FROM status"
 #define QRY_UPDATE_STATUS "UPDATE status SET locked = ?, url = ?, uname = ?, passwd = ?, acceptallcerts = ?, watchmode = ?, basedate = ?, updatecheck = ?, updateversion = ?, uid = ?"
-#define QRY_SELECT_SYNC "SELECT id,uid,priority,name,path,filterversion,crypted,status,lastsync,hash,cryptkey FROM syncs WHERE id = ?"
-#define QRY_LIST_SYNC "SELECT id,uid,priority,name,path,filterversion,crypted,status,lastsync,hash,cryptkey FROM syncs"
-#define QRY_INSERT_SYNC "INSERT INTO syncs (id,uid,priority,name,path,filterversion,crypted,status,lastsync,hash,cryptkey) VALUES (?,?,?,?,?,?,?,?,?,?,?)"
-#define QRY_UPDATE_SYNC "UPDATE syncs SET priority = ?, name = ?, path = ?, filterversion = ?, crypted = ?, status = ?, lastsync = ?, hash = ?, cryptkey = ? WHERE id = ?"
+
+#define QRY_SELECT_SYNC "SELECT id,uid,priority,name,path,filterversion,shareversion,crypted,status,lastsync,hash,cryptkey FROM syncs WHERE id = ?"
+#define QRY_LIST_SYNC "SELECT id,uid,priority,name,path,filterversion,shareversion,crypted,status,lastsync,hash,cryptkey FROM syncs"
+#define QRY_INSERT_SYNC "INSERT INTO syncs (id,uid,priority,name,path,filterversion,shareversion,crypted,status,lastsync,hash,cryptkey) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+#define QRY_UPDATE_SYNC "UPDATE syncs SET priority = ?, name = ?, path = ?, filterversion = ?, shareversion = ?, crypted = ?, status = ?, lastsync = ?, hash = ?, cryptkey = ? WHERE id = ?"
 #define QRY_DELETE_SYNC "DELETE FROM syncs WHERE id = ?"
+
 #define QRY_SELECT_FILTER "SELECT id,sid,files,directories,type,rule FROM filters WHERE id = ?"
 #define QRY_LIST_FILTER_SID "SELECT id,sid,files,directories,type,rule FROM filters WHERE sid = ?"
 #define QRY_INSERT_FILTER "INSERT INTO filters (id,sid,files,directories,type,rule) VALUES (?,?,?,?,?,?)"
 #define QRY_UPDATE_FILTER "UPDATE filters SET sid = ?, files = ?, directories = ?, type = ?, rule = ? WHERE id = ?"
 #define QRY_DELETE_FILTER "DELETE FROM filters WHERE id = ?"
 #define QRY_DELETE_FILTER_SID "DELETE FROM filters WHERE sid = ?"
+
+#define QRY_LIST_SHARE_SID "SELECT id,sid,uname FROM shares WHERE sid = ?"
+#define QRY_INSERT_SHARE "INSERT INTO shares (id,sid,uname) VALUES (?,?,?)"
+#define QRY_DELETE_SHARE "DELETE FROM shares WHERE id = ?"
+#define QRY_DELETE_SHARE_SID "DELETE FROM shares WHERE sid = ?"
+
 #define QRY_SELECT_FILE_NAME "SELECT id,name,cryptname,ctime,mtime,size,is_dir,parent,hash,status FROM files WHERE parent = ? AND name = ?"
 #define QRY_SELECT_FILE_ID "SELECT id,name,cryptname,ctime,mtime,size,is_dir,parent,hash,status FROM files WHERE id = ?"
 #define QRY_LIST_FILE_PARENT "SELECT id,name,cryptname,ctime,mtime,size,is_dir,parent,hash,status FROM files WHERE parent = ?"
@@ -55,6 +64,11 @@ int _db_insert_filter(mc_filter *var);
 int _db_update_filter(mc_filter *var);
 int _db_delete_filter(int id);
 int _db_delete_filter_sid(int sid);
+
+int _db_list_share_sid(list<mc_share> *l, int sid);
+int _db_insert_share(mc_share *var);
+int _db_delete_share(mc_share *var);
+int _db_delete_share_sid(int sid);
 
 int _db_select_file_name(mc_file *var);
 int _db_select_file_id(mc_file *var);
@@ -140,10 +154,12 @@ int _db_open(const string& fname){
 				rc = _db_execstr("INSERT INTO status (locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,uid) VALUES (0,'','','',0,300,0,0,'',0)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("CREATE TABLE syncs (id INTEGER PRIMARY KEY, uid INTEGER NOT NULL, priority INTEGER NOT NULL, name TEXT NOT NULL, path TEXT NOT NULL, \
-									filterversion INTEGER NOT NULL, crypted INTEGER NOT NULL, status INTEGER NOT NULL, lastsync INTEGER NOT NULL, hash BLOB, cryptkey BLOB)");
+									filterversion INTEGER NOT NULL, shareversion INTEGER NOT NULL, crypted INTEGER NOT NULL, status INTEGER NOT NULL, lastsync INTEGER NOT NULL, hash BLOB, cryptkey BLOB)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("CREATE TABLE filters (id INTEGER PRIMARY KEY, sid INTEGER NOT NULL, files BOOLEAN NOT NULL, directories BOOLEAN NOT NULL, \
 									type INTEGER NOT NULL, rule TEXT NOT NULL)");
+				MC_CHKERR_MSG(rc, "Failed to setup new db.");
+				rc = _db_execstr("CREATE TABLE shares (id INTEGER PRIMARY KEY, sid INTEGER NOT NULL, uname TEXT NOT NULL)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("CREATE TABLE files (id INTEGER PRIMARY KEY, name TEXT NOT NULL, cryptname TEXT NOT NULL, ctime INTEGER NOT NULL, mtime INTERGER NOT NULL, size INTEGER NOT NULL, \
 									is_dir BOOLEAN NOT NULL, parent INTEGER NOT NULL, hash BLOB, status INTEGER NOT NULL)");
@@ -179,6 +195,14 @@ int _db_open(const string& fname){
 		rc = sqlite3_prepare_v2(db, QRY_DELETE_FILTER, sizeof(QRY_DELETE_FILTER), &stmt_delete_filter, NULL);
 		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
 		rc = sqlite3_prepare_v2(db, QRY_DELETE_FILTER_SID, sizeof(QRY_DELETE_FILTER_SID), &stmt_delete_filter_sid, NULL);
+		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
+		rc = sqlite3_prepare_v2(db, QRY_LIST_SHARE_SID, sizeof(QRY_LIST_SHARE_SID), &stmt_list_share_sid, NULL);
+		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
+		rc = sqlite3_prepare_v2(db, QRY_INSERT_SHARE, sizeof(QRY_INSERT_SHARE), &stmt_insert_share, NULL);
+		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
+		rc = sqlite3_prepare_v2(db, QRY_DELETE_SHARE, sizeof(QRY_DELETE_SHARE), &stmt_delete_share, NULL);
+		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
+		rc = sqlite3_prepare_v2(db, QRY_DELETE_SHARE_SID, sizeof(QRY_DELETE_SHARE_SID), &stmt_delete_share_sid, NULL);
 		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
 		rc = sqlite3_prepare_v2(db, QRY_SELECT_FILE_NAME, sizeof(QRY_SELECT_FILE_NAME), &stmt_select_file_name, NULL);
 		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
@@ -237,6 +261,10 @@ int _db_close(){
 		sqlite3_finalize(stmt_update_filter);
 		sqlite3_finalize(stmt_delete_filter);
 		sqlite3_finalize(stmt_delete_filter_sid);
+		sqlite3_finalize(stmt_list_share_sid);
+		sqlite3_finalize(stmt_insert_share);
+		sqlite3_finalize(stmt_delete_share);
+		sqlite3_finalize(stmt_delete_share_sid);
 		sqlite3_finalize(stmt_select_file_name);
 		sqlite3_finalize(stmt_select_file_id);
 		sqlite3_finalize(stmt_list_file_parent);
@@ -340,11 +368,12 @@ int _db_select_sync(mc_sync_db *var){
 		var->name.assign((const char*)sqlite3_column_text(stmt_select_sync,3));
 		var->path.assign((const char*)sqlite3_column_text(stmt_select_sync,4));
 		var->filterversion = sqlite3_column_int(stmt_select_sync,5);
-		var->crypted = sqlite3_column_int(stmt_select_sync,6) != 0;
-		var->status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_select_sync,7);
-		var->lastsync = sqlite3_column_int64(stmt_select_sync,8);
-		memcpy(var->hash,sqlite3_column_blob(stmt_select_sync,9),16);
-		memcpy(var->cryptkey,sqlite3_column_blob(stmt_select_sync,10),32);
+		var->shareversion = sqlite3_column_int(stmt_select_sync,6);
+		var->crypted = sqlite3_column_int(stmt_select_sync,7) != 0;
+		var->status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_select_sync,8);
+		var->lastsync = sqlite3_column_int64(stmt_select_sync,9);
+		memcpy(var->hash,sqlite3_column_blob(stmt_select_sync,10),16);
+		memcpy(var->cryptkey,sqlite3_column_blob(stmt_select_sync,11),32);
 	}
 	return 0;
 }
@@ -364,11 +393,12 @@ int _db_list_sync(list<mc_sync_db> *l){
 		var.name.assign((const char*)sqlite3_column_text(stmt_list_sync,3));
 		var.path.assign((const char*)sqlite3_column_text(stmt_list_sync,4));
 		var.filterversion = sqlite3_column_int(stmt_list_sync,5);
-		var.crypted = sqlite3_column_int(stmt_list_sync,6) != 0;
-		var.status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_list_sync,7);
-		var.lastsync = sqlite3_column_int64(stmt_list_sync,8);
-		memcpy(var.hash,sqlite3_column_blob(stmt_list_sync,9),16);
-		memcpy(var.cryptkey,sqlite3_column_blob(stmt_list_sync,10),32);
+		var.shareversion = sqlite3_column_int(stmt_list_sync,6);
+		var.crypted = sqlite3_column_int(stmt_list_sync,7) != 0;
+		var.status = (MC_SYNCSTATUS)sqlite3_column_int(stmt_list_sync,8);
+		var.lastsync = sqlite3_column_int64(stmt_list_sync,9);
+		memcpy(var.hash,sqlite3_column_blob(stmt_list_sync,10),16);
+		memcpy(var.cryptkey,sqlite3_column_blob(stmt_list_sync,11),32);
 		l->push_back(var);
 		rc = sqlite3_step(stmt_list_sync);
 	}
@@ -395,15 +425,17 @@ int _db_insert_sync(mc_sync_db *var){
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_bind_int(stmt_insert_sync,6,var->filterversion);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_insert_sync,7,var->crypted);
+	rc = sqlite3_bind_int(stmt_insert_sync,7,var->shareversion);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_insert_sync,8,var->status);
+	rc = sqlite3_bind_int(stmt_insert_sync,8,var->crypted);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int64(stmt_insert_sync,9,var->lastsync);
+	rc = sqlite3_bind_int(stmt_insert_sync,9,var->status);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_blob(stmt_insert_sync,10,var->hash,16,SQLITE_STATIC);
+	rc = sqlite3_bind_int64(stmt_insert_sync,10,var->lastsync);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_blob(stmt_insert_sync,11,var->cryptkey,32,SQLITE_STATIC);
+	rc = sqlite3_bind_blob(stmt_insert_sync,11,var->hash,16,SQLITE_STATIC);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_bind_blob(stmt_insert_sync,12,var->cryptkey,32,SQLITE_STATIC);
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_step(stmt_insert_sync);
 	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
@@ -425,17 +457,19 @@ int _db_update_sync(mc_sync_db *var){
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_bind_int(stmt_update_sync,4,var->filterversion);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_update_sync,5,var->crypted);
+	rc = sqlite3_bind_int(stmt_update_sync,5,var->shareversion);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_update_sync,6,var->status);
+	rc = sqlite3_bind_int(stmt_update_sync,6,var->crypted);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int64(stmt_update_sync,7,var->lastsync);
+	rc = sqlite3_bind_int(stmt_update_sync,7,var->status);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_blob(stmt_update_sync,8,var->hash,16,SQLITE_STATIC);
+	rc = sqlite3_bind_int64(stmt_update_sync,8,var->lastsync);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_blob(stmt_update_sync,9,var->cryptkey,32,SQLITE_STATIC);
+	rc = sqlite3_bind_blob(stmt_update_sync,9,var->hash,16,SQLITE_STATIC);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_update_sync,10,var->id);
+	rc = sqlite3_bind_blob(stmt_update_sync,10,var->cryptkey,32,SQLITE_STATIC);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_bind_int(stmt_update_sync,11,var->id);
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_step(stmt_update_sync);
 	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
@@ -578,6 +612,76 @@ int _db_delete_filter_sid(int sid){
 	rc = sqlite3_bind_int(stmt_delete_filter_sid,1,sid);
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_step(stmt_delete_filter_sid);
+	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
+	return 0;
+}
+
+SAFEFUNC2(db_list_share_sid, list<mc_share> *l, int sid, l, sid)
+int _db_list_share_sid(list<mc_share> *l, int sid){
+	int rc;
+	mc_share var;
+	MC_DBGL("Listing share by sid " << sid);
+	rc = sqlite3_reset(stmt_list_share_sid);
+	rc = sqlite3_clear_bindings(stmt_list_share_sid);
+	MC_CHKERR_MSG(rc,"Clear failed");
+	rc = sqlite3_bind_int(stmt_list_share_sid,1,sid);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_step(stmt_list_share_sid);
+	while(rc == SQLITE_ROW){
+		var.sid = sqlite3_column_int(stmt_list_share_sid,0);
+		var.uid = sqlite3_column_int(stmt_list_share_sid,1);
+		var.uname.assign((const char*)sqlite3_column_text(stmt_list_share_sid,2));
+		l->push_back(var);
+		rc = sqlite3_step(stmt_list_share_sid);
+	}
+	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
+	return 0;
+}
+
+SAFEFUNC(db_insert_share,mc_share *var,var)
+int _db_insert_share(mc_share *var){
+	int rc;
+	MC_DBGL("Inserting share " << var->id << ": " << var->rule);
+	rc = sqlite3_reset(stmt_insert_share);
+	rc = sqlite3_clear_bindings(stmt_insert_share);
+	MC_CHKERR_MSG(rc,"Clear failed");
+	rc = sqlite3_bind_int(stmt_insert_share,1,var->sid);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_bind_int(stmt_insert_share,2,var->uid);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_bind_text(stmt_insert_share,6,var->uname.c_str(),var->uname.length(),SQLITE_STATIC);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_step(stmt_insert_share);
+	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
+	return 0;
+}
+
+SAFEFUNC(db_delete_share,mc_share *var,var)
+int _db_delete_share(mc_share *var){
+	int rc;
+	MC_DBGL("Deleting share " << var->sid << " / " << var->uid);
+	rc = sqlite3_reset(stmt_delete_share);
+	rc = sqlite3_clear_bindings(stmt_delete_share);
+	MC_CHKERR_MSG(rc,"Clear failed");
+	rc = sqlite3_bind_int(stmt_delete_share,1,var->sid);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_bind_int(stmt_delete_share,2,var->uid);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_step(stmt_delete_share);
+	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
+	return 0;
+}
+
+SAFEFUNC(db_delete_share_sid,int sid,sid)
+int _db_delete_share_sid(int sid){
+	int rc;
+	MC_DBGL("Deleting shares by sid " << sid);
+	rc = sqlite3_reset(stmt_delete_share_sid);
+	rc = sqlite3_clear_bindings(stmt_delete_share_sid);
+	MC_CHKERR_MSG(rc,"Clear failed");
+	rc = sqlite3_bind_int(stmt_delete_share_sid,1,sid);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_step(stmt_delete_share_sid);
 	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
 	return 0;
 }
