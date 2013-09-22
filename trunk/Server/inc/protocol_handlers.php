@@ -65,6 +65,10 @@ function handle_delsync($ibuf,$uid){
 	$q = $mysqli->query("DELETE FROM mc_filters WHERE sid = ".$id);
 	if(!$q) return pack_interror($mysqli->error);
 
+	//delete all shares
+	$q = $mysqli->query("DELETE FROM mc_shares WHERE sid = ".$id);
+	if(!$q) return pack_interror($mysqli->error);
+
 	//delete sync itself
 	$q = $mysqli->query("DELETE FROM mc_syncs WHERE id = ".$id);
 	if(!$q) return pack_interror($mysqli->error);
@@ -81,7 +85,6 @@ function handle_listfilters($ibuf,$uid){
 	} else {
 		$q = $mysqli->query("SELECT id,sid,files,directories,type,rule FROM mc_filters WHERE sid = ".$sid.
 			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
-
 	}
 	if(!$q) return pack_interror($mysqli->error);
 	$l = array();
@@ -151,6 +154,73 @@ function handle_delfilter($ibuf,$uid){
 	} else { //update the sync
 		$q = $mysqli->query("UPDATE mc_syncs SET filterversion = filterversion + 1 WHERE id = ".$res[1]." AND uid = ".$uid);
 	}
+	if(!$q) return pack_interror($mysqli->error);
+
+	return pack_code(MC_SRVSTAT_OK);
+}
+
+function handle_listshares($ibuf,$uid){
+	global $mysqli;
+	$sid = unpack_listshares($ibuf);
+	//sync must exist and be owned by user or shared to him
+	$q = $mysqli->query("SELECT uid FROM mc_syncs WHERE id = ".$sid.
+		" AND (uid = ".$uid." OR id IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
+	if(!$q) return pack_interror($mysqli->error);
+	if($q->num_rows == 0) return pack_sharelist(array()); //return empty list, constistent with listfilters
+
+	$q = $mysqli->query("SELECT s.sid,s.uid,u.name FROM mc_shares s INNER JOIN mc_users u ON s.uid = u.id WHERE sid = ".$sid);
+	if(!$q) return pack_interror($mysqli->error);
+	$l = array();
+	while($r = $q->fetch_row()){ $l[]= $r; }
+	return pack_sharelist($l);
+}
+
+function handle_puthare($ibuf,$uid){
+	global $mysqli;
+	$qry = unpack_putshare($ibuf);
+	//sync must exist and be owned by user
+	$q = $mysqli->query("SELECT uid FROM mc_syncs WHERE id = ".$qry['sid']." AND uid = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
+
+	//check doesn't exist yet
+	$q = $mysqli->query("SELECT sid,uid FROM mc_filters WHERE sid = ".$qry['sid']." AND uid = ".$qry['uid']);
+	if(!$q) return pack_interror($mysqli->error);
+	if($q->num_rows != 0) return pack_code(MC_SRVSTAT_EXISTS);
+
+	//check target user exists
+	$q = $mysqli->query("SELECT uid FROM mc_users WHERE uid = ".$qry['uid']);
+	if(!$q) return pack_interror($mysqli->error);
+	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
+	
+	//insert into table
+	$q = $mysqli->query("INSERT INTO mc_shares (sid,uid) VALUES ".
+		"(".$qry['sid'].", ".$qry['uid']);
+	if(!$q) return pack_interror($mysqli->error);
+	$sid = $mysqli->insert_id;
+
+	//update shareversion
+	$q = $mysqli->query("UPDATE mc_syncs SET shareversion = shareversion + 1 WHERE id = ".$qry['sid']." AND uid = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+
+	return pack_shareid($sid);
+}
+
+function handle_delshare($ibuf,$uid){
+	global $mysqli;
+	$qry = unpack_delshare($ibuf);
+	//sync must exist and be owned by user
+	$q = $mysqli->query("SELECT uid FROM mc_syncs WHERE id = ".$qry['sid']." AND uid = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
+
+	//delete share
+	$q = $mysqli->query("DELETE FROM mc_shares WHERE sid = ".$qry['sid']." AND uid = ".$qry['uid']);
+	if(!$q) return pack_interror($mysqli->error);
+	if($mysqli->affected_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
+
+	//update filterversion
+	$q = $mysqli->query("UPDATE mc_syncs SET shareversion = shareversion + 1 WHERE id = ".$qry['sid']." AND uid = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
 
 	return pack_code(MC_SRVSTAT_OK);
