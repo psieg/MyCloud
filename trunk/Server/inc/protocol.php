@@ -32,7 +32,6 @@ define("MC_SRVSTAT_SYNCID",		201);	// ID of sync just created
 define("MC_SRVSTAT_FILTERLIST",	300);	// List of filters for sync
 define("MC_SRVSTAT_FILTERID",	301);	// ID of created / updated filter
 define("MC_SRVSTAT_SHARELIST",	400);	// List of shares for sync
-define("MC_SRVSTAT_SHAREID",	401);	// ID of created / updated share
 define("MC_SRVSTAT_DIRLIST",	500);	// Here's the directory listing you requested
 define("MC_SRVSTAT_FILE",		501);	// Here are contents of the file
 define("MC_SRVSTAT_FILEMETA",	502);	// Metadata of the file
