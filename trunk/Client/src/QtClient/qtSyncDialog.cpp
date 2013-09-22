@@ -28,8 +28,9 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	icon = QIcon(":/Resources/icon.png");
 	lock = QIcon(":/Resources/lock.png");
 	file = QIcon(":/Resources/file.png");
-	add = QIcon(":/Resources/add.png");
 	directory = QIcon(":/Resources/directory.png");
+	add = QIcon(":/Resources/add.png");
+	user = QIcon(":/Resources/user.png");
 	loadcompleted = false;
 }
 
@@ -644,8 +645,8 @@ void QtSyncDialog::on_editFilterButton_clicked(){
 
 void QtSyncDialog::on_addShareButton_clicked(){
 	int rc;
-	//QtShareDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id);
-	//d.exec();
+	QtShareDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id);
+	d.exec();
 
 	//Shareversion updated
 	rc = db_select_sync(&dbsynclist[dbindex]);
@@ -844,9 +845,9 @@ void QtSyncDialog::listShares_actual(){
 	ui.shareList->clear();
 	for(mc_share& s : sharelist){
 		if(s.uid == myUID)
-			ui.shareList->addItem(tr("me"));
+			ui.shareList->addItem(new QListWidgetItem(user,tr("me")));
 		else
-			ui.shareList->addItem(s.uname.c_str());
+			ui.shareList->addItem(new QListWidgetItem(user,s.uname.c_str()));
 	}
 	
 	ui.shareList->setEnabled(true);

@@ -444,14 +444,6 @@ void unpack_sharelist(mc_buf *buf, list<mc_share> *l){
 
 }
 
-void unpack_shareid(mc_buf *buf, int *id){
-	try {
-		memcpy(id,&buf->mem[sizeof(int)],sizeof(int));
-	} catch (...) {
-		throw MC_ERR_PROTOCOL;
-	}
-}
-
 void unpack_dirlist(mc_buf *buf, list<mc_file> *l){
 	unsigned int index = sizeof(int);
 	int namelen = 0;

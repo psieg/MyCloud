@@ -139,19 +139,7 @@
     </widget>
    </item>
    <item row="4" column="5">
-    <layout class="QGridLayout">
-     <property name="leftMargin">
-      <number>0</number>
-     </property>
-     <property name="topMargin">
-      <number>0</number>
-     </property>
-     <property name="rightMargin">
-      <number>0</number>
-     </property>
-     <property name="bottomMargin">
-      <number>0</number>
-     </property>
+    <layout class="QGridLayout" name="okLayout">
      <item row="0" column="0">
       <widget class="QPushButton" name="okButton">
        <property name="text">

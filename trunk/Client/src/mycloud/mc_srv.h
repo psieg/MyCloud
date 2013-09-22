@@ -87,7 +87,7 @@ int srv_delfilter_process(mc_buf *obuf);
 int srv_listshares_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int sid);
 int srv_listshares_process(mc_buf *obuf, list<mc_share> *l);
 int srv_putshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share);
-int srv_putshare_process(mc_buf *obuf, int *id);
+int srv_putshare_process(mc_buf *obuf);
 int srv_delshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share);
 int srv_delshare_process(mc_buf *obuf);
 int srv_notifychange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_sync_db> *l);

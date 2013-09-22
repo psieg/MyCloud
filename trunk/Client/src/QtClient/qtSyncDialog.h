@@ -6,9 +6,10 @@
 #include <QtWidgets/QFileDialog>
 #include <QtGui/QShowEvent>
 #include "ui_qtSyncDialog.h"
+#include "qtNewSyncDialog.h"
 #include "qtFilterDialog.h"
 #include "qtGeneralFilterDialog.h"
-#include "qtNewSyncDialog.h"
+#include "qtShareDialog.h"
 #include "mc_workerthread.h"
 #include "mc_db.h"
 #include "mc_srv.h"
@@ -72,7 +73,7 @@ private:
 	QtNetworkPerformer *performer;
 	mc_buf netibuf,netobuf;
 	int64 authtime;
-	QIcon icon,lock,file,directory,add;
+	QIcon icon,lock,file,directory,add,user;
 	int dbindex;
 	bool loadcompleted;
 	int deletingfilterid;

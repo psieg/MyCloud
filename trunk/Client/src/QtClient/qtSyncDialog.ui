@@ -326,20 +326,32 @@
           <property name="text">
            <string>F</string>
           </property>
+          <property name="toolTip">
+           <string>Matches Files</string>
+          </property>
          </column>
          <column>
           <property name="text">
            <string>D</string>
+          </property>
+          <property name="toolTip">
+           <string>Matches Directories</string>
           </property>
          </column>
          <column>
           <property name="text">
            <string>Type</string>
           </property>
+          <property name="toolTip">
+           <string>How Value is matched</string>
+          </property>
          </column>
          <column>
           <property name="text">
            <string>Value</string>
+          </property>
+          <property name="toolTip">
+           <string>Path / Name / Regular Expression</string>
           </property>
          </column>
          <layout class="QGridLayout">
@@ -533,6 +545,7 @@ Hit OK to subscribe</string>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
   <tabstop>nameBox</tabstop>
+  <tabstop>deleteSyncButton</tabstop>
   <tabstop>pathEdit</tabstop>
   <tabstop>browseButton</tabstop>
   <tabstop>keyEdit</tabstop>
@@ -540,6 +553,10 @@ Hit OK to subscribe</string>
   <tabstop>removeFilterButton</tabstop>
   <tabstop>editFilterButton</tabstop>
   <tabstop>filterTable</tabstop>
+  <tabstop>globalFilterButton</tabstop>
+  <tabstop>addShareButton</tabstop>
+  <tabstop>removeShareButton</tabstop>
+  <tabstop>shareList</tabstop>
   <tabstop>okButton</tabstop>
   <tabstop>cancelButton</tabstop>
  </tabstops>

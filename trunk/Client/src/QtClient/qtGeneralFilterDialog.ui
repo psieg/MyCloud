@@ -58,20 +58,32 @@
       <property name="text">
        <string>F</string>
       </property>
+      <property name="toolTip">
+       <string>Matches Files</string>
+      </property>
      </column>
      <column>
       <property name="text">
        <string>D</string>
+      </property>
+      <property name="toolTip">
+       <string>Matches Directories</string>
       </property>
      </column>
      <column>
       <property name="text">
        <string>Type</string>
       </property>
+      <property name="toolTip">
+       <string>How Values is matched</string>
+      </property>
      </column>
      <column>
       <property name="text">
        <string>Value</string>
+      </property>
+      <property name="toolTip">
+       <string>Path / Name / Regular Expression</string>
       </property>
      </column>
      <layout class="QGridLayout">
