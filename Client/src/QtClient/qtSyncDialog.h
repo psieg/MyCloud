@@ -34,6 +34,7 @@ private slots:
 	void filterListReceived(int);
 	void shareListReceived(int);
 	void filterDeleteReceived(int);
+	void shareDeleteReceived(int);
 	void syncDeleteReceived(int);
 
 	void on_deleteSyncButton_clicked();
@@ -42,6 +43,8 @@ private slots:
 	void on_addFilterButton_clicked();
 	void on_removeFilterButton_clicked();
 	void on_editFilterButton_clicked();
+	void on_addShareButton_clicked();
+	void on_removeShareButton_clicked();
 	void on_filterTable_itemSelectionChanged();
 	void on_shareList_itemSelectionChanged();
 	void on_globalFilterButton_clicked();
@@ -73,6 +76,7 @@ private:
 	int dbindex;
 	bool loadcompleted;
 	int deletingfilterid;
+	mc_share deletingshare;
 };
 
 #endif // QTSYNCDIALOG_H

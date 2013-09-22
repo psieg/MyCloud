@@ -142,7 +142,7 @@ void pack_putshare(mc_buf *buf, unsigned char authtoken[16], mc_share *share){
 	buf->used = bufsize;
 }
 void pack_delshare(mc_buf *buf, unsigned char authtoken[16], mc_share *share){
-	const int num = MC_SRVQRY_DELFILTER;
+	const int num = MC_SRVQRY_DELSHARE;
 	MatchBuf(buf,3*sizeof(int)+16);
 	memcpy(&buf->mem[0],&num,sizeof(int));
 	memcpy(&buf->mem[sizeof(int)],authtoken,16);
