@@ -322,6 +322,43 @@ void QtSyncDialog::filterDeleteReceived(int rc){
 	listFilters();
 }
 
+void QtSyncDialog::shareDeleteReceived(int rc){
+	std::list<mc_share> list;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(shareDeleteReceived(int)));
+	if(rc) {
+		reject();
+		return;
+	}
+
+	rc = srv_delshare_process(&netobuf);
+	if(rc){
+		reject();
+		return;
+	}
+
+	rc = db_delete_share(&deletingshare);
+	if(rc){
+		reject();
+		return;
+	}
+
+	//if successful, the server will have increased the shareversion by one
+	rc = db_select_sync(&dbsynclist[dbindex]);
+	if(rc){
+		reject();
+		return;
+	}
+	dbsynclist[dbindex].shareversion += 1;
+	rc = db_update_sync(&dbsynclist[dbindex]);
+	if(rc){
+		reject();
+		return;
+	}
+
+	ui.sendLabel->setVisible(false);
+	listShares();
+}
+
 void QtSyncDialog::syncDeleteReceived(int rc){
 	const int sid = srvsynclist[ui.nameBox->currentIndex()].id;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(syncDeleteReceived(int)));
@@ -562,7 +599,6 @@ void QtSyncDialog::on_nameBox_currentIndexChanged(int index){
 	}
 }
 
-
 void QtSyncDialog::on_addFilterButton_clicked(){
 	int rc;
 	QtFilterDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id);
@@ -606,6 +642,33 @@ void QtSyncDialog::on_editFilterButton_clicked(){
 	ui.filterTable->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.filterTable->columnCount()-1),true);
 }
 
+void QtSyncDialog::on_addShareButton_clicked(){
+	int rc;
+	//QtShareDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id);
+	//d.exec();
+
+	//Shareversion updated
+	rc = db_select_sync(&dbsynclist[dbindex]);
+	if(rc){
+		reject();
+		return;
+	}
+
+	listShares();
+}
+
+void QtSyncDialog::on_removeShareButton_clicked(){
+	const int index = ui.shareList->currentRow();
+	ui.shareList->setEnabled(false);
+	ui.addShareButton->setEnabled(false);
+	ui.removeShareButton->setEnabled(false);
+	ui.sendLabel->setVisible(true);
+	deletingshare.sid = sharelist[index].sid;
+	deletingshare.uid = sharelist[index].uid;
+	connect(performer,SIGNAL(finished(int)),this,SLOT(shareDeleteReceived(int)));
+	srv_delshare_async(&netibuf,&netobuf,performer,&sharelist[index]);
+}
+
 void QtSyncDialog::on_filterTable_itemSelectionChanged(){
 	if(ui.filterTable->selectedItems().length() == 0){
 		ui.removeFilterButton->setEnabled(false);
@@ -627,7 +690,6 @@ void QtSyncDialog::on_shareList_itemSelectionChanged(){
 		}
 	}
 }
-
 
 void QtSyncDialog::on_globalFilterButton_clicked(){
 	bool refresh = true;
