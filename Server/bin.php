@@ -54,6 +54,9 @@ if($ready){
 		case MC_SRVQRY_LISTFILTERS:
 		case MC_SRVQRY_PUTFILTER:
 		case MC_SRVQRY_DELFILTER:
+		case MC_SRVQRY_LISTSHARES:
+		case MC_SRVQRY_PUTSHARE:
+		case MC_SRVQRY_DELSHARE:
 		case MC_SRVQRY_LISTDIR:
 		case MC_SRVQRY_GETFILE:
 		case MC_SRVQRY_GETOFFSET:
@@ -89,6 +92,15 @@ if($ready){
 							break;
 						case MC_SRVQRY_DELFILTER:
 							$res = handle_delfilter($ibuf,$uid);
+							break;
+						case MC_SRVQRY_LISTSHARES:
+							$res = handle_listshares($ibuf,$uid);
+							break;
+						case MC_SRVQRY_PUTSHARE:
+							$res = handle_putshare($ibuf,$uid);
+							break;
+						case MC_SRVQRY_DELSHARE:
+							$res = handle_delshare($ibuf,$uid);
 							break;
 						case MC_SRVQRY_LISTDIR:
 							$res = handle_listdir($ibuf,$uid);
