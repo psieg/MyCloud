@@ -25,6 +25,7 @@ int _srv_reauth();
 int _srv_timecheck();
 int _srv_listsyncs(list<mc_sync> *l);
 int _srv_listfilters(list<mc_filter> *l, int sid);
+int _srv_listshares(list<mc_share> *l, int sid);
 int _srv_listdir(list<mc_file> *l, int parent);
 int _srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], bool withprogress = true);
 int _srv_getfile(int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16], bool withprogress = true); 
@@ -530,7 +531,6 @@ int _srv_listfilters(list<mc_filter> *l, int sid){
 	return 0;
 }
 
-
 int srv_listfilters_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int sid){
 	MC_DBGL("Fetching filter list for sid: " << sid << " (async)");
 	srv_mutex.lock();
@@ -550,7 +550,7 @@ int srv_listfilters_process(mc_buf *obuf, list<mc_filter> *l){
 
 //We don't need these synchronous
 int srv_putfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_filter *filter){
-	MC_DBGL("Putting filter " << filter->id << ": " << filter->rule << "(async)");
+	MC_DBGL("Putting filter " << filter->id << ": " << filter->rule << " (async)");
 	srv_mutex.lock();
 	pack_putfilter(ibuf,authtoken,filter);
 	srv_mutex.unlock();
@@ -576,6 +576,68 @@ int srv_delfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc
 int srv_delfilter_process(mc_buf *obuf){
 	return srv_eval(MC_SRVSTAT_OK,-1,obuf);
 }
+
+
+SAFEFUNC2(srv_listshares,list<mc_share> *l, int sid,l,sid)
+int _srv_listshares(list<mc_share> *l, int sid){
+	MC_DBGL("Fetching share list for sid: " << sid);
+	int rc;
+	pack_listshares(&ibuf,authtoken,sid);
+	rc = srv_perform(MC_SRVSTAT_SHARELIST);
+	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
+		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_SHARELIST); }
+	MC_CHKERR(rc);
+
+	unpack_sharelist(&obuf,l);
+	return 0;
+}
+
+int srv_listshares_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int sid){
+	MC_DBGL("Fetching share list for sid: " << sid << " (async)");
+	srv_mutex.lock();
+	pack_listshares(ibuf,authtoken,sid);
+	srv_mutex.unlock();
+
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_listshares_process(mc_buf *obuf, list<mc_share> *l){
+	int rc;
+	rc = srv_eval(MC_SRVSTAT_SHARELIST,-1,obuf);
+	MC_CHKERR(rc);
+
+	unpack_sharelist(obuf,l);
+	return 0;
+}
+
+//We don't need these synchronous
+int srv_putshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share){
+	MC_DBGL("Putting share " << share->sid << " / " << share->uid << " (async)");
+	srv_mutex.lock();
+	pack_putshare(ibuf,authtoken,share);
+	srv_mutex.unlock();
+
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_putshare_process(mc_buf *obuf, int *id){
+	int rc;
+	rc = srv_eval(MC_SRVSTAT_SHAREID,-1,obuf);
+	MC_CHKERR(rc);
+
+	unpack_shareid(obuf,id);
+	return 0;
+}
+int srv_delshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share){
+	MC_DBGL("Deleting share " << share->sid << " / " << share->uid << " (async)");
+	srv_mutex.lock();
+	pack_delshare(ibuf,authtoken,share);
+	srv_mutex.unlock();
+
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_delshare_process(mc_buf *obuf){
+	return srv_eval(MC_SRVSTAT_OK,-1,obuf);
+}
+
 
 SAFEFUNC2(srv_listdir,list<mc_file> *l, int parent,l,parent)
 int _srv_listdir(list<mc_file> *l, int parent){

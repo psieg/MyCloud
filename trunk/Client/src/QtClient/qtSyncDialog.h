@@ -30,8 +30,9 @@ public slots:
 private slots:
 	void authed(int);
 	void syncListReceived(int);
-	void filterListReceived(int);
 	void globalFilterListReceived(int);
+	void filterListReceived(int);
+	void shareListReceived(int);
 	void filterDeleteReceived(int);
 	void syncDeleteReceived(int);
 
@@ -42,6 +43,7 @@ private slots:
 	void on_removeFilterButton_clicked();
 	void on_editFilterButton_clicked();
 	void on_filterTable_itemSelectionChanged();
+	void on_shareList_itemSelectionChanged();
 	void on_globalFilterButton_clicked();
 
 protected:
@@ -51,6 +53,8 @@ private:
 	void filldbdata();
 	void listFilters();
 	void listFilters_actual();
+	void listShares();
+	void listShares_actual();
 	void startOver();
 	void disableAll();
 
@@ -61,6 +65,7 @@ private:
 	std::vector<mc_sync> srvsynclist;
 	std::vector<mc_sync_db> dbsynclist;
 	std::vector<mc_filter> filterlist;
+	std::vector<mc_share> sharelist;
 	QtNetworkPerformer *performer;
 	mc_buf netibuf,netobuf;
 	int64 authtime;

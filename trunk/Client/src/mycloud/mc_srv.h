@@ -19,6 +19,7 @@ int srv_auth(const string& user, const string& passwd, int64 *basedate = NULL, i
 int srv_timecheck();
 int srv_listsyncs(list<mc_sync> *l);
 int srv_listfilters(list<mc_filter> *l, int sid);
+int srv_listshares(list<mc_share> *l, int sid);
 int srv_listdir(list<mc_file> *l, int parent);
 int srv_getfile(int id, int64 offset, int64 blocksize, FILE *fdesc, int64 *byteswritten, unsigned char hash[16], bool withprogress = true);
 int srv_getfile(int id, int64 offset, int64 blocksize, char *buf, int64 *byteswritten, unsigned char hash[16], bool withprogress = true); //requires buf to be blocksize big
@@ -83,6 +84,12 @@ int srv_putfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc
 int srv_putfilter_process(mc_buf *obuf, int *id);
 int srv_delfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_filter *filter);
 int srv_delfilter_process(mc_buf *obuf);
+int srv_listshares_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int sid);
+int srv_listshares_process(mc_buf *obuf, list<mc_share> *l);
+int srv_putshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share);
+int srv_putshare_process(mc_buf *obuf, int *id);
+int srv_delshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share);
+int srv_delshare_process(mc_buf *obuf);
 int srv_notifychange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_sync_db> *l);
 int srv_notifychange_process(mc_buf *obuf, int *id);
 int srv_passchange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& newpass);

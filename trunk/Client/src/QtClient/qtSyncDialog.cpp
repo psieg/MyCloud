@@ -15,6 +15,7 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	ui.filterTable->setColumnWidth(2,fm.width(tr("MFull Name (regex)M")));
 	ui.filterTable->horizontalHeader()->setSectionResizeMode(3,QHeaderView::Stretch);
 	ui.fetchFilterLabel->setVisible(false);
+	ui.fetchShareLabel->setVisible(false);
 	ui.needSubscribeLabel->setVisible(false);
 	ui.deleteLabel->setVisible(false);
 	ui.sendLabel->setVisible(false);
@@ -245,9 +246,43 @@ void QtSyncDialog::filterListReceived(int rc){
 	}
 
 	ui.fetchFilterLabel->setVisible(false);
-	ui.filterTable->setEnabled(true);
-	ui.addFilterButton->setEnabled(true);
 	listFilters();
+}
+
+void QtSyncDialog::shareListReceived(int rc){
+	std::list<mc_share> list;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(shareListReceived(int)));
+	
+	rc = srv_listshares_process(&netobuf,&list);
+	if(rc){
+		reject();
+		return;
+	}
+
+	rc = db_delete_share_sid(dbsynclist[dbindex].id);
+	if(rc){
+		reject();
+		return;
+	}
+
+	for(mc_share& s : list){
+		rc = db_insert_share(&s);
+		if(rc){
+			reject();
+			return;
+		}
+	}
+	
+
+	dbsynclist[dbindex].shareversion = srvsynclist[ui.nameBox->currentIndex()].shareversion;
+	rc = db_update_sync(&dbsynclist[dbindex]);
+	if(rc){
+		reject();
+		return;
+	}
+
+	ui.fetchShareLabel->setVisible(false);
+	listShares();
 }
 
 void QtSyncDialog::filterDeleteReceived(int rc){
@@ -284,12 +319,6 @@ void QtSyncDialog::filterDeleteReceived(int rc){
 	}
 
 	ui.sendLabel->setVisible(false);
-	ui.filterTable->setEnabled(true);
-	if(dbsynclist[dbindex].uid == myUID){
-		ui.addFilterButton->setEnabled(true);
-		ui.removeFilterButton->setEnabled(true);
-		ui.editFilterButton->setEnabled(true);
-	}
 	listFilters();
 }
 
@@ -340,6 +369,11 @@ void QtSyncDialog::syncDeleteReceived(int rc){
 		return;
 	}
 	rc = db_delete_filter_sid(sid);
+	if(rc){
+		reject();
+		return;
+	}
+	rc = db_delete_share_sid(sid);
 	if(rc){
 		reject();
 		return;
@@ -584,6 +618,17 @@ void QtSyncDialog::on_filterTable_itemSelectionChanged(){
 	}
 }
 
+void QtSyncDialog::on_shareList_itemSelectionChanged(){
+	if(ui.shareList->selectedItems().length() == 0){
+		ui.removeShareButton->setEnabled(false);
+	} else {
+		if(dbsynclist[dbindex].uid == myUID){
+			ui.removeShareButton->setEnabled(true);
+		}
+	}
+}
+
+
 void QtSyncDialog::on_globalFilterButton_clicked(){
 	bool refresh = true;
 	//check wether a refresh from server is needed
@@ -606,6 +651,22 @@ void QtSyncDialog::filldbdata(){
 	const int sid = srvsynclist[ui.nameBox->currentIndex()].id;
 	if(loadcompleted){
 		i = 0;		
+		
+		//disable and clear stuff, when found it will be filled and enabled
+		dbindex = -1; // = there is no matching db entry
+		ui.pathEdit->setText("");
+		ui.keyEdit->setText("");
+		ui.filterTable->clearContents();
+		ui.filterTable->setRowCount(0);
+		ui.filterTable->setEnabled(false);
+		ui.addFilterButton->setEnabled(false);
+		ui.removeFilterButton->setEnabled(false);
+		ui.editFilterButton->setEnabled(false);
+		ui.shareList->clear();
+		ui.shareList->setEnabled(false);
+		ui.addShareButton->setEnabled(false);
+		ui.removeShareButton->setEnabled(false);
+		
 		for(mc_sync_db& s : dbsynclist){
 			if(s.id == sid){
 				dbindex = i;
@@ -617,32 +678,16 @@ void QtSyncDialog::filldbdata(){
 					ui.keyEdit->setText("");
 				}
 				//Filters
-				ui.filterTable->setEnabled(true);
-				if(s.uid == myUID){
-					ui.addFilterButton->setEnabled(true);
-				}
-				ui.needSubscribeLabel->setVisible(false);
 				listFilters();
 				//Shares
-				ui.shareList->setEnabled(true);
-				//ui.addShareButton->setEnabled(true);
-				//ui.removeShareButton->setEnabled(true);
+				//listShares(); //called from listFilters
 				return;
 			}
 			i++;
 		}
-		//reach here when no local sync found
-		dbindex = -1; // = there is no matching db entry
-		ui.pathEdit->setText("");
-		ui.keyEdit->setText("");
-		ui.filterTable->clearContents();
-		ui.filterTable->setRowCount(0);
-		ui.filterTable->setEnabled(false);
-		ui.addFilterButton->setEnabled(false);
+
+		//none found
 		ui.needSubscribeLabel->setVisible(true);
-		ui.shareList->setEnabled(false);
-		ui.addShareButton->setEnabled(false);
-		ui.removeShareButton->setEnabled(false);
 	}
 }
 
@@ -703,6 +748,49 @@ void QtSyncDialog::listFilters_actual(){
 					
 		ui.filterTable->setItem(ui.filterTable->rowCount()-1,3,new QTableWidgetItem(f.rule.c_str()));
 	}
+
+	ui.filterTable->setEnabled(true);
+	if(dbsynclist[dbindex].uid == myUID){
+		ui.addFilterButton->setEnabled(true);
+	}
+	ui.needSubscribeLabel->setVisible(false);
+	//chained listShares (because we can't handle parallel network requests)
+	listShares();
+}
+
+
+void QtSyncDialog::listShares(){
+	std::list<mc_filter> fl;
+	
+	if(dbsynclist[dbindex].shareversion < srvsynclist[ui.nameBox->currentIndex()].shareversion){		
+		ui.shareList->setEnabled(false);
+		ui.addShareButton->setEnabled(false);
+		ui.fetchShareLabel->setVisible(true);
+		connect(performer,SIGNAL(finished(int)),this,SLOT(shareListReceived(int)));
+		srv_listshares_async(&netibuf,&netobuf,performer,dbsynclist[dbindex].id);
+	} else {
+		listShares_actual();
+	}
+}
+
+void QtSyncDialog::listShares_actual(){
+	std::list<mc_share> sl;
+	int rc;
+	rc = db_list_share_sid(&sl,dbsynclist[dbindex].id);
+	if(rc) return;
+	sharelist.assign(sl.begin(),sl.end());
+	ui.shareList->clear();
+	for(mc_share& s : sharelist){
+		if(s.uid == myUID)
+			ui.shareList->addItem(tr("me"));
+		else
+			ui.shareList->addItem(s.uname.c_str());
+	}
+	
+	ui.shareList->setEnabled(true);
+	if(dbsynclist[dbindex].uid == myUID){
+		ui.addShareButton->setEnabled(true);
+	}
 }
 
 void QtSyncDialog::startOver(){
@@ -712,6 +800,7 @@ void QtSyncDialog::startOver(){
 	ui.pathEdit->clear();
 	ui.keyEdit->clear();
 	ui.filterTable->clearContents();
+	ui.shareList->clear();
 	disableAll();
 	connect(performer,SIGNAL(finished(int)),this,SLOT(syncListReceived(int)));
 	srv_listsyncs_async(&netibuf,&netobuf,performer);

@@ -31,9 +31,9 @@ sqlite3_stmt *stmt_select_status, *stmt_update_status, \
 #define QRY_DELETE_FILTER "DELETE FROM filters WHERE id = ?"
 #define QRY_DELETE_FILTER_SID "DELETE FROM filters WHERE sid = ?"
 
-#define QRY_LIST_SHARE_SID "SELECT id,sid,uname FROM shares WHERE sid = ?"
-#define QRY_INSERT_SHARE "INSERT INTO shares (id,sid,uname) VALUES (?,?,?)"
-#define QRY_DELETE_SHARE "DELETE FROM shares WHERE id = ?"
+#define QRY_LIST_SHARE_SID "SELECT sid,uid,uname FROM shares WHERE sid = ?"
+#define QRY_INSERT_SHARE "INSERT INTO shares (sid,uid,uname) VALUES (?,?,?)"
+#define QRY_DELETE_SHARE "DELETE FROM shares WHERE sid = ? AND uid = ?"
 #define QRY_DELETE_SHARE_SID "DELETE FROM shares WHERE sid = ?"
 
 #define QRY_SELECT_FILE_NAME "SELECT id,name,cryptname,ctime,mtime,size,is_dir,parent,hash,status FROM files WHERE parent = ? AND name = ?"
@@ -159,7 +159,7 @@ int _db_open(const string& fname){
 				rc = _db_execstr("CREATE TABLE filters (id INTEGER PRIMARY KEY, sid INTEGER NOT NULL, files BOOLEAN NOT NULL, directories BOOLEAN NOT NULL, \
 									type INTEGER NOT NULL, rule TEXT NOT NULL)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
-				rc = _db_execstr("CREATE TABLE shares (id INTEGER PRIMARY KEY, sid INTEGER NOT NULL, uname TEXT NOT NULL)");
+				rc = _db_execstr("CREATE TABLE shares (sid INTEGER PRIMARY KEY, uid INTEGER NOT NULL, uname TEXT NOT NULL)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("CREATE TABLE files (id INTEGER PRIMARY KEY, name TEXT NOT NULL, cryptname TEXT NOT NULL, ctime INTEGER NOT NULL, mtime INTERGER NOT NULL, size INTEGER NOT NULL, \
 									is_dir BOOLEAN NOT NULL, parent INTEGER NOT NULL, hash BLOB, status INTEGER NOT NULL)");
@@ -649,7 +649,7 @@ int _db_insert_share(mc_share *var){
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_bind_int(stmt_insert_share,2,var->uid);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_text(stmt_insert_share,6,var->uname.c_str(),var->uname.length(),SQLITE_STATIC);
+	rc = sqlite3_bind_text(stmt_insert_share,3,var->uname.c_str(),var->uname.length(),SQLITE_STATIC);
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_step(stmt_insert_share);
 	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
