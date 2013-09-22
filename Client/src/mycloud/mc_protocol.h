@@ -38,7 +38,6 @@ typedef int MC_SRVSTATUS;
 #define MC_SRVSTAT_FILTERLIST	300 // List of filters for sync
 #define MC_SRVSTAT_FILTERID		301 // ID of created / updated filter
 #define MC_SRVSTAT_SHARELIST	400 // List of shares for sync
-#define MC_SRVSTAT_SHAREID		401 // ID of created / updated share
 #define MC_SRVSTAT_DIRLIST		500	// Here's the directory listing you requested
 #define MC_SRVSTAT_FILE			501	// Here are contents of the file
 #define MC_SRVSTAT_FILEMETA		502	// Metadata of the file
@@ -89,7 +88,6 @@ void unpack_syncid(mc_buf *buf,  int *id);
 void unpack_filterlist(mc_buf *buf, list<mc_filter> *l);
 void unpack_filterid(mc_buf *buf, int *id);
 void unpack_sharelist(mc_buf *buf, list<mc_share> *l);
-void unpack_shareid(mc_buf *buf, int *id);
 void unpack_dirlist(mc_buf *buf, list<mc_file> *l);
 void unpack_file(mc_buf *buf, int64 *offset);
 void unpack_offset(mc_buf *buf, int64 *offset);

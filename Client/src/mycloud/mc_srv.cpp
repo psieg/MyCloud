@@ -618,12 +618,11 @@ int srv_putshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_
 
 	return perf->perform(ibuf,obuf,false);
 }
-int srv_putshare_process(mc_buf *obuf, int *id){
+int srv_putshare_process(mc_buf *obuf){
 	int rc;
-	rc = srv_eval(MC_SRVSTAT_SHAREID,-1,obuf);
+	rc = srv_eval(MC_SRVSTAT_OK,-1,obuf);
 	MC_CHKERR(rc);
 
-	unpack_shareid(obuf,id);
 	return 0;
 }
 int srv_delshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share){

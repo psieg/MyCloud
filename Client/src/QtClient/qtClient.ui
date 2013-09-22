@@ -266,7 +266,7 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QWidget" name="layoutWidget">
+      <widget class="QWidget" name="upperLayoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout">
         <property name="spacing">
          <number>0</number>
@@ -336,7 +336,7 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="layoutWidget">
+      <widget class="QWidget" name="lowerLayoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="leftMargin">
          <number>9</number>
