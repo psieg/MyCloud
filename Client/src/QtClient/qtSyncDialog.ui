@@ -101,6 +101,9 @@
        <property name="enabled">
         <bool>false</bool>
        </property>
+       <property name="toolTip">
+        <string>Delete Sync</string>
+       </property>
        <property name="icon">
         <iconset resource="qtClient.qrc">
          <normaloff>:/Resources/remove.png</normaloff>:/Resources/remove.png</iconset>
@@ -397,6 +400,9 @@ Hit OK to subscribe</string>
            <property name="enabled">
             <bool>false</bool>
            </property>
+           <property name="toolTip">
+            <string>Share to another user</string>
+           </property>
            <property name="icon">
             <iconset resource="qtClient.qrc">
              <normaloff>:/Resources/add.png</normaloff>:/Resources/add.png</iconset>
@@ -416,6 +422,9 @@ Hit OK to subscribe</string>
           <widget class="QToolButton" name="removeShareButton">
            <property name="enabled">
             <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Remove sharing</string>
            </property>
            <property name="icon">
             <iconset resource="qtClient.qrc">
@@ -448,10 +457,37 @@ Hit OK to subscribe</string>
         </layout>
        </item>
        <item>
-        <widget class="QListView" name="shareList">
+        <widget class="QListWidget" name="shareList">
          <property name="enabled">
           <bool>false</bool>
          </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <layout class="QGridLayout">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item row="0" column="0">
+           <widget class="QLabel" name="fetchShareLabel">
+            <property name="text">
+             <string>&lt;i&gt;updating&lt;br&gt;Shares...&lt;/i&gt;</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>

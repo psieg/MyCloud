@@ -113,6 +113,45 @@ void pack_delfilter(mc_buf *buf, unsigned char authtoken[16], int id){
 	buf->used = 2*sizeof(int)+16;
 }
 
+void pack_listshares(mc_buf *buf, unsigned char authtoken[16], int syncid){
+	const int num = MC_SRVQRY_LISTSHARES;
+	MatchBuf(buf,2*sizeof(int)+16);
+	memcpy(&buf->mem[0],&num,sizeof(int));
+	memcpy(&buf->mem[sizeof(int)],authtoken,16);
+
+	memcpy(&buf->mem[sizeof(int)+16],&syncid,sizeof(int));
+	buf->used = 2*sizeof(int)+16;
+}
+
+void pack_putshare(mc_buf *buf, unsigned char authtoken[16], mc_share *share){
+	int num = MC_SRVQRY_PUTSHARE;
+	unsigned int index = 0;
+	const size_t bufsize = 3*sizeof(int)+16;
+	MatchBuf(buf,bufsize);
+
+	memcpy(&buf->mem[index],&num,sizeof(int));
+	index += sizeof(int);
+	memcpy(&buf->mem[index],authtoken,16);
+	index += 16;
+	
+	memcpy(&buf->mem[index],&share->sid,sizeof(int));
+	index += sizeof(int);
+	memcpy(&buf->mem[index],&share->uid,sizeof(int));
+	index += sizeof(int);
+	
+	buf->used = bufsize;
+}
+void pack_delshare(mc_buf *buf, unsigned char authtoken[16], mc_share *share){
+	const int num = MC_SRVQRY_DELFILTER;
+	MatchBuf(buf,3*sizeof(int)+16);
+	memcpy(&buf->mem[0],&num,sizeof(int));
+	memcpy(&buf->mem[sizeof(int)],authtoken,16);
+	
+	memcpy(&buf->mem[sizeof(int)+16],&share->sid,sizeof(int));
+	memcpy(&buf->mem[2*sizeof(int)+16],&share->uid,sizeof(int));
+	buf->used = 3*sizeof(int)+16;
+}
+
 void pack_listdir(mc_buf *buf, unsigned char authtoken[16], int parent){
 	const int num = MC_SRVQRY_LISTDIR;
 	MatchBuf(buf,2*sizeof(int)+16);
@@ -376,6 +415,36 @@ void unpack_filterlist(mc_buf *buf, list<mc_filter> *l){
 }
 
 void unpack_filterid(mc_buf *buf, int *id){
+	try {
+		memcpy(id,&buf->mem[sizeof(int)],sizeof(int));
+	} catch (...) {
+		throw MC_ERR_PROTOCOL;
+	}
+}
+
+void unpack_sharelist(mc_buf *buf, list<mc_share> *l){
+	unsigned int index = sizeof(int);
+	int unamelen = 0;
+	mc_share item;
+	try {
+		while(index < buf->used){
+			memcpy(&item.sid,&buf->mem[index],sizeof(int));
+			index += sizeof(int);
+			memcpy(&item.uid,&buf->mem[index],sizeof(int));
+			index += sizeof(int);
+			memcpy(&unamelen,&buf->mem[index],sizeof(int));
+			index += sizeof(int);
+			item.uname.assign(&buf->mem[index],unamelen);
+			index += unamelen;
+			l->push_back(item);
+		}
+	} catch (...) {
+		throw MC_ERR_PROTOCOL;
+	}
+
+}
+
+void unpack_shareid(mc_buf *buf, int *id){
 	try {
 		memcpy(id,&buf->mem[sizeof(int)],sizeof(int));
 	} catch (...) {
