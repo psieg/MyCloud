@@ -146,7 +146,6 @@ files that often cause problems, e.g. with permissions</string>
   <zorder>filterTable</zorder>
   <zorder>label</zorder>
   <zorder>okButton</zorder>
-  <zorder>horizontalSpacer</zorder>
  </widget>
  <resources>
   <include location="qtClient.qrc"/>
