@@ -207,8 +207,12 @@ function pack_sharelist($list){
 	return $r;
 }
 
-function pack_shareid($sid){
-	return pack("l2",MC_SRVSTAT_SHAREID,$sid);
+function pack_userlist($list){
+	$r = pack("l1",MC_SRVSTAT_USERLIST);
+	foreach($list as $user){
+		$r .= pack("l2",$user[0],strlen($user[1])).$user[1];
+	}
+	return $r;
 }
 
 function pack_dirlist($list){
