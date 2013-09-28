@@ -591,7 +591,6 @@ int srv_delfilter_process(mc_buf *obuf){
 	return srv_eval(MC_SRVSTAT_OK,-1,obuf);
 }
 
-
 SAFEFUNC2(srv_listshares,list<mc_share> *l, int sid,l,sid)
 int _srv_listshares(list<mc_share> *l, int sid){
 	MC_DBGL("Fetching share list for sid: " << sid);
@@ -641,6 +640,7 @@ int srv_putshare_process(mc_buf *obuf){
 
 	return 0;
 }
+
 int srv_delshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share){
 	MC_DBGL("Deleting share " << share->sid << " / " << share->uid << " (async)");
 	token_mutex.lock();
@@ -653,6 +653,21 @@ int srv_delshare_process(mc_buf *obuf){
 	return srv_eval(MC_SRVSTAT_OK,-1,obuf);
 }
 
+int srv_listusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf){
+	MC_DBGL("Fetching user list (async)");
+	token_mutex.lock();
+	pack_listusers(ibuf,authtoken);
+	token_mutex.unlock();
+
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_listusers_process(mc_buf *obuf, list<mc_user> *l){	int rc;
+	rc = srv_eval(MC_SRVSTAT_USERLIST,-1,obuf);
+	MC_CHKERR(rc);
+
+	unpack_userlist(obuf,l);
+	return 0;
+}
 
 SAFEFUNC2(srv_listdir,list<mc_file> *l, int parent,l,parent)
 int _srv_listdir(list<mc_file> *l, int parent){

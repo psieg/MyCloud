@@ -186,6 +186,10 @@ typedef struct _mc_share {
 	string uname; //not on server but we don't need a user table here
 } mc_share;
 
+typedef struct _mc_user {
+	int id;
+	string name;
+} mc_user;
 
 typedef struct _mc_sync_ctx {
 	mc_sync_db *sync;
