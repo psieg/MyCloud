@@ -81,13 +81,13 @@ int download_actual(mc_crypt_ctx *cctx, const string& fpath, mc_file *srv){
 	fdesc = fs_fopen(fpath,"wb");
 	if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not (re)write the file");
 	rc = crypt_init_download(cctx,srv);
-	MC_CHKERR_FD(rc,fdesc);
+	MC_CHKERR_FD_DOWN(rc,fdesc,cctx);
 					
 	while(offset < srv->size){
 		MC_NOTIFYPROGRESS(offset,srv->size);
-		MC_CHECKTERMINATING_FD(fdesc);
+		MC_CHECKTERMINATING_FD_DOWN(fdesc,cctx);
 		rc = crypt_getfile(cctx,srv->id,offset,MC_RECVBLOCKSIZE,fdesc,&written,srv->hash);
-		MC_CHKERR_FD(rc,fdesc);
+		MC_CHKERR_FD_DOWN(rc,fdesc,cctx);
 		offset += written;
 	}
 
@@ -369,30 +369,30 @@ int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, m
 
 	fs_fseek(fdesc,0,SEEK_SET);
 	rc = crypt_init_upload(cctx,db);
-	MC_CHKERR_FD(rc,fdesc);
+	MC_CHKERR_FD_UP(rc,fdesc,cctx);
 
 	MC_NOTIFYPROGRESS(0,db->size);						
-	MC_CHECKTERMINATING_FD(fdesc);
+	MC_CHECKTERMINATING_FD_UP(fdesc,cctx);
 	if(db->size <= MC_SENDBLOCKSIZE){
 		rc = crypt_putfile(cctx,path,db,db->size,fdesc);
-		MC_CHKERR_FD(rc,fdesc);
+		MC_CHKERR_FD_UP(rc,fdesc,cctx);
 		sent = db->size;
 	} else {
 		rc = crypt_putfile(cctx,path,db,MC_SENDBLOCKSIZE,fdesc);
-		MC_CHKERR_FD(rc,fdesc);
+		MC_CHKERR_FD_UP(rc,fdesc,cctx);
 		sent = MC_SENDBLOCKSIZE;
 	}
 
 	if(insertnew){
 		rc = db_insert_file(db);
-		MC_CHKERR_FD(rc,fdesc);
+		MC_CHKERR_FD_UP(rc,fdesc,cctx);
 	}
 
 	if(sent < db->size){
 		// Complete the upload
 		while(sent < fs->size){
 			MC_NOTIFYPROGRESS(sent,db->size);
-			MC_CHECKTERMINATING_FD(fdesc);
+			MC_CHECKTERMINATING_FD_UP(fdesc,cctx);
 			if(db->size-sent <= MC_SENDBLOCKSIZE){
 				rc = crypt_addfile(cctx,db->id,sent,db->size-sent,fdesc,db->hash);
 				sent += db->size-sent;
@@ -400,7 +400,7 @@ int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, m
 				rc = crypt_addfile(cctx,db->id,sent,MC_SENDBLOCKSIZE,fdesc,db->hash);
 				sent += MC_SENDBLOCKSIZE;
 			}
-			MC_CHKERR_FD(rc,fdesc);
+			MC_CHKERR_FD_UP(rc,fdesc,cctx);
 		}
 	}
 	rc = crypt_finish_upload(cctx);
@@ -869,32 +869,38 @@ int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_fi
 	init_crypt_ctx(&cctx,ctx);
 	
 	rc = crypt_initresume_up(&cctx,db,&sent);
-	MC_CHKERR(rc);
+	MC_CHKERR_UP(rc,&cctx);
 	
 	if(sent > db->size){
 		MC_INF("File changed on disk, restarting upload");
+		crypt_abort_upload(&cctx);
 		return upload(ctx, path, fs, db, srv, hashstr);
 	}
 
 	MC_DBG("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL,fpath);
 	fdesc = fs_fopen(fpath,"rb");
-	if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not read the file");
+	if(!fdesc){
+		crypt_abort_upload(&cctx);
+		MC_CHKERR_MSG(MC_ERR_IO,"Could not read the file");
+	}
 
 	fs_fseek(fdesc,0,SEEK_END);
 	if(fs_ftell(fdesc) != db->size){
 		int code = errno;
 		MC_INF("File changed on disk, restarting upload");
+		crypt_abort_upload(&cctx);
 		fs_fclose(fdesc);
 		return upload(ctx, path, fs, db, srv, hashstr);
 	}
 	
 	rc = crypt_resumetopos_up(&cctx,db,sent,fdesc);
-	MC_CHKERR_FD(rc,fdesc);
+	MC_CHKERR_FD_UP(rc,fdesc,&cctx);
 	//fs_fseek(fdesc,sent,SEEK_SET);
 
 	if(fs_ftell(fdesc) != sent){
 		MC_INF("File changed on disk, restarting upload");
+		crypt_abort_upload(&cctx);
 		fs_fclose(fdesc);
 		return upload(ctx, path, fs, db, srv, hashstr);
 	}
@@ -909,7 +915,7 @@ int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_fi
 			rc = crypt_addfile(&cctx,db->id,sent,MC_SENDBLOCKSIZE,fdesc,db->hash);
 			sent += MC_SENDBLOCKSIZE;
 		}
-		MC_CHKERR_FD(rc,fdesc);
+		MC_CHKERR_FD_UP(rc,fdesc,&cctx);
 	}
 
 	fs_fclose(fdesc);
@@ -945,29 +951,33 @@ int complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_
 	init_crypt_ctx(&cctx,ctx);
 
 	rc = crypt_initresume_down(&cctx,srv);
-	MC_CHKERR(rc);
+	MC_CHKERR_DOWN(rc,&cctx);
 
 	MC_DBG("Opening file " << fpath << " for writing");
 	MC_NOTIFYSTART(MC_NT_DL,fpath);
 	fdesc = fs_fopen(fpath,"r+b");
-	if(!fdesc) MC_CHKERR_MSG(MC_ERR_IO,"Could not write the file");
+	if(!fdesc){
+		crypt_abort_download(&cctx);
+		MC_CHKERR_MSG(MC_ERR_IO,"Could not write the file");
+	}
 
 	fs_fseek(fdesc,0,SEEK_END);
 	offset = fs_ftell(fdesc);
 
 	rc = crypt_resumetopos_down(&cctx,srv,offset,fdesc);
-	MC_CHKERR_FD(rc,fdesc);
+	MC_CHKERR_FD_DOWN(rc,fdesc,&cctx);
 
 	if(offset > srv->size){
 		MC_INF("File changed on disk, restarting download");
+		crypt_abort_download(&cctx);
 		fs_fclose(fdesc);
 		return download(ctx, path, fs, db, srv, hashstr);
 	}
 	while(offset < srv->size){
 		MC_NOTIFYPROGRESS(offset,srv->size);
-		MC_CHECKTERMINATING_FD(fdesc);
+		MC_CHECKTERMINATING_FD_DOWN(fdesc,&cctx);
 		rc = crypt_getfile(&cctx,srv->id,offset,MC_RECVBLOCKSIZE,fdesc,&written,srv->hash);
-		MC_CHKERR_FD(rc,fdesc);
+		MC_CHKERR_FD_DOWN(rc,fdesc,&cctx);
 		offset += written;
 	}
 	

@@ -72,10 +72,15 @@ int fs_filemd5(unsigned char hash[16], size_t fsize, FILE *fdesc){
 		MC_MEM(fbuf,bufsize);
 	}	
 	
-	MC_NOTIFYIOSTART(MC_NT_FS);
 	for(i = 0; (i+1)*bufsize<fsize; i++){
+		MC_NOTIFYIOSTART(MC_NT_FS);
 		fread(fbuf,bufsize,1,fdesc);
-
+		MC_NOTIFYIOEND(MC_NT_FS);
+		
+		if(MC_TERMINATING()){
+			free(fbuf);
+			return MC_ERR_TERMINATING;
+		}
 		cry.addData(fbuf,bufsize);
 	}
 
@@ -83,7 +88,6 @@ int fs_filemd5(unsigned char hash[16], size_t fsize, FILE *fdesc){
 	fread(fbuf,fsize-i*bufsize,1,fdesc);
 	cry.addData(fbuf,fsize-i*bufsize);
 	
-	MC_NOTIFYIOEND(MC_NT_FS);
 
 	free(fbuf);
 

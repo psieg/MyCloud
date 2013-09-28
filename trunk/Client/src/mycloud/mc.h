@@ -173,16 +173,29 @@ using namespace std;
 #	define MC_MEM(ptr,size)			{ throw ENOMEM; }
 #endif
 
-#define MC_CHKERR(rc)			{ if(rc) return rc; }
-#define MC_CHKERR_FD(rc,fd)		{ if(rc){ if(fd) fclose(fd); return rc; } }
+#define MC_CHKERR(rc)					{ if(rc) return rc; }
+#define MC_CHKERR_FD(rc,fd)				{ if(rc){ if(fd) fs_fclose(fd); return rc; } }
+#define MC_CHKERR_UP(rc,cctx)			{ if(rc) { crypt_abort_upload(cctx); return rc; } }
+#define MC_CHKERR_DOWN(rc,cctx)			{ if(rc) { crypt_abort_download(cctx); return rc; } }
+#define MC_CHKERR_FD(rc,fd)				{ if(rc){ if(fd) fs_fclose(fd); return rc; } }
+#define MC_CHKERR_FD_UP(rc,fd,cctx)		{ if(rc){ crypt_abort_upload(cctx); if(fd) fs_fclose(fd); return rc; } }
+#define MC_CHKERR_FD_DOWN(rc,fd,cctx)	{ if(rc){ crypt_abort_download(cctx); if(fd) fs_fclose(fd); return rc; } }
 
 
 /* return wether the WorkerThreads terminating-indicator is set */
 #define MC_TERMINATING()				QtWorkerThread::instance()->terminating
 /* if the terminating indicator is set, return MC_ERR_TERMINATING */
 #define MC_CHECKTERMINATING()			if(QtWorkerThread::instance()->terminating) MC_ERR_MSG(MC_ERR_TERMINATING, "Aborting");
+/* if the terminating indicator is set, return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING_UP(cctx)			if(QtWorkerThread::instance()->terminating){ crypt_abort_upload(cctx); MC_ERR_MSG(MC_ERR_TERMINATING, "Aborting"); }
+/* if the terminating indicator is set, return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING_DOWN(cctx)			if(QtWorkerThread::instance()->terminating){ crypt_abort_download(cctx); MC_ERR_MSG(MC_ERR_TERMINATING, "Aborting"); }
 /* if the terminating indicator is set, close fd and return MC_ERR_TERMINATING */
 #define MC_CHECKTERMINATING_FD(fd)		if(QtWorkerThread::instance()->terminating) { if(fd) fclose(fd); MC_ERR_MSG(MC_ERR_TERMINATING, "Aborting"); }
+/* if the terminating indicator is set, close fd and return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING_FD_UP(fd,cctx)		if(QtWorkerThread::instance()->terminating) { crypt_abort_upload(cctx); if(fd) fclose(fd); MC_ERR_MSG(MC_ERR_TERMINATING, "Aborting"); }
+/* if the terminating indicator is set, close fd and return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING_FD_DOWN(fd,cctx)		if(QtWorkerThread::instance()->terminating) { crypt_abort_download(cctx); if(fd) fclose(fd); MC_ERR_MSG(MC_ERR_TERMINATING, "Aborting"); }
 
 
 #ifdef MC_QTCLIENT

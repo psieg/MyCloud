@@ -192,7 +192,10 @@ int QtNetworkPerformer::perform(mc_buf *inbuf, mc_buf *outbuf, bool withprogress
 		// caller has to run a QEventLoop and catch finished(), we're done
 	} else {
 		loop.exec();
-		MC_CHECKTERMINATING(); //From quittimer
+		if(MC_TERMINATING()){
+			rep->abort(); //delete in destructor
+			return MC_ERR_TERMINATING;
+		}
 		return processReply();
 	}
 	return 0;
