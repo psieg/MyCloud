@@ -171,7 +171,7 @@ int fs_listdir(list<mc_file_fs> *l, const string& path){
 	MC_NOTIFYIOSTART(MC_NT_FS);
 	hFile = FindFirstFileW(utf8_to_unicode(scanpath).c_str(),&fd); /* Project Encoding set to Mutlibyte (...A) (correct?) */
 	if(hFile == INVALID_HANDLE_VALUE) 
-		MC_ERR_MSG(MC_ERR_IO,"FindFirstFile failed: " << GetLastError());
+		MC_ERR_MSG(MC_ERR_IO,"FindFirstFile failed for " << scanpath << ": " << GetLastError());
 	/* First result "." can be skipped */
 	while (FindNextFileW(hFile,&fd) != 0) {
 		memset(&file,0,sizeof(mc_file_fs));
