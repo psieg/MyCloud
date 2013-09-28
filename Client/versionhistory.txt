@@ -44,3 +44,10 @@
 + Automatic Startup on Windows
 * Autoresolve conflicts between deleted files
 * Automatic readjust of Syncs after reset
+
+0.3
++ sharing Syncs between users (one is owner)
++ detection of case changes
+* new updateCA certificate
+* fixed some large file support issues
+* minor memory fixes
