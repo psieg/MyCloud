@@ -9,7 +9,7 @@
 #	include "mc_workerthread.h"
 #endif
 
-QMutex srv_mutex;
+QMutex srv_mutex, token_mutex; // srv_mutex protects the synchronous versions as they share the same i/obufs, token_mutex protects the authtoken and user/pass only
 QtNetworkPerformer *perf = NULL;
 mc_buf ibuf,obuf;
 unsigned char authtoken[16];
@@ -377,20 +377,24 @@ int _srv_auth(const string& user, const string& passwd, int64 *basedate, int *ui
 	MC_DBGL("Authenticating on server");
 	int rc,version,localuid;
 	int64 rtime,ltimea,ltimeb,diff,localbasedate;
+	token_mutex.lock();
 	reauth_user = user;
 	reauth_pass = passwd;
 	pack_auth(&ibuf,user,passwd);
+	token_mutex.unlock();
 	ltimea = time(NULL);
 	rc = srv_perform(MC_SRVSTAT_AUTHED,false);
 	MC_CHKERR(rc);
 	ltimeb = time(NULL);
-
+	
+	token_mutex.lock();
 	if(uid)	
 		if(basedate) unpack_authed(&obuf,&version,authtoken,&rtime,basedate,uid);
 		else unpack_authed(&obuf,&version,authtoken,&rtime,&localbasedate,uid);
 	else 
 		if(basedate) unpack_authed(&obuf,&version,authtoken,&rtime,basedate,&localuid);
 		else unpack_authed(&obuf,&version,authtoken,&rtime,&localbasedate,uid);
+	token_mutex.unlock();
 	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
 	MC_DBG("Authenticated, token is " << MD5BinToHex(authtoken));
 	diff = abs((long)(ltimea-rtime));
@@ -403,11 +407,11 @@ int _srv_auth(const string& user, const string& passwd, int64 *basedate, int *ui
 int srv_auth_async(mc_buf *ibuf, mc_buf* obuf, QtNetworkPerformer *perf,
 				   const string& user, const string& passwd, int64 *ltimea){
 	MC_DBGL("Authenticating on server (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	reauth_user = user;
 	reauth_pass = passwd;
-	srv_mutex.unlock();
 	pack_auth(ibuf,user,passwd);
+	token_mutex.unlock();
 	*ltimea = time(NULL);
 	return perf->perform(ibuf,obuf,false);
 }
@@ -419,12 +423,14 @@ int srv_auth_process(mc_buf *obuf, int64 *ltimea, int64 *basedate, int *uid){
 
 	ltimeb = time(NULL);
 	
+	token_mutex.lock();
 	if(uid)	
 		if(basedate) unpack_authed(obuf,&version,authtoken,&rtime,basedate,uid);
 		else unpack_authed(obuf,&version,authtoken,&rtime,&localbasedate,uid);
 	else 
 		if(basedate) unpack_authed(obuf,&version,authtoken,&rtime,basedate,&localuid);
 		else unpack_authed(obuf,&version,authtoken,&rtime,&localbasedate,&localuid);
+	token_mutex.unlock();
 	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
 	MC_DBG("Authenticated, token is " << MD5BinToHex(authtoken));
 	diff = abs((long)(*ltimea-rtime));
@@ -441,13 +447,17 @@ int _srv_reauth(){
 	mc_buf tmpibuf,tmpobuf;
 	SetBuf(&tmpibuf);
 	SetBuf(&tmpobuf);
+	token_mutex.lock();
 	pack_auth(&tmpibuf,reauth_user,reauth_pass);
+	token_mutex.unlock();
 	ltimea = time(NULL);
 	rc = srv_perform(MC_SRVSTAT_AUTHED,false,-1,0,&tmpibuf,&tmpobuf);
 	MC_CHKERR(rc);
 	ltimeb = time(NULL);
-
+	
+	token_mutex.lock();
 	unpack_authed(&tmpobuf,&version,authtoken,&rtime,&basedate,&uid);
+	token_mutex.unlock();
 	FreeBuf(&tmpibuf);
 	FreeBuf(&tmpobuf);
 	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
@@ -463,7 +473,9 @@ SAFEFUNC(srv_listsyncs,list<mc_sync> *l,l)
 int _srv_listsyncs(list<mc_sync> *l){
 	MC_DBGL("Fetching sync list");
 	int rc;
+	token_mutex.lock();
 	pack_listsyncs(&ibuf,authtoken);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_SYNCLIST);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_SYNCLIST); }
@@ -476,9 +488,9 @@ int _srv_listsyncs(list<mc_sync> *l){
 //No SAFEFUNC as we don't use srv resources (other than reading authtoken)
 int srv_listsyncs_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf){
 	MC_DBGL("Fetching sync list (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_listsyncs(ibuf,authtoken);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 	return perf->perform(ibuf,obuf,false);
 }
 int srv_listsyncs_process(mc_buf *obuf, list<mc_sync> *l){
@@ -493,9 +505,9 @@ int srv_listsyncs_process(mc_buf *obuf, list<mc_sync> *l){
 
 int srv_createsync_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& name, bool crypted){
 	MC_DBGL("Creating new sync " << name << " (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_createsync(ibuf,authtoken,name,crypted);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 	return perf->perform(ibuf,obuf,false);
 }
 int srv_createsync_process(mc_buf *obuf, int *id){
@@ -508,9 +520,9 @@ int srv_createsync_process(mc_buf *obuf, int *id){
 }
 int srv_delsync_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int id){
 	MC_DBGL("Deleting sync " << id << " (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_delsync(ibuf,authtoken,id);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 	return perf->perform(ibuf,obuf,false);
 }
 int srv_delsync_process(mc_buf *obuf){
@@ -521,7 +533,9 @@ SAFEFUNC2(srv_listfilters,list<mc_filter> *l, int sid,l,sid)
 int _srv_listfilters(list<mc_filter> *l, int sid){
 	MC_DBGL("Fetching filter list for sid: " << sid);
 	int rc;
+	token_mutex.lock();
 	pack_listfilters(&ibuf,authtoken,sid);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_FILTERLIST);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_FILTERLIST); }
@@ -533,9 +547,9 @@ int _srv_listfilters(list<mc_filter> *l, int sid){
 
 int srv_listfilters_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int sid){
 	MC_DBGL("Fetching filter list for sid: " << sid << " (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_listfilters(ibuf,authtoken,sid);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 
 	return perf->perform(ibuf,obuf,false);
 }
@@ -551,9 +565,9 @@ int srv_listfilters_process(mc_buf *obuf, list<mc_filter> *l){
 //We don't need these synchronous
 int srv_putfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_filter *filter){
 	MC_DBGL("Putting filter " << filter->id << ": " << filter->rule << " (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_putfilter(ibuf,authtoken,filter);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 
 	return perf->perform(ibuf,obuf,false);
 }
@@ -567,9 +581,9 @@ int srv_putfilter_process(mc_buf *obuf, int *id){
 }
 int srv_delfilter_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_filter *filter){
 	MC_DBGL("Deleting filter " << filter->id << ": " << filter->rule << " (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_delfilter(ibuf,authtoken,filter->id);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 
 	return perf->perform(ibuf,obuf,false);
 }
@@ -582,7 +596,9 @@ SAFEFUNC2(srv_listshares,list<mc_share> *l, int sid,l,sid)
 int _srv_listshares(list<mc_share> *l, int sid){
 	MC_DBGL("Fetching share list for sid: " << sid);
 	int rc;
+	token_mutex.lock();
 	pack_listshares(&ibuf,authtoken,sid);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_SHARELIST);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_SHARELIST); }
@@ -594,9 +610,9 @@ int _srv_listshares(list<mc_share> *l, int sid){
 
 int srv_listshares_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int sid){
 	MC_DBGL("Fetching share list for sid: " << sid << " (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_listshares(ibuf,authtoken,sid);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 
 	return perf->perform(ibuf,obuf,false);
 }
@@ -612,9 +628,9 @@ int srv_listshares_process(mc_buf *obuf, list<mc_share> *l){
 //We don't need these synchronous
 int srv_putshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share){
 	MC_DBGL("Putting share " << share->sid << " / " << share->uid << " (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_putshare(ibuf,authtoken,share);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 
 	return perf->perform(ibuf,obuf,false);
 }
@@ -627,9 +643,9 @@ int srv_putshare_process(mc_buf *obuf){
 }
 int srv_delshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share){
 	MC_DBGL("Deleting share " << share->sid << " / " << share->uid << " (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_delshare(ibuf,authtoken,share);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 
 	return perf->perform(ibuf,obuf,false);
 }
@@ -642,7 +658,9 @@ SAFEFUNC2(srv_listdir,list<mc_file> *l, int parent,l,parent)
 int _srv_listdir(list<mc_file> *l, int parent){
 	MC_DBGL("Fetching dir list for parent: " << parent);
 	int rc;
+	token_mutex.lock();
 	pack_listdir(&ibuf,authtoken,parent);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_DIRLIST);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_DIRLIST); }
@@ -654,7 +672,9 @@ int _srv_listdir(list<mc_file> *l, int parent){
 
 int _srv_getfile_actual(int id, int64 offset, int64 blocksize, unsigned char hash[16], int64 *write, bool withprogress){
 	int rc;
+	token_mutex.lock();
 	pack_getfile(&ibuf,authtoken,id,offset,blocksize,hash);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_FILE,withprogress);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_FILE); }
@@ -709,7 +729,9 @@ SAFEFUNC2(srv_getoffset,int id,int64 *offset,id,offset)
 int _srv_getoffset(int id, int64 *offset){
 	MC_DBGL("Getting file offset of " << id);
 	int rc;
+	token_mutex.lock();
 	pack_getoffset(&ibuf,authtoken,id);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_OFFSET);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_OFFSET); }
@@ -726,8 +748,10 @@ int _srv_putfile(mc_file *file, int64 blocksize, FILE *fdesc){
 	MC_DBGL("Putting file " << file->id << ": " << file->name << (file->is_dir?"/":""));
 	int rc;
 	size_t read;
-
+	
+	token_mutex.lock();
 	pack_putfile(&ibuf,authtoken,file,blocksize);
+	token_mutex.unlock();
 		
 	MatchBuf(&ibuf,ibuf.used+blocksize);
 
@@ -755,7 +779,9 @@ SAFEFUNC3(srv_putfile,mc_file *file, int64 blocksize, char *buf, \
 int _srv_putfile(mc_file *file, int64 blocksize, char *buf){
 	MC_DBGL("Putting file " << file->id << ": " << file->name << (file->is_dir?"/":""));
 	int rc;
+	token_mutex.lock();
 	pack_putfile(&ibuf,authtoken,file,blocksize);
+	token_mutex.unlock();
 		
 	MatchBuf(&ibuf,ibuf.used+blocksize);
 
@@ -783,7 +809,9 @@ int _srv_addfile(int id, int64 offset, int64 blocksize, FILE *fdesc, unsigned ch
 	MC_DBGL("Adding file " << id << " at offset " << offset);
 	size_t read;
 	int rc;
+	token_mutex.lock();
 	pack_addfile(&ibuf,authtoken,id,offset,blocksize,hash);
+	token_mutex.unlock();
 
 	MatchBuf(&ibuf,ibuf.used+blocksize);
 	//fs_fseek(fdesc,offset,SEEK_SET); //Normally we loop this function anyway
@@ -808,7 +836,9 @@ int _srv_addfile(int id, int64 offset, int64 blocksize, char *buf, unsigned char
 	MC_DBGL("Adding file " << id << " at offset " << offset);
 	int rc;
 	size_t read;
+	token_mutex.lock();
 	pack_addfile(&ibuf,authtoken,id,offset,blocksize,hash);
+	token_mutex.unlock();
 	MatchBuf(&ibuf,ibuf.used+blocksize);
 
 	if(blocksize != 0){
@@ -827,7 +857,9 @@ SAFEFUNC(srv_patchfile,mc_file *file,file)
 int _srv_patchfile(mc_file *file){
 	MC_DBGL("Patching file " << file->id << ": " << file->name << (file->is_dir?"/":""));
 	int rc;
+	token_mutex.lock();
 	pack_patchfile(&ibuf,authtoken,file);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_OK);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_OK); }
@@ -839,7 +871,9 @@ SAFEFUNC(srv_delfile,mc_file *file,file)
 int _srv_delfile(mc_file *file){
 	MC_DBGL("Deleting file " << file->id << ": " << file->name << (file->is_dir?"/":""));
 	int rc;
+	token_mutex.lock();
 	pack_delfile(&ibuf,authtoken,file->id,file->mtime);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_OK);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_OK); }
@@ -851,7 +885,9 @@ SAFEFUNC2(srv_getmeta,int id, mc_file *file, id,file)
 int _srv_getmeta(int id, mc_file *file){
 	MC_DBGL("Getting metadata for file: " << id);
 	int rc;
+	token_mutex.lock();
 	pack_getmeta(&ibuf,authtoken,id);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_FILEMETA);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_FILEMETA); }
@@ -865,7 +901,9 @@ SAFEFUNC(srv_purgefile,int id,id)
 int _srv_purgefile(int id){
 	MC_DBGL("PURGING file " << id);
 	int rc;
+	token_mutex.lock();
 	pack_purgefile(&ibuf,authtoken,id);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_OK);
 	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
 		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_OK); }
@@ -877,7 +915,9 @@ SAFEFUNC2(srv_notifychange,list<mc_sync_db> *l, int *id,l,id)
 int _srv_notifychange(list<mc_sync_db> *l, int *id){
 	MC_DBGL("Watching srv changes");
 	int rc;
+	token_mutex.lock();
 	pack_notifychange(&ibuf,authtoken,l);
+	token_mutex.unlock();
 	rc = srv_perform(MC_SRVSTAT_CHANGE,false,MC_SRVSTAT_NOCHANGE);
 	if(rc == MC_ERR_ALTCODE) return MC_ERR_NOCHANGE;
 	MC_CHKERR(rc);
@@ -889,9 +929,9 @@ int _srv_notifychange(list<mc_sync_db> *l, int *id){
 //No SAFEFUNC as we don't use srv resources (other than reading authtoken)
 int srv_notifychange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_sync_db> *l){
 	MC_DBGL("Watching srv changes (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_notifychange(ibuf,authtoken,l);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 	return perf->perform(ibuf,obuf,false);
 }
 int srv_notifychange_process(mc_buf *obuf, int *id){
@@ -907,9 +947,9 @@ int srv_notifychange_process(mc_buf *obuf, int *id){
 
 int srv_passchange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& newpass){
 	MC_DBGL("Changing password (async)");
-	srv_mutex.lock();
+	token_mutex.lock();
 	pack_passchange(ibuf,authtoken,newpass);
-	srv_mutex.unlock();
+	token_mutex.unlock();
 	return perf->perform(ibuf,obuf,false);
 }
 int srv_passchange_process(mc_buf *obuf){	
