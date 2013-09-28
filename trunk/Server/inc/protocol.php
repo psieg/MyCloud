@@ -13,6 +13,7 @@ define("MC_SRVQRY_DELFILTER",	302);	// Delete a filter
 define("MC_SRVQRY_LISTSHARES",	400);	// List all shares for async
 define("MC_SRVQRY_PUTSHARE",	401);	// Add / Replace a share
 define("MC_SRVQRY_DELSHARE",	402);	// Delete a share
+define("MC_SRVQRY_LISTUSERS",	403);	// LIst all users (so user can choose s.b. to share to)
 define("MC_SRVQRY_LISTDIR",		501);	// List all files in a dir (with their stats)
 define("MC_SRVQRY_GETFILE",		502);	// Get the content of a file
 define("MC_SRVQRY_GETMETA",		503);	// Get a file's metadata
@@ -32,6 +33,7 @@ define("MC_SRVSTAT_SYNCID",		201);	// ID of sync just created
 define("MC_SRVSTAT_FILTERLIST",	300);	// List of filters for sync
 define("MC_SRVSTAT_FILTERID",	301);	// ID of created / updated filter
 define("MC_SRVSTAT_SHARELIST",	400);	// List of shares for sync
+define("MC_SRVSTAT_USERLIST",	401);	// List of users
 define("MC_SRVSTAT_DIRLIST",	500);	// Here's the directory listing you requested
 define("MC_SRVSTAT_FILE",		501);	// Here are contents of the file
 define("MC_SRVSTAT_FILEMETA",	502);	// Metadata of the file

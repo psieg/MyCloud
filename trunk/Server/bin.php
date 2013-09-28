@@ -57,6 +57,7 @@ if($ready){
 		case MC_SRVQRY_LISTSHARES:
 		case MC_SRVQRY_PUTSHARE:
 		case MC_SRVQRY_DELSHARE:
+		case MC_SRVQRY_LISTUSERS:
 		case MC_SRVQRY_LISTDIR:
 		case MC_SRVQRY_GETFILE:
 		case MC_SRVQRY_GETOFFSET:
@@ -74,6 +75,7 @@ if($ready){
 				$uid = $q->fetch_row();
 				if($uid){
 					$uid = $uid[0];
+					$mysqli->query("UPDATE mc_users SET lastseen = ".time()." WHERE id = ".$uid);
 					switch($qrycode){
 						case MC_SRVQRY_LISTSYNCS:
 							$res = handle_listsyncs($ibuf,$uid);
@@ -101,6 +103,9 @@ if($ready){
 							break;
 						case MC_SRVQRY_DELSHARE:
 							$res = handle_delshare($ibuf,$uid);
+							break;
+						case MC_SRVQRY_LISTUSERS:
+							$res = handle_listusers($ibuf,$uid);
 							break;
 						case MC_SRVQRY_LISTDIR:
 							$res = handle_listdir($ibuf,$uid);
@@ -138,7 +143,6 @@ if($ready){
 						default:
 							$res = pack_interror("Not Implemented");
 					}
-					$mysqli->query("UPDATE mc_users SET lastseen = ".time()." WHERE id = ".$uid);
 					print($res);
 				} else {
 					print(pack_code(MC_SRVSTAT_UNAUTH));

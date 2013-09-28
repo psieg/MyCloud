@@ -87,8 +87,7 @@ function handle_listfilters($ibuf,$uid){
 			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	}
 	if(!$q) return pack_interror($mysqli->error);
-	$l = array();
-	while($r = $q->fetch_row()){ $l[]= $r; }
+	$l = $q->fetch_all();
 	return pack_filterlist($l);
 }
 
@@ -170,12 +169,11 @@ function handle_listshares($ibuf,$uid){
 
 	$q = $mysqli->query("SELECT s.sid,s.uid,u.name FROM mc_shares s INNER JOIN mc_users u ON s.uid = u.id WHERE sid = ".$sid);
 	if(!$q) return pack_interror($mysqli->error);
-	$l = array();
-	while($r = $q->fetch_row()){ $l[]= $r; }
+	$l = $q->fetch_all(); 
 	return pack_sharelist($l);
 }
 
-function handle_puthare($ibuf,$uid){
+function handle_putshare($ibuf,$uid){
 	global $mysqli;
 	$qry = unpack_putshare($ibuf);
 	//sync must exist and be owned by user
@@ -184,18 +182,18 @@ function handle_puthare($ibuf,$uid){
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 
 	//check doesn't exist yet
-	$q = $mysqli->query("SELECT sid,uid FROM mc_filters WHERE sid = ".$qry['sid']." AND uid = ".$qry['uid']);
+	$q = $mysqli->query("SELECT sid,uid FROM mc_shares WHERE sid = ".$qry['sid']." AND uid = ".$qry['uid']);
 	if(!$q) return pack_interror($mysqli->error);
-	if($q->num_rows != 0) return pack_code(MC_SRVSTAT_EXISTS);
-
+	if($q->num_rows != 0) return pack_exists($qry['uid']); //there's no id...
+ 
 	//check target user exists
-	$q = $mysqli->query("SELECT uid FROM mc_users WHERE uid = ".$qry['uid']);
+	$q = $mysqli->query("SELECT id FROM mc_users WHERE id = ".$qry['uid']);
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	
 	//insert into table
 	$q = $mysqli->query("INSERT INTO mc_shares (sid,uid) VALUES ".
-		"(".$qry['sid'].", ".$qry['uid']);
+		"(".$qry['sid'].", ".$qry['uid'].")");
 	if(!$q) return pack_interror($mysqli->error);
 	$sid = $mysqli->insert_id;
 
@@ -203,7 +201,7 @@ function handle_puthare($ibuf,$uid){
 	$q = $mysqli->query("UPDATE mc_syncs SET shareversion = shareversion + 1 WHERE id = ".$qry['sid']." AND uid = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
 
-	return pack_shareid($sid);
+	return pack_code(MC_SRVSTAT_OK);
 }
 
 function handle_delshare($ibuf,$uid){
@@ -226,14 +224,22 @@ function handle_delshare($ibuf,$uid){
 	return pack_code(MC_SRVSTAT_OK);
 }
 
+function handle_listusers($ibuf,$uid){
+	global $mysqli;
+	//For now, there aren't enought users to require some form of limit - simlpy dump all
+	$q = $mysqli->query("SELECT id,name FROM mc_users");
+	if(!$q) return pack_interror($mysqli->error);
+	$l = $q->fetch_all();
+	return pack_userlist($l);
+}
+
 function handle_listdir($ibuf,$uid){
 	global $mysqli;
 	$parent = unpack_listdir($ibuf);
 	$q = $mysqli->query("SELECT id,name,ctime,mtime,size,is_dir,parent,status,hash FROM mc_files WHERE parent = ".$parent.
 		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
-	$l = array();
-	while($r = $q->fetch_row()){ $l[] = $r; }
+	$l = $q->fetch_all();
 	return pack_dirlist($l);
 }
 
