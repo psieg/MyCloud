@@ -32,11 +32,15 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	add = QIcon(":/Resources/add.png");
 	user = QIcon(":/Resources/user.png");
 	loadcompleted = false;
+	SetBuf(&netibuf);
+	SetBuf(&netobuf);
 }
 
 QtSyncDialog::~QtSyncDialog()
 {
 	if(performer) delete performer;
+	FreeBuf(&netibuf);
+	FreeBuf(&netobuf);
 }
 
 void QtSyncDialog::showEvent(QShowEvent *event){
@@ -63,8 +67,6 @@ void QtSyncDialog::showEvent(QShowEvent *event){
 	_url.append(s.url.c_str());
 	_url.append("/bin.php");
 	performer = new QtNetworkPerformer(_url,"trustCA.crt",s.acceptallcerts,true);
-	SetBuf(&netibuf);
-	SetBuf(&netobuf);
 		
 	connect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
 	srv_auth_async(&netibuf,&netobuf,performer,s.uname,s.passwd,&authtime);

@@ -308,9 +308,10 @@ inline void MatchBuf(mc_buf *buf, size_t required){
 	size_t newsize = buf->size;
 	if(required > buf->size){
 		if(newsize == 0) return; //error condition
-		while(newsize < required) newsize *= 2;
+		//while(newsize < required) newsize *= 2;
+		newsize = required;
 		void* p = realloc(buf->mem,newsize);
-		MC_MEM(p,newsize);
+		MC_MEM(p,newsize);		
 		buf->mem = (char*) p;
 		MC_MEM(buf->mem,newsize);
 		buf->size = newsize;
@@ -338,7 +339,7 @@ typedef struct _mc_crypt_ctx {
 	mc_buf pbuf; //persistent buffer to avoid mallocs
 } mc_crypt_ctx;
 inline void init_crypt_ctx(mc_crypt_ctx *cctx, mc_sync_ctx *ctx)
-	{ cctx->hasiv = false; cctx->hastag = false; cctx->f = NULL; cctx->ctx = ctx; }
+	{ cctx->hasiv = false; cctx->hastag = false; cctx->f = NULL; cctx->ctx = ctx; cctx->pbuf.mem = NULL; }
 inline void init_crypt_ctx_copy(mc_crypt_ctx *cctx, mc_crypt_ctx *extcctx)
 	{ cctx->hasiv = extcctx->hasiv; cctx->hastag = extcctx->hastag; cctx->f = extcctx->f; cctx->ctx = extcctx->ctx; }
 

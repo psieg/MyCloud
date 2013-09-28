@@ -44,7 +44,6 @@ int main(int argc, char *argv[])
 #endif
 	QCoreApplication a(argc, argv);
 	QtWorkerThread w;
-	w.command = QtWorkerThread::NormalRun;
 		
 	db_open("state.db");
 
