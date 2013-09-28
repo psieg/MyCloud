@@ -152,6 +152,14 @@ void pack_delshare(mc_buf *buf, unsigned char authtoken[16], mc_share *share){
 	buf->used = 3*sizeof(int)+16;
 }
 
+void pack_listusers(mc_buf *buf, unsigned char authtoken[16]){
+	const int num = MC_SRVQRY_LISTUSERS;
+	MatchBuf(buf,sizeof(int)+16);
+	memcpy(&buf->mem[0],&num,sizeof(int));
+	memcpy(&buf->mem[sizeof(int)],authtoken,16);
+	buf->used = sizeof(int)+16;
+}
+
 void pack_listdir(mc_buf *buf, unsigned char authtoken[16], int parent){
 	const int num = MC_SRVQRY_LISTDIR;
 	MatchBuf(buf,2*sizeof(int)+16);
@@ -441,7 +449,25 @@ void unpack_sharelist(mc_buf *buf, list<mc_share> *l){
 	} catch (...) {
 		throw MC_ERR_PROTOCOL;
 	}
+}
 
+void unpack_userlist(mc_buf *buf, list<mc_user> *l){
+	unsigned int index = sizeof(int);
+	int unamelen = 0;
+	mc_user item;
+	try {
+		while(index < buf->used){
+			memcpy(&item.id,&buf->mem[index],sizeof(int));
+			index += sizeof(int);
+			memcpy(&unamelen,&buf->mem[index],sizeof(int));
+			index += sizeof(int);
+			item.name.assign(&buf->mem[index],unamelen);
+			index += unamelen;
+			l->push_back(item);
+		}
+	} catch (...) {
+		throw MC_ERR_PROTOCOL;
+	}
 }
 
 void unpack_dirlist(mc_buf *buf, list<mc_file> *l){

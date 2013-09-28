@@ -32,16 +32,43 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QComboBox" name="comboBox">
+    <widget class="QComboBox" name="userBox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+	  <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="leftMargin">
+       <number>6</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>11</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="fetchUserLabel">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>&lt;i&gt;retreiving User list...&lt;/i&gt;</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
-   <item row="0" column="0" colspan="4">
+   <item row="0" column="0" colspan="5">
     <widget class="QLabel" name="label">
      <property name="text">
       <string>Chose the user you would like to share the sync to.
@@ -53,6 +80,9 @@ If the Sync is encrypted, you have to send him the key on a safe channel</string
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="0">
       <widget class="QPushButton" name="okButton">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>OK</string>
        </property>

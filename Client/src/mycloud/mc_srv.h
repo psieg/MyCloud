@@ -90,6 +90,8 @@ int srv_putshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_
 int srv_putshare_process(mc_buf *obuf);
 int srv_delshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_share *share);
 int srv_delshare_process(mc_buf *obuf);
+int srv_listusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf);
+int srv_listusers_process(mc_buf *obuf, list<mc_user> *l);
 int srv_notifychange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_sync_db> *l);
 int srv_notifychange_process(mc_buf *obuf, int *id);
 int srv_passchange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& newpass);

@@ -18,6 +18,7 @@ typedef int MC_SRVQUERY;
 #define MC_SRVQRY_LISTSHARES	400 // List all shares for a sync
 #define MC_SRVQRY_PUTSHARE		401 // Add / Replace a share
 #define MC_SRVQRY_DELSHARE		402 // Delete a share
+#define MC_SRVQRY_LISTUSERS		403	// List all users (so user can choose s.b. to share to)
 #define MC_SRVQRY_LISTDIR		501	// List all files in a dir (with their stats)
 #define MC_SRVQRY_GETFILE		502	// Get the content of a file
 #define MC_SRVQRY_GETMETA		503	// Get a file's metadata
@@ -38,6 +39,7 @@ typedef int MC_SRVSTATUS;
 #define MC_SRVSTAT_FILTERLIST	300 // List of filters for sync
 #define MC_SRVSTAT_FILTERID		301 // ID of created / updated filter
 #define MC_SRVSTAT_SHARELIST	400 // List of shares for sync
+#define MC_SRVSTAT_USERLIST		401	// List of users
 #define MC_SRVSTAT_DIRLIST		500	// Here's the directory listing you requested
 #define MC_SRVSTAT_FILE			501	// Here are contents of the file
 #define MC_SRVSTAT_FILEMETA		502	// Metadata of the file
@@ -69,6 +71,7 @@ void pack_delfilter(mc_buf *buf, unsigned char authtoken[16], int id);
 void pack_listshares(mc_buf *buf, unsigned char authtoken[16], int syncid);
 void pack_putshare(mc_buf *buf, unsigned char authtoken[16], mc_share *share);
 void pack_delshare(mc_buf *buf, unsigned char authtoken[16], mc_share *share);
+void pack_listusers(mc_buf *buf, unsigned char authtoken[16]);
 void pack_listdir(mc_buf *buf, unsigned char authtoken[16], int parent);
 void pack_getfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 offset, int64 blocksize, unsigned char hash[16]);
 void pack_getoffset(mc_buf *buf, unsigned char authtoken[16], int id);
@@ -88,6 +91,7 @@ void unpack_syncid(mc_buf *buf,  int *id);
 void unpack_filterlist(mc_buf *buf, list<mc_filter> *l);
 void unpack_filterid(mc_buf *buf, int *id);
 void unpack_sharelist(mc_buf *buf, list<mc_share> *l);
+void unpack_userlist(mc_buf *buf, list<mc_user> *l);
 void unpack_dirlist(mc_buf *buf, list<mc_file> *l);
 void unpack_file(mc_buf *buf, int64 *offset);
 void unpack_offset(mc_buf *buf, int64 *offset);

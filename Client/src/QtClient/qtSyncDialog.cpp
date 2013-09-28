@@ -645,7 +645,7 @@ void QtSyncDialog::on_editFilterButton_clicked(){
 
 void QtSyncDialog::on_addShareButton_clicked(){
 	int rc;
-	QtShareDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id);
+	QtShareDialog d(this,performer,&netibuf,&netobuf,dbsynclist[dbindex].id,myUID);
 	d.exec();
 
 	//Shareversion updated

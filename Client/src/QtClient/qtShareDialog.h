@@ -16,13 +16,14 @@ class QtShareDialog : public QDialog
 	Q_OBJECT
 
 public:
-	QtShareDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, int syncID);
+	QtShareDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf, int syncID, int myUID);
 	~QtShareDialog();
 
 public slots:
 	void accept();
 	
 private slots:
+	void userListReceived(int);
 	void replyReceived(int);
 
 protected:
@@ -35,6 +36,9 @@ private:
 	mc_buf *netibuf,*netobuf;
 	mc_share share;
 	mc_sync_db sync;
+	QIcon user;
+	std::vector<mc_user> userlist;
+	int myUID;
 
 };
 
