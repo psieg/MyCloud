@@ -437,10 +437,12 @@ function handle_putfile($ibuf,$uid){
 	$rc = touch($filedata[0],$qry['mtime']);
 	if(!$rc) return pack_interror("Failed to set mtime");
 
-	if($qry['blocksize']==$qry['size']){
+	if($qry['blocksize'] == $qry['size']){
 		$q = $mysqli->query("UPDATE mc_files SET status = ".MC_FILESTAT_COMPLETE." ".
 			"WHERE id = ".$fid.
 			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
+	} else if($qry['blocksize'] >= $qry['size']){
+		return pack_interror("Writing beyond file size!");
 	}
 	
 	updateHash($fid);	
@@ -478,6 +480,8 @@ function handle_addfile($ibuf,$uid){
 			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 		if(!$q) return pack_interror($mysqli->error);
 		updateHash($qry[0]);
+	} else if(ftell($fdesc) > $res[2]){
+		return pack_interror("Writing beyond file size!");
 	}
 	fclose($fdesc);
 	$rc = touch($filedata[0],$res[1]);
