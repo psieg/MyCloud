@@ -27,30 +27,60 @@ void QtShareDialog::showEvent(QShowEvent *event){
 }
 
 void QtShareDialog::userListReceived(int rc){
-	list<mc_user> list;
+	list<mc_user> l;
+	list<mc_share> sharelist;
+
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(userListReceived(int)));
 	if(rc){
 		reject();
 		return;
 	}
 
-	rc = srv_listusers_process(netobuf,&list);
+	rc = srv_listusers_process(netobuf,&l);
 	if(rc){
 		reject();
 		return;
 	}
+
+	rc = db_list_share_sid(&sharelist,share.sid);
+	if(rc){
+		reject();
+		return;
+	}
+
+	if(l.size() == 1){ //only one user on the server
+		QMessageBox b(this);
+		b.setText(tr("No users"));
+		b.setInformativeText(tr("There are no other users on the server to whom you could share.\nCreate more users first."));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Warning);
+		b.exec();
+
+		reject();
+		return;
+	}
 	
-	for(mc_user& u : list){
+	for(mc_user& u : l){
 		if(u.id != myUID){
-			ui.userBox->addItem(user,u.name.c_str());
-			userlist.push_back(u);
+			bool sharedalready = false;
+			for(mc_share& s : sharelist){
+				if(s.uid == u.id){
+					sharedalready = true;
+					break;
+				}
+			}
+			if(!sharedalready){
+				ui.userBox->addItem(user,u.name.c_str());
+				userlist.push_back(u);
+			}
 		}
 	}
 
 	if(userlist.size() == 0){
 		QMessageBox b(this);
 		b.setText(tr("No other users"));
-		b.setInformativeText(tr("There seems to be no other user you could share to."));
+		b.setInformativeText(tr("There seems to be no user left you could share to."));
 		b.setStandardButtons(QMessageBox::Ok);
 		b.setDefaultButton(QMessageBox::Ok);
 		b.setIcon(QMessageBox::Warning);
