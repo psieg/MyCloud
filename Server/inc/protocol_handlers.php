@@ -37,6 +37,11 @@ function handle_createsync($ibuf,$uid){
 	$rc = mkdir($full);
 	if(!$rc) return pack_interror("Failed to create directory");
 
+	if($qry[0]){
+		$rc = touch(MC_FS_BASEDIR."/".$res[0]."/".$qry[1].".crypted");
+		if(!$rc) return pack_interror("Failed to save cryptinfo");
+	}
+
 	return pack_syncid($sid);
 }
 
