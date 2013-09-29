@@ -18,20 +18,25 @@ function rscan2($uid,$sid,$parentid,$path){
 		}else { //All known, add/check hashes
 			foreach($db as $d){
 				if($d[3] === NULL){
+					echo "hash: ".$path.'/'.$d[1]."\n";
 					if($d[2]){
 						 rscan2($uid,$sid,$d[0],$path.'/'.$d[1]);
 						$h = directoryHash($d[0]);
 					} else {
-						$h = md5_file($path.'/'.$d[1],true);
+						// use external utility so hashing is not counted towards execution time
+						//$h = md5_file($path.'/'.$d[1],true);
+						$h = exec("md5sum -b ".$path.'/'.$d[1]);
+						$h = substr($h,0,-strlen($path.'/'.$d[1]));
+						$h = hex2bin($h);
 					}
 					$q2 = $mysqli->query("UPDATE mc_files SET hash = '".esc($h)."' WHERE id = ".$d[0]);
 					if(!$q2){ echo "Error: ".$mysqli->error; break; }
-					echo "hash: ".$path.'/'.$d[1]."\n";
 				}
 			}
 		}		
 	} else { //Not scanned yet
 		//First add all, then add hashes
+		echo "scan:".$path."\n";
 		foreach($fs as $f){
 			if($f == "." || $f == "..") continue;
 			$info = stat($path.'/'.$f);
@@ -40,7 +45,6 @@ function rscan2($uid,$sid,$parentid,$path){
 			"(".$uid.", ".$sid.", '".esc($f)."', ".$info['mtime'].", ".$info['mtime'].", ".($is_dir?0:$info['size']).", ".($is_dir?1:0).", ".$parentid.", ".MC_FILESTAT_COMPLETE.")");
 			if(!$q){ echo "Error: ".$mysqli->error; break; }
 		}
-		echo "scan:".$path."\n";
 		return rscan2($uid,$sid,$parentid,$path);
 	}
 }
