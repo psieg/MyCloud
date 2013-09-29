@@ -12,6 +12,8 @@ if(isset($_GET['phase1'])){
 		'CREATE TABLE mc_shares (sid INTEGER NOT NULL, uid INTEGER NOT NULL)',
 		#default filter rules
 		'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,1,'.MC_FILTERT_REGEX_FULLNAME.',".*\\\.mc_conflict\\\.?.*","MyCloud conflicted files")',
+		'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,0,'.MC_FILTERT_MATCH_FULLNAME.',"desktop.ini","desktop.ini (permission issues)")',
+		'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,0,'.MC_FILTERT_MATCH_FULLNAME.',"Thumbs.db","Thumbs.db")',
 		#'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,0,'.MC_FILTERT_MATCH_EXTENSION.',"ncb","VC IntelliSense Databases")',
 		#'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,0,'.MC_FILTERT_MATCH_EXTENSION.',"sdf","VS2012 Cache Databases")',
 		'INSERT INTO mc_filters (uid,sid,files,directories,type,rule,comment) VALUES (0,0,1,0,'.MC_FILTERT_MATCH_EXTENSION.',"opensdf","VS2012 Cache Databases")',
