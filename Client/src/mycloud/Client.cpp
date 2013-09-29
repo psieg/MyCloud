@@ -42,11 +42,6 @@ int runmc()
 				if(!rc){
 					try {
 						MC_NOTIFYSTART(MC_NT_CONN,status.url);
-						if(status.uid != uid){
-							status.uid = uid;							
-							rc = db_update_status(&status);
-							if(rc) throw rc;
-						}
 						if(status.basedate < basedate){
 							if(status.basedate != 0){
 								MC_WRN("Server has newer basedate, resetting");
@@ -69,7 +64,9 @@ int runmc()
 								for(mc_sync_db& db : dbsyncs){
 									bool found = false;
 									for(mc_sync& srv : srvsyncs){
-										if(db.name == srv.name){
+										//only recover own syncs, there might be name conflicts with shared ones
+										if(db.name == srv.name && db.crypted == srv.crypted 
+											&& status.uid == db.uid && uid == srv.uid){
 											db.id = srv.id;
 											db.uid = srv.uid;
 											db.crypted = srv.crypted;
@@ -87,6 +84,11 @@ int runmc()
 								MC_NOTIFYEND(MC_NT_SYNC); // Trigger listSyncs()
 							}
 							status.basedate = basedate;
+							rc = db_update_status(&status);
+							if(rc) throw rc;
+						}
+						if(status.uid != uid){
+							status.uid = uid;
 							rc = db_update_status(&status);
 							if(rc) throw rc;
 						}
