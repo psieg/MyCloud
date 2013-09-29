@@ -18,15 +18,15 @@ function rscan2($uid,$sid,$parentid,$path){
 		}else { //All known, add/check hashes
 			foreach($db as $d){
 				if($d[3] === NULL){
-					echo "hash: ".$path.'/'.$d[1]."\n";
 					if($d[2]){
 						 rscan2($uid,$sid,$d[0],$path.'/'.$d[1]);
 						$h = directoryHash($d[0]);
 					} else {
+						echo "hash: ".$path.'/'.$d[1]."\n";
 						// use external utility so hashing is not counted towards execution time
 						//$h = md5_file($path.'/'.$d[1],true);
 						$h = exec("md5sum -b ".$path.'/'.$d[1]);
-						$h = substr($h,0,-strlen($path.'/'.$d[1]));
+						$h = substr($h,0,-(strlen($path.'/'.$d[1])+2));
 						$h = hex2bin($h);
 					}
 					$q2 = $mysqli->query("UPDATE mc_files SET hash = '".esc($h)."' WHERE id = ".$d[0]);
