@@ -62,7 +62,6 @@ int fs_filemd5(unsigned char hash[16], size_t fsize, FILE *fdesc){
 	char* fbuf;
 	QCryptographicHash cry(QCryptographicHash::Md5);
 	int i;
-	MC_DBGL("Calculating MD5 of file " << fpath);
 
 	bufsize = choosebufsize(fsize);
 	fbuf = (char*) malloc(bufsize);

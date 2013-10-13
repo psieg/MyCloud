@@ -481,13 +481,12 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 	if(!modified){ // File not modified
 			newdb->status = MC_FILESTAT_COMPLETE;
 			memcpy(newdb->hash,srv->hash,16);
-			
-			rc = db_insert_file(newdb);
-			MC_CHKERR(rc);
 
 			rc = crypt_patchfile(&cctx,path,newdb);
 			MC_CHKERR(rc);
 			
+			rc = db_insert_file(newdb);
+			MC_CHKERR(rc);			
 	} else {			
 		if(fs->is_dir){
 			memset(newdb->hash,'\0',16);
@@ -584,11 +583,11 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 	db->size = fs->size;
 
 	if(!modified){
-
-		rc = db_update_file(db);
+		
+		rc = crypt_patchfile(&cctx,path,db);
 		MC_CHKERR(rc);
 
-		rc = crypt_patchfile(&cctx,path,db);
+		rc = db_update_file(db);
 		MC_CHKERR(rc);
 
 	} else if(srv != NULL){
