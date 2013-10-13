@@ -641,7 +641,7 @@ int _db_list_share_sid(list<mc_share> *l, int sid){
 SAFEFUNC(db_insert_share,mc_share *var,var)
 int _db_insert_share(mc_share *var){
 	int rc;
-	MC_DBGL("Inserting share " << var->id << ": " << var->rule);
+	MC_DBGL("Inserting share " << var->sid << "/" << var->uid);
 	rc = sqlite3_reset(stmt_insert_share);
 	rc = sqlite3_clear_bindings(stmt_insert_share);
 	MC_CHKERR_MSG(rc,"Clear failed");
