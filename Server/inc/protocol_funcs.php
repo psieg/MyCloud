@@ -151,6 +151,11 @@ function unpack_passchange($fdesc){
 	return fread($fdesc,$len);
 }
 
+function unpack_setkeyring($fdesc){
+	$len = unpack("l1len",fread($fdesc,4))['len'];
+	return fread($fdesc,$len);
+}
+
 
 function pack_code($code){
 	return pack("l1",$code);
@@ -252,5 +257,9 @@ function pack_filemeta($file){
 
 function pack_change($sid){
 	return pack("l2",MC_SRVSTAT_CHANGE,$sid);
+}
+
+function pack_keyring($buf){
+	return pack("l2",MC_SRVSTAT_KEYRING,strlen($buf)).$buf;
 }
 ?>
