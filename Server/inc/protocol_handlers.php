@@ -659,7 +659,7 @@ function handle_passchange($ibuf,$uid){
 
 function handle_getkeyring($ibuf,$uid){
 	global $mysqli;
-	$q = $mysqli->query("SELECT kerying FROM mc_users WHERE id = ".$uid);
+	$q = $mysqli->query("SELECT keyring FROM mc_users WHERE id = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
 	// this entry must exist
 	$res = $q->fetch_row();
