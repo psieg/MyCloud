@@ -973,3 +973,32 @@ int srv_passchange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, c
 int srv_passchange_process(mc_buf *obuf){	
 	return srv_eval(MC_SRVSTAT_OK,-1,obuf);
 }
+
+int srv_getkeyring_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf){
+	MC_DBGL("Getting kerying (async)");
+	token_mutex.lock();
+	pack_getkeyring(ibuf,authtoken);
+	token_mutex.unlock();
+	return perf->perform(ibuf,obuf,false);
+}
+
+int srv_getkeyring_process(mc_buf *obuf, list<mc_keyringentry> *l){
+	int rc;
+	rc = srv_eval(MC_SRVSTAT_KEYRING,-1,obuf);
+	MC_CHKERR(rc);
+
+	unpack_keyring(obuf,l);
+	return 0;
+}
+
+int srv_setkeyring_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_keyringentry> *l){
+	MC_DBGL("Setting kerying (async)");
+	token_mutex.lock();
+	pack_setkeyring(ibuf,authtoken,l);
+	token_mutex.unlock();
+	return perf->perform(ibuf,obuf,false);
+}
+
+int srv_setkeyring_process(mc_buf *obuf){
+	return srv_eval(MC_SRVSTAT_OK,-1,obuf);
+}

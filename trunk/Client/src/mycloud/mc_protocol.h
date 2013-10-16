@@ -3,8 +3,8 @@
 #include "mc.h"
 /* This unit defines the Codes used in our protocol and functions to pack/unpack messages */
 
-#define MC_CLIENT_PROTOCOL_VERSION		9
-#define MC_MIN_SERVER_PROTOCOL_VERSION	9
+#define MC_CLIENT_PROTOCOL_VERSION		10
+#define MC_MIN_SERVER_PROTOCOL_VERSION	10
 
 typedef int MC_SRVQUERY;
 #define MC_SRVQRY_STATUS		100	// What's your status
@@ -30,6 +30,8 @@ typedef int MC_SRVQUERY;
 #define MC_SRVQRY_PURGEFILE		520	// Purge this file (it's been hit by an ignore list)
 #define MC_SRVQRY_NOTIYCHANGE	600	// Return when something changes or after timeout
 #define MC_SRVQRY_PASSCHANGE	700	// Change password to X
+#define MC_SRVQRY_GETKEYRING	800 // Download keyring
+#define MC_SRVQRY_SETKEYRING	801 // Set keyring
 
 typedef int MC_SRVSTATUS; 
 #define MC_SRVSTAT_OK			100	// I'm good / Query successful
@@ -46,7 +48,8 @@ typedef int MC_SRVSTATUS;
 #define MC_SRVSTAT_OFFSET		503	// Here's how much of the file I have
 #define MC_SRVSTAT_FILEID		510	// ID of file just created
 #define MC_SRVSTAT_CHANGE		600 // ID of the changed watched sync
-#define MC_SRVSTAT_NOCHANGE		601 // None of the watched syncs has changed 
+#define MC_SRVSTAT_NOCHANGE		601 // None of the watched syncs has changed
+#define MC_SRVSTAT_KEYRING		800 // Keyring
 
 #define MC_SRVSTAT_BADQRY		900	// I don't understand
 #define MC_SRVSTAT_INTERROR		901	// Something went wrong
@@ -83,6 +86,8 @@ void pack_getmeta(mc_buf *buf, unsigned char authtoken[16], int id);
 void pack_purgefile(mc_buf *buf, unsigned char authtoken[16], int id);
 void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db> *l);
 void pack_passchange(mc_buf *buf, unsigned char authtoken[16], const string& newpass);
+void pack_getkeyring(mc_buf *buf, unsigned char authtoken[16]);
+void pack_setkeyring(mc_buf *buf, unsigned char authtoken[16], list<mc_keyringentry> *l);
 
 /* These functions fill the params with the response buffer's contents */
 void unpack_authed(mc_buf *buf, int *version, unsigned char authtoken[16], int64 *time, int64 *basedate, int *uid);
@@ -98,5 +103,6 @@ void unpack_offset(mc_buf *buf, int64 *offset);
 void unpack_fileid(mc_buf *buf, int *id);
 void unpack_filemeta(mc_buf *buf, mc_file *file);
 void unpack_change(mc_buf *buf, int *id);
+void unpack_keyring(mc_buf *buf, list<mc_keyringentry> *l);
 
 #endif /* MC_PROTOCOL_H */
