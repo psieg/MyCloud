@@ -37,6 +37,7 @@ private slots:
 	void filterDeleteReceived(int);
 	void shareDeleteReceived(int);
 	void syncDeleteReceived(int);
+	void keyringReceived(int);
 
 	void on_deleteSyncButton_clicked();
 	void on_browseButton_clicked();
@@ -54,6 +55,7 @@ protected:
 	void showEvent(QShowEvent *event);
 
 private:
+	void accept_step2();
 	void filldbdata();
 	void listFilters();
 	void listFilters_actual();
@@ -78,6 +80,8 @@ private:
 	bool loadcompleted;
 	int deletingfilterid;
 	mc_share deletingshare;
+	mc_sync_db *worksync;
+	mc_sync_db newsync;
 };
 
 #endif // QTSYNCDIALOG_H

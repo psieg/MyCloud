@@ -154,7 +154,7 @@
       <number>64</number>
      </property>
      <property name="placeholderText">
-      <string>leave empty to generate a new key</string>
+      <string>leave empty to fetch from keyring or generate a new key</string>
      </property>
     </widget>
    </item>

@@ -87,7 +87,7 @@ void pack_purgefile(mc_buf *buf, unsigned char authtoken[16], int id);
 void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db> *l);
 void pack_passchange(mc_buf *buf, unsigned char authtoken[16], const string& newpass);
 void pack_getkeyring(mc_buf *buf, unsigned char authtoken[16]);
-void pack_setkeyring(mc_buf *buf, unsigned char authtoken[16], list<mc_keyringentry> *l);
+void pack_setkeyring(mc_buf *buf, unsigned char authtoken[16], string *data);
 
 /* These functions fill the params with the response buffer's contents */
 void unpack_authed(mc_buf *buf, int *version, unsigned char authtoken[16], int64 *time, int64 *basedate, int *uid);
@@ -103,6 +103,6 @@ void unpack_offset(mc_buf *buf, int64 *offset);
 void unpack_fileid(mc_buf *buf, int *id);
 void unpack_filemeta(mc_buf *buf, mc_file *file);
 void unpack_change(mc_buf *buf, int *id);
-void unpack_keyring(mc_buf *buf, list<mc_keyringentry> *l);
+void unpack_keyring(mc_buf *buf, string *data);
 
 #endif /* MC_PROTOCOL_H */

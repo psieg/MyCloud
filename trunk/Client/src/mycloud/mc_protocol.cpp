@@ -345,29 +345,21 @@ void pack_getkeyring(mc_buf *buf, unsigned char authtoken[16]){
 	buf->used = sizeof(int)+16;
 }
 
-void pack_setkeyring(mc_buf *buf, unsigned char authtoken[16], list<mc_keyringentry> *l){
+void pack_setkeyring(mc_buf *buf, unsigned char authtoken[16], string *data){
 	int num = MC_SRVQRY_SETKEYRING;
 	unsigned int index = 0;
-	size_t s = sizeof(int)+16;
-	for(mc_keyringentry& e : *l) s += 2*sizeof(int) + 32 + e.sname.length();
 
-	MatchBuf(buf,s);
-	memcpy(&buf->mem[index],&num,sizeof(int));
-	index += sizeof(int);
-	memcpy(&buf->mem[index],authtoken,16);
+	MatchBuf(buf,2*sizeof(int)+16+data->length());
+	memcpy(&buf->mem[0],&num,sizeof(int));
 
-	for(mc_keyringentry& e : *l){
-		memcpy(&buf->mem[index],e.key,sizeof(int));
-		index += sizeof(int);
-		num = e.sname.length();
-		memcpy(&buf->mem[index],&num,sizeof(int));
-		index += sizeof(int);
-		memcpy(&buf->mem[index],e.sname.c_str(),num);
-		index += num;
-		memcpy(&buf->mem[index],e.key,32);
-		index += 32;
-	}
-	buf->used = s;
+	memcpy(&buf->mem[sizeof(int)],authtoken,16);
+
+	num = data->length();
+	memcpy(&buf->mem[sizeof(int)+16],&num,sizeof(int));
+
+	memcpy(&buf->mem[2*sizeof(int)+16],data->c_str(),num);
+
+	buf->used = 2*sizeof(int)+16+data->length();
 }
 
 /* These functions fill the params with the response buffer's contents 
@@ -597,22 +589,15 @@ void unpack_change(mc_buf *buf, int *id){
 	}
 }
 
-void unpack_keyring(mc_buf *buf, list<mc_keyringentry> *l){
+void unpack_keyring(mc_buf *buf, string *data){
 	unsigned int index = sizeof(int);
-	int namelen = 0;
-	mc_keyringentry item;
+	int len = 0;
 	try {
-		while(index < buf->used){
-			memcpy(&item.sid,&buf->mem[index],sizeof(int));
-			index += sizeof(int);
-			memcpy(&namelen,&buf->mem[index],sizeof(int));
-			index += sizeof(int);
-			item.sname.assign(&buf->mem[index],namelen);
-			index += namelen;
-			memcpy(&item.key,&buf->mem[index],32);
-			index += 32;
-			l->push_back(item);
-		}
+		// first int is content length
+		len = (int)buf->mem[index];
+		index += sizeof(int);
+		if(len == 0) *data = "";
+		else data->assign(buf->mem[index],len);
 	} catch (...) {
 		throw MC_ERR_PROTOCOL;
 	}

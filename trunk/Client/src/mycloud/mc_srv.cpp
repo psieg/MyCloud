@@ -982,19 +982,19 @@ int srv_getkeyring_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf){
 	return perf->perform(ibuf,obuf,false);
 }
 
-int srv_getkeyring_process(mc_buf *obuf, list<mc_keyringentry> *l){
+int srv_getkeyring_process(mc_buf *obuf, string *data){
 	int rc;
 	rc = srv_eval(MC_SRVSTAT_KEYRING,-1,obuf);
 	MC_CHKERR(rc);
 
-	unpack_keyring(obuf,l);
+	unpack_keyring(obuf,data);
 	return 0;
 }
 
-int srv_setkeyring_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_keyringentry> *l){
+int srv_setkeyring_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, string *data){
 	MC_DBGL("Setting kerying (async)");
 	token_mutex.lock();
-	pack_setkeyring(ibuf,authtoken,l);
+	pack_setkeyring(ibuf,authtoken,data);
 	token_mutex.unlock();
 	return perf->perform(ibuf,obuf,false);
 }
