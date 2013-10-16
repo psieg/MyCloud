@@ -97,7 +97,7 @@ int srv_notifychange_process(mc_buf *obuf, int *id);
 int srv_passchange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& newpass);
 int srv_passchange_process(mc_buf *obuf);
 int srv_getkeyring_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf);
-int srv_getkeyring_process(mc_buf *obuf, list<mc_keyringentry> *l);
-int srv_setkeyring_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_keyringentry> *l);
+int srv_getkeyring_process(mc_buf *obuf, string *data);
+int srv_setkeyring_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, string *data);
 int srv_setkeyring_process(mc_buf *obuf);
 #endif /* MC_SRV_H */

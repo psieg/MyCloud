@@ -430,12 +430,54 @@ void QtSyncDialog::syncDeleteReceived(int rc){
 	startOver();
 }
 
+void QtSyncDialog::keyringReceived(int rc){
+	string keyringdata;
+	list<mc_keyringentry> ring;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceived(int)));
+	if(rc) {
+		reject();
+		return;
+	}
+
+	rc = srv_getkeyring_process(&netobuf,&keyringdata);
+	if(rc){
+		reject();
+		return;
+	}
+
+	//TODO. decrypt, find
+
+
+	QByteArray ckey = QByteArray(32,'\0');
+	if(crypt_randkey((unsigned char*)ckey.data())){
+		QMessageBox b(this);
+		b.setText(tr("Can't generate keys atm"));
+		b.setInformativeText(tr("Please enter the CryptKey for this sync."));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Warning);
+		b.exec();
+		ui.okButton->setEnabled(true);
+		return;
+	} else {
+		ui.keyEdit->setText(ckey.toHex());
+		QMessageBox b(this);
+		b.setText(tr("New Key generated"));
+		b.setInformativeText(tr("A new key has been generated. Make a copy and store it in a safe place so you can enter it on other computers"));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Information);
+		b.exec();
+		ui.okButton->setEnabled(true);
+		return;
+	}
+
+	accept_step2();
+}
+
 void QtSyncDialog::accept(){
 	int rc;
 	int maxprio=0;
-	QByteArray ckey;
-	mc_sync_db *worksync;
-	mc_sync_db newsync;
 
 	if(ui.pathEdit->text().length() == 0){
 		QMessageBox b(this);
@@ -481,7 +523,9 @@ void QtSyncDialog::accept(){
 		if(ui.keyEdit->text() != ""){
 			QRegExp hexMatcher("^[0-9A-F]{64}$", Qt::CaseInsensitive);
 			if (hexMatcher.exactMatch(ui.keyEdit->text())){
-				ckey = QByteArray::fromHex(ui.keyEdit->text().toLatin1());
+				QByteArray ckey = QByteArray::fromHex(ui.keyEdit->text().toLatin1());
+				memcpy(worksync->cryptkey,ckey.constData(),32);
+				accept_step2();
 			} else {
 				QMessageBox b(this);
 				b.setText(tr("Please enter a valid 256-bit key in hex format"));
@@ -493,30 +537,24 @@ void QtSyncDialog::accept(){
 				return;
 			}
 		} else {
-			ckey = QByteArray(32,'\0');
-			if(crypt_randkey((unsigned char*)ckey.data())){
-				QMessageBox b(this);
-				b.setText(tr("Can't generate keys atm"));
-				b.setInformativeText(tr("Please enter the CryptKey for this sync."));
-				b.setStandardButtons(QMessageBox::Ok);
-				b.setDefaultButton(QMessageBox::Ok);
-				b.setIcon(QMessageBox::Warning);
-				b.exec();
-				return;
-			} else {
-				ui.keyEdit->setText(ckey.toHex());
-				QMessageBox b(this);
-				b.setText(tr("New Key generated"));
-				b.setInformativeText(tr("A new key has been generated. Make a copy and store it in a safe place so you can enter it on other computers"));
-				b.setStandardButtons(QMessageBox::Ok);
-				b.setDefaultButton(QMessageBox::Ok);
-				b.setIcon(QMessageBox::Information);
-				b.exec();
-				return;
-			}
+			// fetch keyring and check
+			// will call step2
+			ui.keyEdit->setText(tr("// Downloading Keyring..."));
+			connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceived(int)));
+			srv_getkeyring_async(&netibuf,&netobuf,performer);
+			ui.okButton->setEnabled(false);
+
 		}
-		memcpy(worksync->cryptkey,ckey.constData(),32);
-	} else memset(worksync->cryptkey,0,32);
+	} else {
+		memset(worksync->cryptkey,0,32);
+		accept_step2();
+	}
+
+
+}
+
+void QtSyncDialog::accept_step2(){
+	int rc;
 
 	if(dbindex == -1){
 		newsync.status = MC_SYNCSTAT_UNKOWN;

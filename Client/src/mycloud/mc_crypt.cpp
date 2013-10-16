@@ -162,6 +162,14 @@ int crypt_filelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *
 	return 0;
 }
 
+
+int crypt_keyring_fromsrv(const string& data, const string& password, list<mc_keyringentry> *l){
+	return 0; //NOOP for now
+}
+int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string& data){
+	return 0; //NOOP for now
+}
+
 void crypt_filestring(mc_sync_ctx *ctx, mc_file *f, string *s){
 	s->append((const char*)&f->id,sizeof(int));
 	if(ctx->sync->crypted) s->append(f->cryptname); 

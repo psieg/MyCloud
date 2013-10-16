@@ -44,7 +44,10 @@ int crypt_file_tosrv(mc_sync_ctx *ctx, const string& path, mc_file *f);
 int crypt_file_fromsrv(mc_sync_ctx *ctx, const string& path, mc_file *f); //TODO: private because implicit?
 // Translate a directory listing in-place
 int crypt_filelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *l);
-
+// Translate a data-string to a keyring-list
+int crypt_keyring_fromsrv(const string& data, const string& password, list<mc_keyringentry> *l);
+// Translate from keyring-list to server-format
+int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string& data);
 
 // Filestring differs because of the size translation
 void crypt_filestring(mc_sync_ctx *ctx, mc_file *f, string *s);
