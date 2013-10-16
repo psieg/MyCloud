@@ -446,10 +446,15 @@ void QtSyncDialog::keyringReceived(int rc){
 	}
 
 	//TODO. decrypt, find
+	/*
+	if(found){
+		memcpy(worksync->cryptkey,ckey.constData(),32);
+		accept_step2();
+	}
+	*/
 
-
-	QByteArray ckey = QByteArray(32,'\0');
-	if(crypt_randkey((unsigned char*)ckey.data())){
+	newkey = QByteArray(32,'\0');
+	if(crypt_randkey((unsigned char*)newkey.data())){
 		QMessageBox b(this);
 		b.setText(tr("Can't generate keys atm"));
 		b.setInformativeText(tr("Please enter the CryptKey for this sync."));
@@ -460,19 +465,33 @@ void QtSyncDialog::keyringReceived(int rc){
 		ui.okButton->setEnabled(true);
 		return;
 	} else {
-		ui.keyEdit->setText(ckey.toHex());
+		ui.keyEdit->setText(newkey.toHex());
 		QMessageBox b(this);
 		b.setText(tr("New Key generated"));
-		b.setInformativeText(tr("A new key has been generated. Make a copy and store it in a safe place so you can enter it on other computers"));
+		b.setInformativeText(tr("A new key has been generated. You <b>really</b> should make a copy and store it somewhere safe, e.g. to enter it on other computers."));
 		b.setStandardButtons(QMessageBox::Ok);
 		b.setDefaultButton(QMessageBox::Ok);
 		b.setIcon(QMessageBox::Information);
 		b.exec();
+		
+		QMessageBox b2(this);
+		b2.setText(tr("Store Key in Keyring?"));
+		b2.setInformativeText(tr("Do you want to store the new key in the Keyring on the server? (It will be stored encrypted)"));
+		b2.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+		b2.setDefaultButton(QMessageBox::Yes);
+		b2.setIcon(QMessageBox::Question);
+		b2.exec();
+
+		if(b2.result() == QMessageBox::Yes){
+			// TODO: add to keyring and send to server
+			ui.keyEdit->setText(tr("// Uploading Keyring..."));
+			// Calle must use 	ui.keyEdit->setText(newkey.toHex());
+			return;
+		}
 		ui.okButton->setEnabled(true);
 		return;
 	}
 
-	accept_step2();
 }
 
 void QtSyncDialog::accept(){

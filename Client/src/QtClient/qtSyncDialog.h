@@ -80,6 +80,7 @@ private:
 	bool loadcompleted;
 	int deletingfilterid;
 	mc_share deletingshare;
+	QByteArray newkey;
 	mc_sync_db *worksync;
 	mc_sync_db newsync;
 };
