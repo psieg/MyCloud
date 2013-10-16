@@ -1,5 +1,5 @@
 <?php
-define('MC_SERVER_PROTOCOL_VERSION',9);
+define('MC_SERVER_PROTOCOL_VERSION',10);
 define('MC_MIN_CLIENT_PROTOCOL_VERSION',9);
 
 define("MC_SRVQRY_STATUS",		100);	// What's your status
@@ -25,6 +25,8 @@ define("MC_SRVQRY_DELFILE",		513);	// Delete a file
 define("MC_SRVQRY_PURGEFILE",	520);	// Purge this file (it's been hit by an ignore list)
 define("MC_SRVQRY_NOTIFYCHANGE",600);	// Return when something changes or after timeout
 define("MC_SRVQRY_PASSCHANGE",	700);	// Change password to X
+define("MC_SRVQRY_GETKEYRING",	800);	// Download Keyring
+define("MC_SRVQRY_SETKEYRING",	801);	// Set Keyring
 
 define("MC_SRVSTAT_OK",			100);	// I'm good / Query successful
 define("MC_SRVSTAT_AUTHED",		101);	// QRY_AUTH succeeded, here's your AuthToken
@@ -41,6 +43,7 @@ define("MC_SRVSTAT_OFFSET",		503);	// Here's how much of the file I have
 define("MC_SRVSTAT_FILEID",		510);	// ID of file just created
 define("MC_SRVSTAT_CHANGE",		600);	// ID of the changed watched sync
 define("MC_SRVSTAT_NOCHANGE",	601);	// None of the watched syncs has changed
+define("MC_SRVSTAT_KEYRING",	800);	// Keyring
 
 define("MC_SRVSTAT_BADQRY",		900);	// I don't understand
 define("MC_SRVSTAT_INTERROR",	901);	// Something went wrong

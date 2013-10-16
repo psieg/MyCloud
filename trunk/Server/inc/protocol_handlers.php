@@ -656,4 +656,21 @@ function handle_passchange($ibuf,$uid){
 	if(!$q) return pack_interror($mysqli->error);
 	return pack_code(MC_SRVSTAT_OK);
 }
+
+function handle_getkeyring($ibuf,$uid){
+	global $mysqli;
+	$q = $mysqli->query("SELECT kerying FROM mc_users WHERE id = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	// this entry must exist
+	$res = $q->fetch_row();
+	return pack_keyring($res[0]);
+}
+
+function handle_setkeyring($ibuf,$uid){
+	global $mysqli;
+	$new = unpack_setkeyring($ibuf);
+	$q = $mysqli->query("UPDATE mc_users SET keyring = ".esc($new)." WHERE id = ".$uid);
+	if(!$q) return pack_interror($mysqli->error);
+	return pack_code(MC_SRVSTAT_OK);
+}
 ?>
