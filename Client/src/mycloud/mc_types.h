@@ -191,6 +191,12 @@ typedef struct _mc_user {
 	string name;
 } mc_user;
 
+typedef struct _mc_keyringentry {
+	int sid;
+	string sname;
+	unsigned char key[32];
+} mc_keyringentry;
+
 typedef struct _mc_sync_ctx {
 	mc_sync_db *sync;
 	list<mc_filter> *filter;
@@ -326,7 +332,6 @@ inline void FreeBuf(mc_buf *buf){
 	buf->mem = NULL;
 }
 
-
 /* used for crypt */
 typedef struct _mc_crypt_ctx {
 	mc_sync_ctx *ctx;
@@ -342,7 +347,6 @@ inline void init_crypt_ctx(mc_crypt_ctx *cctx, mc_sync_ctx *ctx)
 	{ cctx->hasiv = false; cctx->hastag = false; cctx->f = NULL; cctx->ctx = ctx; cctx->pbuf.mem = NULL; }
 inline void init_crypt_ctx_copy(mc_crypt_ctx *cctx, mc_crypt_ctx *extcctx)
 	{ cctx->hasiv = extcctx->hasiv; cctx->hastag = extcctx->hastag; cctx->f = extcctx->f; cctx->ctx = extcctx->ctx; }
-
 
 
 #endif /* MC_TYPES_H */

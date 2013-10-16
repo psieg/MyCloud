@@ -307,8 +307,8 @@ void pack_purgefile(mc_buf *buf, unsigned char authtoken[16], int id){
 }
 
 void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db> *l){
-	int index = 0;
 	const int num = MC_SRVQRY_NOTIYCHANGE;
+	unsigned int index = 0;
 	MatchBuf(buf,sizeof(int)+16+l->size()*(sizeof(int)+16));
 	memcpy(&buf->mem[index],&num,sizeof(int));
 	index += sizeof(int);
@@ -337,6 +337,38 @@ void pack_passchange(mc_buf *buf, unsigned char authtoken[16], const string& new
 	buf->used = 2*sizeof(int)+16+newpass.length();
 }
 
+void pack_getkeyring(mc_buf *buf, unsigned char authtoken[16]){
+	const int num = MC_SRVQRY_GETKEYRING;
+	MatchBuf(buf,sizeof(int)+16);
+	memcpy(&buf->mem[0],&num,sizeof(int));
+	memcpy(&buf->mem[sizeof(int)],authtoken,16);
+	buf->used = sizeof(int)+16;
+}
+
+void pack_setkeyring(mc_buf *buf, unsigned char authtoken[16], list<mc_keyringentry> *l){
+	int num = MC_SRVQRY_SETKEYRING;
+	unsigned int index = 0;
+	size_t s = sizeof(int)+16;
+	for(mc_keyringentry& e : *l) s += 2*sizeof(int) + 32 + e.sname.length();
+
+	MatchBuf(buf,s);
+	memcpy(&buf->mem[index],&num,sizeof(int));
+	index += sizeof(int);
+	memcpy(&buf->mem[index],authtoken,16);
+
+	for(mc_keyringentry& e : *l){
+		memcpy(&buf->mem[index],e.key,sizeof(int));
+		index += sizeof(int);
+		num = e.sname.length();
+		memcpy(&buf->mem[index],&num,sizeof(int));
+		index += sizeof(int);
+		memcpy(&buf->mem[index],e.sname.c_str(),num);
+		index += num;
+		memcpy(&buf->mem[index],e.key,32);
+		index += 32;
+	}
+	buf->used = s;
+}
 
 /* These functions fill the params with the response buffer's contents 
 *	Offset is always sizeof(int) as the server status code does not matter to us */
@@ -560,6 +592,27 @@ void unpack_filemeta(mc_buf *buf, mc_file *file){
 void unpack_change(mc_buf *buf, int *id){
 	try {
 		memcpy(id,&buf->mem[sizeof(int)],sizeof(int));
+	} catch (...) {
+		throw MC_ERR_PROTOCOL;
+	}
+}
+
+void unpack_keyring(mc_buf *buf, list<mc_keyringentry> *l){
+	unsigned int index = sizeof(int);
+	int namelen = 0;
+	mc_keyringentry item;
+	try {
+		while(index < buf->used){
+			memcpy(&item.sid,&buf->mem[index],sizeof(int));
+			index += sizeof(int);
+			memcpy(&namelen,&buf->mem[index],sizeof(int));
+			index += sizeof(int);
+			item.sname.assign(&buf->mem[index],namelen);
+			index += namelen;
+			memcpy(&item.key,&buf->mem[index],32);
+			index += 32;
+			l->push_back(item);
+		}
 	} catch (...) {
 		throw MC_ERR_PROTOCOL;
 	}
