@@ -164,9 +164,36 @@ int crypt_filelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *
 
 
 int crypt_keyring_fromsrv(const string& data, const string& password, list<mc_keyringentry> *l){
-	return 0; //NOOP for now
+	unsigned int index = 0;
+	int num;
+	mc_keyringentry item;
+	try {
+		while(index < data.length()){
+			item.sid = (int)data.c_str()[index];
+			index += sizeof(int);
+			num = (int)data.c_str()[index];
+			index += sizeof(int);
+			item.sname.assign((char*)&data.c_str()[index],num);
+			index += num;
+			memcpy(item.key,(void*)&data.c_str()[index],32);
+			index += 32;
+			//memcpy(&num,(void*)data.c_str()[index],sizeof(int));
+			l->push_back(item);
+		}
+		return 0; //NOOP for now
+	} catch (...) {
+		return MC_ERR_PROTOCOL;
+	}
 }
-int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string& data){
+int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string *data){
+	int num;
+	for(mc_keyringentry& item : *l){
+		data->append((char*)&item.sid,sizeof(int));
+		num = item.sname.length();
+		data->append((char*)&num,sizeof(int));
+		data->append(item.sname);
+		data->append((char*)item.key,32);
+	}
 	return 0; //NOOP for now
 }
 

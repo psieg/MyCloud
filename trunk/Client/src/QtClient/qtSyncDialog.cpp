@@ -446,12 +446,21 @@ void QtSyncDialog::keyringReceived(int rc){
 	}
 
 	//TODO. decrypt, find
-	/*
-	if(found){
-		memcpy(worksync->cryptkey,ckey.constData(),32);
-		accept_step2();
+	rc = crypt_keyring_fromsrv(keyringdata,"",&ring);
+	if(rc){
+		reject();
+		return;
 	}
-	*/
+
+
+	for(mc_keyringentry& entry : ring){
+		if(entry.sid == worksync->id && entry.sname == worksync->name){
+			memcpy(worksync->cryptkey,entry.key,32);
+			accept_step2();
+			return;
+
+		}
+	}
 
 	newkey = QByteArray(32,'\0');
 	if(crypt_randkey((unsigned char*)newkey.data())){
@@ -484,14 +493,47 @@ void QtSyncDialog::keyringReceived(int rc){
 
 		if(b2.result() == QMessageBox::Yes){
 			// TODO: add to keyring and send to server
+			mc_keyringentry newentry;
+			newentry.sid = worksync->id;
+			newentry.sname = worksync->name;
+			memcpy(newentry.key,newkey.constData(),newkey.size());
+			ring.push_back(newentry);
+
+			rc = crypt_keyring_tosrv(&ring,"",&keyringdata);
+			if(rc){
+				reject();
+				return;
+			}
+
 			ui.keyEdit->setText(tr("// Uploading Keyring..."));
+			connect(performer,SIGNAL(finished(int)),this,SLOT(keyringSent(int)));
+			srv_setkeyring_async(&netibuf,&netobuf,performer,&keyringdata);
+
+
 			// Calle must use 	ui.keyEdit->setText(newkey.toHex());
-			return;
+		} else {
+			ui.okButton->setEnabled(true);
 		}
-		ui.okButton->setEnabled(true);
+	}
+
+}
+
+void QtSyncDialog::keyringSent(int rc){
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(keyringSent(int)));
+	
+	if(rc) {
+		reject();
 		return;
 	}
 
+	rc = srv_setkeyring_process(&netobuf);
+	if(rc){
+		reject();
+		return;
+	}
+
+	ui.keyEdit->setText(newkey.toHex());
+	ui.okButton->setEnabled(true);
 }
 
 void QtSyncDialog::accept(){

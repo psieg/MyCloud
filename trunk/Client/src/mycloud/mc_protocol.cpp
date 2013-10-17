@@ -597,7 +597,7 @@ void unpack_keyring(mc_buf *buf, string *data){
 		len = (int)buf->mem[index];
 		index += sizeof(int);
 		if(len == 0) *data = "";
-		else data->assign(buf->mem[index],len);
+		else data->assign((char*)&buf->mem[index],len);
 	} catch (...) {
 		throw MC_ERR_PROTOCOL;
 	}
