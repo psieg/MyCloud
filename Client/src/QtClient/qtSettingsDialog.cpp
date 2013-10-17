@@ -16,7 +16,9 @@ QtSettingsDialog::QtSettingsDialog(QWidget *parent)
 #ifdef MC_WATCHMODE
 	ui.watchmodeBox->setEnabled(true);
 #endif
-
+#ifndef MC_DEBUG
+	ui.certBox->setVisible(false);
+#endif
 	rc = db_select_status(&s);
 	if(!rc){
 		ui.urlEdit->setText(QString(s.url.c_str()));
