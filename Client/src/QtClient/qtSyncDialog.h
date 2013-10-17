@@ -38,6 +38,7 @@ private slots:
 	void shareDeleteReceived(int);
 	void syncDeleteReceived(int);
 	void keyringReceived(int);
+	void keyringSent(int);
 
 	void on_deleteSyncButton_clicked();
 	void on_browseButton_clicked();
