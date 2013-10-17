@@ -669,7 +669,7 @@ function handle_getkeyring($ibuf,$uid){
 function handle_setkeyring($ibuf,$uid){
 	global $mysqli;
 	$new = unpack_setkeyring($ibuf);
-	$q = $mysqli->query("UPDATE mc_users SET keyring = ".esc($new)." WHERE id = ".$uid);
+	$q = $mysqli->query("UPDATE mc_users SET keyring = '".esc($new)."' WHERE id = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
 	return pack_code(MC_SRVSTAT_OK);
 }
