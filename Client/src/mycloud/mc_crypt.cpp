@@ -163,10 +163,52 @@ int crypt_filelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *
 }
 
 
-int crypt_keyring_fromsrv(const string& data, const string& password, list<mc_keyringentry> *l){
+int crypt_keyring_fromsrv(string data, const string& password, list<mc_keyringentry> *l){
 	unsigned int index = 0;
-	int num;
+	int num,rc,written;
 	mc_keyringentry item;
+	unsigned char key[32];
+	unsigned char salt[MC_CRYPTRING_SALTSIZE];
+	unsigned char iv[MC_CRYPTRING_IVSIZE];
+	unsigned char tag[MC_CRYPTRING_PADDING];
+	QByteArray buf;
+	EVP_CIPHER_CTX *evp;
+
+	// extract salt + iv, genrate key
+	if(data.length() == 0) return 0;
+	if(memcmp(data.c_str(),MC_CRYPTRING_IDENTIFIER,MC_CRYPTRING_IDOFFSET) != 0){
+			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized cryptoname format: " << data);
+	};
+	buf = QByteArray(data.c_str());
+	
+	memcpy(salt,buf.data()+MC_CRYPTRING_IDOFFSET,MC_CRYPTRING_SALTSIZE);
+	memcpy(iv,buf.data()+MC_CRYPTRING_IDOFFSET+MC_CRYPTRING_SALTSIZE,MC_CRYPTRING_IVSIZE);
+
+	rc = PKCS5_PBKDF2_HMAC_SHA1(password.c_str(),password.length(),(unsigned char*)salt,MC_CRYPTRING_SALTSIZE,MC_CRYPTRING_ITERCOUNT,32,key);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"PBKDF2 failed");
+		
+	// decrypt
+	evp = EVP_CIPHER_CTX_new();
+		
+	rc = EVP_DecryptInit_ex(evp,EVP_aes_256_gcm(),NULL,key,iv);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptInit failed");
+
+	rc = EVP_DecryptUpdate(evp, (unsigned char*)buf.data()+MC_CRYPTRING_OFFSET, &written, (unsigned char*)buf.data()+MC_CRYPTRING_OFFSET, buf.size()-MC_CRYPTRING_SIZEOVERHEAD);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptUpdate failed");
+
+	memcpy(tag,buf.data()+buf.size()-MC_CRYPTRING_PADDING,MC_CRYPTRING_PADDING);
+	rc = EVP_CIPHER_CTX_ctrl(evp,EVP_CTRL_GCM_SET_TAG,MC_CRYPTRING_PADDING,tag);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"CipherCTXCtrl failed");
+
+	rc = EVP_DecryptFinal_ex(evp,NULL,&written);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"DecryptFinal failed! This means the keyring was modified or you entered the wrong password.");
+
+	EVP_CIPHER_CTX_free(evp);
+
+	data.assign(buf.data()+MC_CRYPTRING_OFFSET,buf.size()-MC_CRYPTRING_SIZEOVERHEAD);
+
+
+	// parse from string
 	try {
 		while(index < data.length()){
 			item.sid = (int)data.c_str()[index];
@@ -180,13 +222,22 @@ int crypt_keyring_fromsrv(const string& data, const string& password, list<mc_ke
 			//memcpy(&num,(void*)data.c_str()[index],sizeof(int));
 			l->push_back(item);
 		}
-		return 0; //NOOP for now
+		return 0;
 	} catch (...) {
 		return MC_ERR_PROTOCOL;
 	}
 }
 int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string *data){
-	int num;
+	int num,rc,written;
+	unsigned char key[32];
+	unsigned char salt[MC_CRYPTRING_SALTSIZE];
+	unsigned char iv[MC_CRYPTRING_IVSIZE];
+	unsigned char tag[MC_CRYPTRING_PADDING];
+	QByteArray buf;
+	EVP_CIPHER_CTX *evp;
+
+
+	// parse to string
 	for(mc_keyringentry& item : *l){
 		data->append((char*)&item.sid,sizeof(int));
 		num = item.sname.length();
@@ -194,7 +245,43 @@ int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string
 		data->append(item.sname);
 		data->append((char*)item.key,32);
 	}
-	return 0; //NOOP for now
+
+	// derive key from password
+	rc = RAND_bytes(salt,MC_CRYPTRING_SALTSIZE);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"RAND_bytes failed");
+	rc = RAND_bytes(iv,MC_CRYPTRING_IVSIZE);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"RAND_bytes failed");
+
+	rc = PKCS5_PBKDF2_HMAC_SHA1(password.c_str(),password.length(),(unsigned char*)salt,MC_CRYPTRING_SALTSIZE,MC_CRYPTRING_ITERCOUNT,32,key);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"PBKDF2 failed");
+
+	// encrypt string
+	buf = QByteArray(data->length()+MC_CRYPTRING_SIZEOVERHEAD,'\0');
+
+	memcpy(buf.data(),MC_CRYPTRING_IDENTIFIER,strlen(MC_CRYPTRING_IDENTIFIER));
+	memcpy(buf.data()+MC_CRYPTRING_IDOFFSET,salt,MC_CRYPTRING_SALTSIZE);
+	memcpy(buf.data()+MC_CRYPTRING_IDOFFSET+MC_CRYPTRING_SALTSIZE,iv,MC_CRYPTRING_IVSIZE);
+
+	evp = EVP_CIPHER_CTX_new();
+
+	rc = EVP_EncryptInit_ex(evp,EVP_aes_256_gcm(),NULL,key,iv);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptInit failed");
+			
+	rc = EVP_EncryptUpdate(evp, (unsigned char*)buf.data()+MC_CRYPTRING_OFFSET, &written, (unsigned char*)data->c_str(), data->length());
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptUpdate failed");
+
+	rc = EVP_EncryptFinal_ex(evp, NULL, &written);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"EncryptFinal failed");
+				
+	rc = EVP_CIPHER_CTX_ctrl(evp, EVP_CTRL_GCM_GET_TAG, MC_CRYPTRING_PADDING, tag);
+	if(!rc) MC_ERR_MSG(MC_ERR_CRYPTO,"CipherCTXCtrl failed");
+	memcpy(buf.data()+buf.size()-MC_CRYPTRING_PADDING,tag,MC_CRYPTRING_PADDING);
+
+	EVP_CIPHER_CTX_free(evp);
+
+	data->assign(buf.constData(),buf.length());
+
+	return 0;
 }
 
 void crypt_filestring(mc_sync_ctx *ctx, mc_file *f, string *s){
