@@ -7,6 +7,7 @@
 #include "qtPasswordChangeDialog.h"
 #include "mc.h" //wether MC_WATCHMODE is defined
 #include "mc_db.h"
+#include "mc_types.h"
 #ifdef MC_OS_WIN
 #include <QtCore/QSettings>
 #include <QtCore/QDir>
