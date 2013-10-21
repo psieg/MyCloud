@@ -445,23 +445,53 @@ void QtSyncDialog::keyringReceived(int rc){
 		return;
 	}
 
-	//TODO. decrypt, find
-	rc = crypt_keyring_fromsrv(keyringdata,"",&ring);
-	if(rc){
-		reject();
-		return;
-	}
+	if(keyringdata.length() > 0){ // don't ask for a password when there is no ring...
 
+		bool ok = false;
+		QString pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please enter the password to your keyring"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
-	for(mc_keyringentry& entry : ring){
-		if(entry.sid == worksync->id && entry.sname == worksync->name){
-			memcpy(worksync->cryptkey,entry.key,32);
-			accept_step2();
+		if(!ok){
+			ui.keyEdit->setText("");
+			ui.okButton->setEnabled(true);
 			return;
-
 		}
+
+		// decrypt
+		rc = crypt_keyring_fromsrv(keyringdata,pass.toStdString(),&ring);
+		if(rc){
+			QMessageBox b(this);
+			b.setText(tr("Keyring Decryption failed"));
+			b.setInformativeText(tr("The keyring could not be decrypted! Re-check your password or enter the key manually."));
+			b.setStandardButtons(QMessageBox::Ok);
+			b.setDefaultButton(QMessageBox::Ok);
+			b.setIcon(QMessageBox::Critical);
+			b.exec();
+			ui.keyEdit->setText("");
+			ui.okButton->setEnabled(true);
+			return;
+		}
+
+		// find
+		for(mc_keyringentry& entry : ring){
+			if(entry.sid == worksync->id && entry.sname == worksync->name){
+				memcpy(worksync->cryptkey,entry.key,32);
+				accept_step2();
+				return;
+
+			}
+		}
+
+		
+		QMessageBox b(this);
+		b.setText(tr("Key not found"));
+		b.setInformativeText(tr("No key for this Sync was found in the keyring. A new key will be generated."));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Information);
+		b.exec();
 	}
 
+	// no key found
 	newkey = QByteArray(32,'\0');
 	if(crypt_randkey((unsigned char*)newkey.data())){
 		QMessageBox b(this);
@@ -499,7 +529,16 @@ void QtSyncDialog::keyringReceived(int rc){
 			memcpy(newentry.key,newkey.constData(),newkey.size());
 			ring.push_back(newentry);
 
-			rc = crypt_keyring_tosrv(&ring,"",&keyringdata);
+			
+			bool ok = false;
+			QString pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please enter the new password for your keyring.\nIt is used to encrypt the keyring and should not be related to your account/server password!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+
+			if(!ok){
+				// consider it a no
+				ui.okButton->setEnabled(true);
+				return;
+			}
+			rc = crypt_keyring_tosrv(&ring,pass.toStdString(),&keyringdata);
 			if(rc){
 				reject();
 				return;
@@ -510,7 +549,7 @@ void QtSyncDialog::keyringReceived(int rc){
 			srv_setkeyring_async(&netibuf,&netobuf,performer,&keyringdata);
 
 
-			// Calle must use 	ui.keyEdit->setText(newkey.toHex());
+			// Calle must use ui.keyEdit->setText(newkey.toHex());
 		} else {
 			ui.okButton->setEnabled(true);
 		}

@@ -4,6 +4,7 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QInputDialog>
 #include <QtGui/QShowEvent>
 #include "ui_qtSyncDialog.h"
 #include "qtNewSyncDialog.h"
