@@ -36,6 +36,18 @@ QtSettingsDialog::QtSettingsDialog(QWidget *parent)
 		}
 		if(s.updatecheck >= 0) ui.updateBox->setChecked(true);
 		else ui.updateBox->setChecked(false);
+		switch(s.keyring){
+			case MC_KEYRINGUSE_NEVER:
+				ui.keyringNeverButton->setChecked(true);
+				break;
+			case MC_KEYRINGUSE_ALWAYS:
+				ui.keyringAlwaysButton->setChecked(true);
+				break;
+			case MC_KEYRINGUSE_ASK:
+				ui.keyringAskButton->setChecked(true);
+			default:
+				break;
+		}
 	}
 
 #ifdef MC_OS_WIN	
@@ -134,6 +146,13 @@ void QtSettingsDialog::accept(){
 		s.updatecheck = (s.updatecheck>=0?s.updatecheck:0);
 	else
 		s.updatecheck = -1;
+
+	if(ui.keyringNeverButton->isChecked())
+		s.keyring = MC_KEYRINGUSE_NEVER;
+	else if (ui.keyringAlwaysButton->isChecked())
+		s.keyring = MC_KEYRINGUSE_ALWAYS;
+	else
+		s.keyring = MC_KEYRINGUSE_ASK;
 
 	db_update_status(&s);
 
