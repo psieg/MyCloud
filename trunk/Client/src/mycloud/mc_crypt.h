@@ -25,6 +25,15 @@
 #define MC_CRYPTNAME_PADDING	16
 #define MC_CRYPTNAME_SIZEOVERHEAD 20
 
+#define MC_CRYPTRING_IDENTIFIER "MCR\x01"	//MCR-1 //Format: 4ID+32SALT+12IV+DATA+16TAG
+#define MC_CRYPTRING_IDOFFSET	4
+#define MC_CRYPTRING_SALTSIZE	32
+#define MC_CRYPTRING_ITERCOUNT	50000	//PBKDF2 iteration count
+#define MC_CRYPTRING_IVSIZE		12
+#define MC_CRYPTRING_OFFSET		48
+#define MC_CRYPTRING_PADDING	16
+#define MC_CRYPTRING_SIZEOVERHEAD 64
+
 // Generate a random Key (for a new sync)
 int crypt_randkey(unsigned char key[MC_CRYPT_KEYSIZE]);
 // Feed the crypto RNG
@@ -45,7 +54,7 @@ int crypt_file_fromsrv(mc_sync_ctx *ctx, const string& path, mc_file *f); //TODO
 // Translate a directory listing in-place
 int crypt_filelist_fromsrv(mc_sync_ctx *ctx, const string& path, list<mc_file> *l);
 // Translate a data-string to a keyring-list
-int crypt_keyring_fromsrv(const string& data, const string& password, list<mc_keyringentry> *l);
+int crypt_keyring_fromsrv(string data, const string& password, list<mc_keyringentry> *l);
 // Translate from keyring-list to server-format
 int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string *data);
 
