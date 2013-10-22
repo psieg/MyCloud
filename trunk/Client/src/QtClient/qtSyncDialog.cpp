@@ -32,6 +32,7 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	add = QIcon(":/Resources/add.png");
 	user = QIcon(":/Resources/user.png");
 	loadcompleted = false;
+	keyringloaded = false;
 	SetBuf(&netibuf);
 	SetBuf(&netobuf);
 }
@@ -49,7 +50,12 @@ void QtSyncDialog::showEvent(QShowEvent *event){
 
 
 	rc = db_select_status(&s);
-	if(rc) QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
+	if(rc){
+		QMetaObject::invokeMethod(this, "reject", Qt::QueuedConnection);
+		return;
+	}
+
+	keyringuse = s.keyring; // can't be changed while this dialog is active
 	
 	if(s.url == ""){
 		QMessageBox b(myparent);
@@ -432,7 +438,6 @@ void QtSyncDialog::syncDeleteReceived(int rc){
 
 void QtSyncDialog::keyringReceived(int rc){
 	string keyringdata;
-	list<mc_keyringentry> ring;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceived(int)));
 	if(rc) {
 		reject();
@@ -457,7 +462,7 @@ void QtSyncDialog::keyringReceived(int rc){
 		}
 
 		// decrypt
-		rc = crypt_keyring_fromsrv(keyringdata,pass.toStdString(),&ring);
+		rc = crypt_keyring_fromsrv(keyringdata,pass.toStdString(),&keyring);
 		if(rc){
 			QMessageBox b(this);
 			b.setText(tr("Keyring Decryption failed"));
@@ -472,7 +477,7 @@ void QtSyncDialog::keyringReceived(int rc){
 		}
 
 		// find
-		for(mc_keyringentry& entry : ring){
+		for(mc_keyringentry& entry : keyring){
 			if(entry.sid == worksync->id && entry.sname == worksync->name){
 				memcpy(worksync->cryptkey,entry.key,32);
 				accept_step2();
@@ -492,69 +497,9 @@ void QtSyncDialog::keyringReceived(int rc){
 	}
 
 	// no key found
-	newkey = QByteArray(32,'\0');
-	if(crypt_randkey((unsigned char*)newkey.data())){
-		QMessageBox b(this);
-		b.setText(tr("Can't generate keys atm"));
-		b.setInformativeText(tr("Please enter the CryptKey for this sync."));
-		b.setStandardButtons(QMessageBox::Ok);
-		b.setDefaultButton(QMessageBox::Ok);
-		b.setIcon(QMessageBox::Warning);
-		b.exec();
-		ui.okButton->setEnabled(true);
-		return;
-	} else {
-		ui.keyEdit->setText(newkey.toHex());
-		QMessageBox b(this);
-		b.setText(tr("New Key generated"));
-		b.setInformativeText(tr("A new key has been generated. You <b>really</b> should make a copy and store it somewhere safe, e.g. to enter it on other computers."));
-		b.setStandardButtons(QMessageBox::Ok);
-		b.setDefaultButton(QMessageBox::Ok);
-		b.setIcon(QMessageBox::Information);
-		b.exec();
-		
-		QMessageBox b2(this);
-		b2.setText(tr("Store Key in Keyring?"));
-		b2.setInformativeText(tr("Do you want to store the new key in the Keyring on the server? (It will be stored encrypted)"));
-		b2.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-		b2.setDefaultButton(QMessageBox::Yes);
-		b2.setIcon(QMessageBox::Question);
-		b2.exec();
-
-		if(b2.result() == QMessageBox::Yes){
-			// TODO: add to keyring and send to server
-			mc_keyringentry newentry;
-			newentry.sid = worksync->id;
-			newentry.sname = worksync->name;
-			memcpy(newentry.key,newkey.constData(),newkey.size());
-			ring.push_back(newentry);
-
-			
-			bool ok = false;
-			QString pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please enter the new password for your keyring.\nIt is used to encrypt the keyring and should not be related to your account/server password!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
-
-			if(!ok){
-				// consider it a no
-				ui.okButton->setEnabled(true);
-				return;
-			}
-			rc = crypt_keyring_tosrv(&ring,pass.toStdString(),&keyringdata);
-			if(rc){
-				reject();
-				return;
-			}
-
-			ui.keyEdit->setText(tr("// Uploading Keyring..."));
-			connect(performer,SIGNAL(finished(int)),this,SLOT(keyringSent(int)));
-			srv_setkeyring_async(&netibuf,&netobuf,performer,&keyringdata);
-
-
-			// Calle must use ui.keyEdit->setText(newkey.toHex());
-		} else {
-			ui.okButton->setEnabled(true);
-		}
-	}
-
+	ui.keyEdit->setText(tr("// Generating Key..."));
+	generateNewKey();
+	
 }
 
 void QtSyncDialog::keyringSent(int rc){
@@ -637,13 +582,31 @@ void QtSyncDialog::accept(){
 				return;
 			}
 		} else {
-			// fetch keyring and check
-			// will call step2
-			ui.keyEdit->setText(tr("// Downloading Keyring..."));
-			connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceived(int)));
-			srv_getkeyring_async(&netibuf,&netobuf,performer);
-			ui.okButton->setEnabled(false);
+			if(keyringuse != MC_KEYRINGUSE_NEVER){
+				if(keyringuse == MC_KEYRINGUSE_ASK){
+					QMessageBox b(this);
+					b.setText(tr("Check Keyring?"));
+					b.setInformativeText(tr("Do you want to check the Keyring for the key?"));
+					b.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+					b.setDefaultButton(QMessageBox::Yes);
+					b.setIcon(QMessageBox::Question);
+					b.exec();
 
+					if(b.result() != QMessageBox::Yes){
+						return generateNewKey();
+					}
+				}
+				// fetch keyring and check
+				// will call step2
+				ui.keyEdit->setText(tr("// Downloading Keyring..."));
+				connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceived(int)));
+				srv_getkeyring_async(&netibuf,&netobuf,performer);
+				ui.okButton->setEnabled(false);
+			} else {
+				ui.keyEdit->setText(tr("// Generating Key..."));
+				ui.okButton->setEnabled(false);
+				generateNewKey();
+			}
 		}
 	} else {
 		memset(worksync->cryptkey,0,32);
@@ -651,6 +614,82 @@ void QtSyncDialog::accept(){
 	}
 
 
+}
+
+void QtSyncDialog::generateNewKey(){
+	int rc;
+	string keyringdata;
+
+	newkey = QByteArray(32,'\0');
+	if(crypt_randkey((unsigned char*)newkey.data())){
+		QMessageBox b(this);
+		b.setText(tr("Can't generate keys atm"));
+		b.setInformativeText(tr("Please enter the CryptKey for this sync."));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Warning);
+		b.exec();
+		ui.okButton->setEnabled(true);
+		return;
+	} else {
+		ui.keyEdit->setText(newkey.toHex());
+		QMessageBox b(this);
+		b.setText(tr("New Key generated"));
+		b.setInformativeText(tr("A new key has been generated. You <b>really</b> should make a copy and store it somewhere safe, e.g. to enter it on other computers."));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setDefaultButton(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Information);
+		b.exec();
+
+		if(keyringloaded){ //if the user did not want to load the ring, he does not want to upload the new
+			int result = 0;
+			if(keyringuse == MC_KEYRINGUSE_ASK){
+				QMessageBox b2(this);
+				b2.setText(tr("Store Key in Keyring?"));
+				b2.setInformativeText(tr("Do you want to store the new key in the Keyring on the server? (It will be stored encrypted)"));
+				b2.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+				b2.setDefaultButton(QMessageBox::Yes);
+				b2.setIcon(QMessageBox::Question);
+				b2.exec();
+				result = b2.result();
+			}
+
+			if(keyringuse == MC_KEYRINGUSE_ALWAYS || result == QMessageBox::Yes){
+				// TODO: add to keyring and send to server
+				mc_keyringentry newentry;
+				newentry.sid = worksync->id;
+				newentry.sname = worksync->name;
+				memcpy(newentry.key,newkey.constData(),newkey.size());
+				keyring.push_back(newentry);
+
+			
+				bool ok = false;
+				QString pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please enter the new password for your keyring.\nIt is used to encrypt the keyring and should not be related to your account/server password!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+
+				if(!ok){
+					// consider it a no
+					ui.okButton->setEnabled(true);
+					return;
+				}
+				rc = crypt_keyring_tosrv(&keyring,pass.toStdString(),&keyringdata);
+				if(rc){
+					reject();
+					return;
+				}
+
+				ui.keyEdit->setText(tr("// Uploading Keyring..."));
+				connect(performer,SIGNAL(finished(int)),this,SLOT(keyringSent(int)));
+				srv_setkeyring_async(&netibuf,&netobuf,performer,&keyringdata);
+
+
+				// Calle must use ui.keyEdit->setText(newkey.toHex());
+			} else {
+				ui.okButton->setEnabled(true);
+			}
+		} else {
+			ui.okButton->setEnabled(true);
+		}
+	}
 }
 
 void QtSyncDialog::accept_step2(){

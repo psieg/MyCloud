@@ -57,6 +57,7 @@ protected:
 	void showEvent(QShowEvent *event);
 
 private:
+	void generateNewKey();
 	void accept_step2();
 	void filldbdata();
 	void listFilters();
@@ -85,6 +86,9 @@ private:
 	QByteArray newkey;
 	mc_sync_db *worksync;
 	mc_sync_db newsync;
+	MC_KEYRINGUSE keyringuse;
+	list<mc_keyringentry> keyring;
+	bool keyringloaded;
 };
 
 #endif // QTSYNCDIALOG_H
