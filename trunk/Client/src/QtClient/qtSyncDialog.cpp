@@ -476,6 +476,8 @@ void QtSyncDialog::keyringReceived(int rc){
 			return;
 		}
 
+		keyringloaded = true;
+
 		// find
 		for(mc_keyringentry& entry : keyring){
 			if(entry.sid == worksync->id && entry.sname == worksync->name){
@@ -495,6 +497,8 @@ void QtSyncDialog::keyringReceived(int rc){
 		b.setIcon(QMessageBox::Information);
 		b.exec();
 	}
+
+	keyringloaded = true;
 
 	// no key found
 	ui.keyEdit->setText(tr("// Generating Key..."));
@@ -656,11 +660,21 @@ void QtSyncDialog::generateNewKey(){
 
 			if(keyringuse == MC_KEYRINGUSE_ALWAYS || result == QMessageBox::Yes){
 				// TODO: add to keyring and send to server
-				mc_keyringentry newentry;
-				newentry.sid = worksync->id;
-				newentry.sname = worksync->name;
-				memcpy(newentry.key,newkey.constData(),newkey.size());
-				keyring.push_back(newentry);
+				bool found = false;
+				for(mc_keyringentry& entry : keyring){
+					if(entry.sid == worksync->id){
+						entry.sname = worksync->name;
+						memcpy(entry.key,newkey.constData(),newkey.size());
+						found = true;
+					}
+				}
+				if(!found){
+					mc_keyringentry newentry;
+					newentry.sid = worksync->id;
+					newentry.sname = worksync->name;
+					memcpy(newentry.key,newkey.constData(),newkey.size());
+					keyring.push_back(newentry);
+				}
 
 			
 				bool ok = false;
