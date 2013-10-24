@@ -15,8 +15,8 @@ sqlite3_stmt *stmt_select_status, *stmt_update_status, \
 				*stmt_list_share_sid, *stmt_insert_share, *stmt_delete_share, *stmt_delete_share_sid, \
 				*stmt_select_file_name, *stmt_select_file_id, *stmt_list_file_parent, *stmt_insert_file, *stmt_update_file, *stmt_delete_file;
 /* the respective queries */
-#define QRY_SELECT_STATUS "SELECT locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,keyring,uid FROM status"
-#define QRY_UPDATE_STATUS "UPDATE status SET locked = ?, url = ?, uname = ?, passwd = ?, acceptallcerts = ?, watchmode = ?, basedate = ?, updatecheck = ?, updateversion = ?, keyring = ?, uid = ?"
+#define QRY_SELECT_STATUS "SELECT locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,uid FROM status"
+#define QRY_UPDATE_STATUS "UPDATE status SET locked = ?, url = ?, uname = ?, passwd = ?, acceptallcerts = ?, watchmode = ?, basedate = ?, updatecheck = ?, updateversion = ?, uid = ?"
 
 #define QRY_SELECT_SYNC "SELECT id,uid,priority,name,path,filterversion,shareversion,crypted,status,lastsync,hash,cryptkey FROM syncs WHERE id = ?"
 #define QRY_LIST_SYNC "SELECT id,uid,priority,name,path,filterversion,shareversion,crypted,status,lastsync,hash,cryptkey FROM syncs"
@@ -149,9 +149,9 @@ int _db_open(const string& fname){
 				rc = sqlite3_open_v2(fname.c_str(),&db,SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE,NULL);
 				MC_CHKERR_MSG(rc, "Can't create db file");
 				rc = _db_execstr("CREATE TABLE status (locked BOOLEAN NOT NULL, url TEXT NOT NULL, uname TEXT NOT NULL, passwd TEXT NOT NULL, acceptallcerts BOOLEAN NOT NULL, \
-									watchmode INTEGER NOT NULL, basedate INTEGER NOT NULL, updatecheck INTEGER NOT NULL, updateversion TEXT NOT NULL, keyring INTEGER NOT NULL, uid INTEGER NOT NULL)");
+									watchmode INTEGER NOT NULL, basedate INTEGER NOT NULL, updatecheck INTEGER NOT NULL, updateversion TEXT NOT NULL, uid INTEGER NOT NULL)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
-				rc = _db_execstr("INSERT INTO status (locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,keyring,uid) VALUES (0,'','','',0,300,0,0,'',1,0)");
+				rc = _db_execstr("INSERT INTO status (locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,keyring,uid) VALUES (0,'','','',0,300,0,0,'',0)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("CREATE TABLE syncs (id INTEGER PRIMARY KEY, uid INTEGER NOT NULL, priority INTEGER NOT NULL, name TEXT NOT NULL, path TEXT NOT NULL, \
 									filterversion INTEGER NOT NULL, shareversion INTEGER NOT NULL, crypted INTEGER NOT NULL, status INTEGER NOT NULL, lastsync INTEGER NOT NULL, hash BLOB, cryptkey BLOB)");
@@ -312,8 +312,7 @@ int _db_select_status(mc_status *var){
 		var->basedate = sqlite3_column_int64(stmt_select_status,6);
 		var->updatecheck = sqlite3_column_int64(stmt_select_status,7);
 		var->updateversion.assign((const char*)sqlite3_column_text(stmt_select_status,8));
-		var->keyring = (MC_KEYRINGUSE) sqlite3_column_int(stmt_select_status,9);
-		var->uid = sqlite3_column_int(stmt_select_status,10);
+		var->uid = sqlite3_column_int(stmt_select_status,9);
 	}
 	return 0;
 }
@@ -343,9 +342,7 @@ int _db_update_status(mc_status *var){
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_bind_text(stmt_update_status,9,var->updateversion.c_str(),var->updateversion.length(),SQLITE_STATIC);
 	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_update_status,10,var->keyring);
-	MC_CHKERR_MSG(rc,"Bind failed");
-	rc = sqlite3_bind_int(stmt_update_status,11,var->uid);
+	rc = sqlite3_bind_int(stmt_update_status,10,var->uid);
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_step(stmt_update_status);
 	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));

@@ -39,7 +39,6 @@ private slots:
 	void shareDeleteReceived(int);
 	void syncDeleteReceived(int);
 	void keyringReceived(int);
-	void keyringSent(int);
 
 	void on_deleteSyncButton_clicked();
 	void on_browseButton_clicked();
@@ -86,7 +85,6 @@ private:
 	QByteArray newkey;
 	mc_sync_db *worksync;
 	mc_sync_db newsync;
-	MC_KEYRINGUSE keyringuse;
 	list<mc_keyringentry> keyring;
 	bool keyringloaded;
 };
