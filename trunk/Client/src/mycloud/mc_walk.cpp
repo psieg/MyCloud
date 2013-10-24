@@ -613,7 +613,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 	//Execution reaches this point if nothing was to be done, thus we check the children
 	if(srv->is_dir){
 		if(db) memcpy(orighash,db->hash,16); else memcpy(orighash,srv->hash,16); //This catches the "EVIL" case from nochange where srv and db point to the same data
-		if(db && memcmp(db->hash,srv->hash,16) == 0){
+		if(db && memcmp(db->hash,srv->hash,16) == 0 && memcmp(db->hash,"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",16) != 0){
 			if(srv->status != MC_FILESTAT_DELETED) rc = walk_nochange(ctx,spath,srv->id,srv->hash);
 			else rc = 0; }
 		else if(fs && fs->is_dir) rc = walk(ctx,spath,srv->id,srv->hash);
@@ -665,8 +665,9 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
-	//if(id == 2698)
-		//MC_WRN("HIT");
+
+	if(id == 14617)
+		MC_DBG("hit");
 
 
 	rc = fs_listdir(&onfs, fpath);
@@ -914,8 +915,9 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	MC_DBG("Walking directory " << id << ": " << path);
 	//MC_NOTIFYSTART(MC_NT_WALKTEST,path);
 	MC_CHECKTERMINATING();
-	//if(id == 2698)
-		//MC_WRN("HIT");
+
+	if(id == 14617)
+		MC_DBG("hit");
 
 
 	rc = fs_listdir(&onfs,fpath);

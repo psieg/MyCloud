@@ -576,11 +576,16 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 	rc = upload_checkmodified(&cctx, fpath, fs, srv, hash, &modified);
 	MC_CHKERR(rc);
 	
-	db->name = fs->name; // case change
-	db->cryptname = ""; //regenerate cryptname	
 	db->mtime = fs->mtime;
 	db->ctime = fs->ctime;
 	db->size = fs->size;
+
+	if(db->name.compare(fs->name) != 0){
+		db->name = fs->name; // case change	
+		db->cryptname = ""; //regenerate cryptname	
+		rc = crypt_file_tosrv(ctx,path,db);
+		MC_CHKERR(rc);
+	}
 
 	if(!modified){
 		
@@ -620,7 +625,6 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 			if(!srv->is_dir){
 
 				db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
-
 							
 				rc = crypt_filemd5_new(&cctx,db->hash,fpath,db->size);
 				MC_CHKERR(rc);	

@@ -286,6 +286,8 @@ int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string
 
 void crypt_filestring(mc_sync_ctx *ctx, mc_file *f, string *s){
 	s->append((const char*)&f->id,sizeof(int));
+	if(f->cryptname == "")
+		MC_WRN("empty cryptname hash");
 	if(ctx->sync->crypted) s->append(f->cryptname); 
 	else s->append(f->name);
 	//s->append((const char*)&f->ctime,sizeof(int64)); //not a deciding/important criteria
