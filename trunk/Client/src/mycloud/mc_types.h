@@ -77,12 +77,6 @@ enum MC_NOTIFYTYPE : int {
 #define MC_FILTERID_NONE -1
 #define MC_FILEID_NONE -1
 
-enum MC_KEYRINGUSE : int {
-	MC_KEYRINGUSE_NEVER		= 0,
-	MC_KEYRINGUSE_ASK		= 1,
-	MC_KEYRINGUSE_ALWAYS	= 2
-};
-
 /* used by db */
 /* These structs defines the format of all tables used, each struct represents one row of the specific table 
  *  they are meant to be used when accessing the database, as mc_db will use them to write binary data
@@ -98,7 +92,6 @@ typedef struct _mc_status {
 	int64 basedate;
 	int64 updatecheck;
 	string updateversion;
-	MC_KEYRINGUSE keyring;
 	int uid;
 } mc_status;
 

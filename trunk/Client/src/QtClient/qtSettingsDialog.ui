@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>428</width>
-    <height>300</height>
+    <height>244</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -27,7 +27,7 @@
    <bool>false</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
-   <item row="3" column="2">
+   <item row="2" column="2">
     <widget class="QPushButton" name="okButton">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -43,14 +43,14 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="3">
+   <item row="2" column="3">
     <widget class="QPushButton" name="cancelButton">
      <property name="text">
       <string>Cancel</string>
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
+   <item row="2" column="0">
     <widget class="QLabel" name="versionLabel">
      <property name="font">
       <font>
@@ -62,7 +62,7 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
+   <item row="2" column="1">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -74,43 +74,6 @@
       </size>
      </property>
     </spacer>
-   </item>
-   <item row="2" column="0" colspan="4">
-    <widget class="QGroupBox" name="groupBox_3">
-     <property name="title">
-      <string>Keyring</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="1" column="0">
-       <widget class="QRadioButton" name="keyringNeverButton">
-        <property name="text">
-         <string>Never check</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QRadioButton" name="keyringAskButton">
-        <property name="text">
-         <string>Ask me everytime</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QRadioButton" name="keyringAlwaysButton">
-        <property name="text">
-         <string>Always</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0" colspan="3">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Check for and store encryption keys in the password-encrypted keyring</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
    </item>
    <item row="0" column="0" colspan="4">
     <widget class="QGroupBox" name="groupBox">

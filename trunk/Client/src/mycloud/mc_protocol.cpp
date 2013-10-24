@@ -594,7 +594,7 @@ void unpack_keyring(mc_buf *buf, string *data){
 	int len = 0;
 	try {
 		// first int is content length
-		len = (int)buf->mem[index];
+		memcpy(&len,&buf->mem[sizeof(int)],sizeof(int));
 		index += sizeof(int);
 		if(len == 0) *data = "";
 		else data->assign((char*)&buf->mem[index],len);

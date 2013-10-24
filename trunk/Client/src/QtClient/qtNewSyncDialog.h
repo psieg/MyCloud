@@ -4,6 +4,7 @@
 #include <QtWidgets/QDialog>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QInputDialog>
 #include <QtGui/QShowEvent>
 #include "ui_qtNewSyncDialog.h"
 #include "mc_db.h"
@@ -24,6 +25,8 @@ public slots:
 	
 private slots:
 	void replyReceived(int);
+	void keyringReceived(int);
+	void keyringSent(int);
 
 protected:
 	void showEvent(QShowEvent *event);
@@ -34,6 +37,7 @@ private:
 	QtNetworkPerformer *performer;
 	mc_buf *netibuf,*netobuf;
 	mc_sync sync;
+	list<mc_keyringentry> keyring;
 
 };
 
