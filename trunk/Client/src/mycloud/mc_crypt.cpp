@@ -179,7 +179,7 @@ int crypt_keyring_fromsrv(string data, const string& password, list<mc_keyringen
 	if(memcmp(data.c_str(),MC_CRYPTRING_IDENTIFIER,MC_CRYPTRING_IDOFFSET) != 0){
 			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized cryptoname format: " << data);
 	};
-	buf = QByteArray(data.c_str());
+	buf = QByteArray(data.c_str(),data.length());
 	
 	memcpy(salt,buf.data()+MC_CRYPTRING_IDOFFSET,MC_CRYPTRING_SALTSIZE);
 	memcpy(iv,buf.data()+MC_CRYPTRING_IDOFFSET+MC_CRYPTRING_SALTSIZE,MC_CRYPTRING_IVSIZE);
