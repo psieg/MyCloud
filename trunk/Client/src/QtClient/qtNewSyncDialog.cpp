@@ -152,11 +152,9 @@ void QtNewSyncDialog::keyringReceived(int rc){
 		}
 
 			
-		if(keyringpass == ""){
-			bool ok = false;
-			while(!ok){
-				keyringpass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
-			}
+		bool ok = false;
+		while(!ok || keyringpass == ""){
+			keyringpass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 		}
 
 		rc = crypt_keyring_tosrv(&keyring,keyringpass.toStdString(),&keyringdata);
