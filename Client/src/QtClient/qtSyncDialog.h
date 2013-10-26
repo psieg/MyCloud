@@ -91,6 +91,7 @@ private:
 	list<mc_keyringentry> keyring;
 	bool keyringloaded;
 	QString keyringpass;
+	bool keychanged;
 };
 
 #endif // QTSYNCDIALOG_H

@@ -552,8 +552,11 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 			
 			if(keyringpass == ""){
 				bool ok = false;
-				while(!ok){
-					keyringpass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+				keyringpass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+				if(!ok || keyringpass == ""){
+					ui.keyEdit->setText(QByteArray::fromRawData((const char*)worksync->cryptkey,32).toHex());
+					ui.okButton->setEnabled(true);
+					return;
 				}
 			}
 
@@ -643,25 +646,29 @@ void QtSyncDialog::accept(){
 			QRegExp hexMatcher("^[0-9A-F]{64}$", Qt::CaseInsensitive);
 			if (hexMatcher.exactMatch(ui.keyEdit->text())){
 				QByteArray ckey = QByteArray::fromHex(ui.keyEdit->text().toLatin1());
-				memcpy(worksync->cryptkey,ckey.constData(),32);
-
-				
-				QMessageBox b(this);
-				b.setText(tr("Keyring"));
-				b.setInformativeText(tr("This key might not be in the keyring yet. Do you want to check and add it?"));
-				b.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-				b.setDefaultButton(QMessageBox::Yes);
-				b.setIcon(QMessageBox::Question);
-				if(b.exec() == QMessageBox::Yes){
-					ui.keyEdit->setText(tr("// Downloading Keyring..."));
-					connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceivedAdding(int)));
-					srv_getkeyring_async(&netibuf,&netobuf,performer);
-					ui.okButton->setEnabled(false);
-
-					return;
-				} else {
-					accept_step2();
+				if(memcmp(worksync->cryptkey,ckey.constData(),32) != 0){
+					memcpy(worksync->cryptkey,ckey.constData(),32);
+					keychanged = true;
 				}
+
+				if(keychanged){				
+					QMessageBox b(this);
+					b.setText(tr("Keyring"));
+					b.setInformativeText(tr("This key might not be in the keyring yet. Do you want to check and add/update it?"));
+					b.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+					b.setDefaultButton(QMessageBox::Yes);
+					b.setIcon(QMessageBox::Question);
+					if(b.exec() == QMessageBox::Yes){
+						ui.keyEdit->setText(tr("// Downloading Keyring..."));
+						connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceivedAdding(int)));
+						srv_getkeyring_async(&netibuf,&netobuf,performer);
+						ui.okButton->setEnabled(false);
+
+						return;
+					}
+				}
+				// not changed or doesn't want to upload
+				accept_step2();
 			} else {
 				QMessageBox b(this);
 				b.setText(tr("Please enter a valid 256-bit key in hex format"));
@@ -892,6 +899,7 @@ void QtSyncDialog::filldbdata(){
 		
 		//disable and clear stuff, when found it will be filled and enabled
 		dbindex = -1; // = there is no matching db entry
+		keychanged = false;
 		ui.pathEdit->setText("");
 		ui.keyEdit->setText("");
 		ui.filterTable->clearContents();
