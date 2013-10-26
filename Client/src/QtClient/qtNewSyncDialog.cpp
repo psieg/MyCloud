@@ -104,7 +104,7 @@ void QtNewSyncDialog::keyringReceived(int rc){
 			if(rc){
 				QMessageBox b(this);
 				b.setText(tr("Keyring Decryption failed"));
-				b.setInformativeText(tr("The keyring could not be decrypted! Re-check your password or enter the key manually."));
+				b.setInformativeText(tr("The keyring could not be decrypted! Re-check your password."));
 				b.setStandardButtons(QMessageBox::Ok);
 				b.setDefaultButton(QMessageBox::Ok);
 				b.setIcon(QMessageBox::Critical);
@@ -112,6 +112,7 @@ void QtNewSyncDialog::keyringReceived(int rc){
 				ui.okButton->setEnabled(true);
 				ok = false;
 			}
+			keyringpass = pass;
 		}
 	}
 
@@ -151,13 +152,14 @@ void QtNewSyncDialog::keyringReceived(int rc){
 		}
 
 			
-		bool ok = false;
-		QString pass = "";
-		while(!ok){
-			pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please enter the new password for your keyring.\nIt is used to encrypt the keyring and should not be related to your account/server password!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+		if(keyringpass == ""){
+			bool ok = false;
+			while(!ok){
+				keyringpass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+			}
 		}
 
-		rc = crypt_keyring_tosrv(&keyring,pass.toStdString(),&keyringdata);
+		rc = crypt_keyring_tosrv(&keyring,keyringpass.toStdString(),&keyringdata);
 		if(rc){
 			reject();
 			return;
