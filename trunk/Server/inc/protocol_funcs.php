@@ -68,6 +68,14 @@ function unpack_delshare($fdesc){
 	return unpack("l1sid/l1uid",fread($fdesc,8));
 }
 
+function unpack_idusers($fdesc){
+	$result = array();
+	while(!feof($fdesc)){
+		$result[] = unpack("l1uid",fread($fdesc,4))['uid'];
+	}
+	return $result;
+}
+
 function unpack_listdir($fdesc){
 	return unpack("l1id",fread($fdesc,4))['id'];
 }
@@ -207,7 +215,7 @@ function pack_filterid($fid){
 function pack_sharelist($list){
 	$r = pack("l1",MC_SRVSTAT_SHARELIST);
 	foreach($list as $share){
-		$r .= pack("l3",$share[0],$share[1],strlen($share[2])).$share[2];
+		$r .= pack("l2",$share[0],$share[1]); //,strlen($share[2])).$share[2];
 	}
 	return $r;
 }
