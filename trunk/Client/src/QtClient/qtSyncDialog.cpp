@@ -434,9 +434,8 @@ void QtSyncDialog::syncDeleteReceived(int rc){
 	startOver();
 }
 
-void QtSyncDialog::keyringReceived(int rc){
+void QtSyncDialog::keyringReceived_actual(int rc){
 	string keyringdata;
-	disconnect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceived(int)));
 	if(rc) {
 		reject();
 		return;
@@ -449,14 +448,17 @@ void QtSyncDialog::keyringReceived(int rc){
 	}
 
 	if(keyringdata.length() > 0){ // don't ask for a password when there is no ring...
+		QString pass;
 
-		bool ok = false;
-		QString pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please enter the password to your keyring"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+		if(keyringpass == ""){
+			bool ok = false;
+			pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please enter the password to your keyring"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
-		if(!ok){
-			ui.keyEdit->setText("");
-			ui.okButton->setEnabled(true);
-			return;
+			if(!ok){
+				return;
+			}
+		} else {
+			pass = keyringpass;
 		}
 
 		// decrypt
@@ -469,12 +471,23 @@ void QtSyncDialog::keyringReceived(int rc){
 			b.setDefaultButton(QMessageBox::Ok);
 			b.setIcon(QMessageBox::Critical);
 			b.exec();
-			ui.keyEdit->setText("");
-			ui.okButton->setEnabled(true);
 			return;
 		}
+		keyringpass = pass;
 
-		keyringloaded = true;
+	}
+	
+	keyringloaded = true;
+}
+
+
+
+void QtSyncDialog::keyringReceivedLooking(int rc){
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceivedLooking(int)));
+	
+	keyringReceived_actual(rc);
+
+	if(keyringloaded){
 
 		// find
 		for(mc_keyringentry& entry : keyring){
@@ -489,20 +502,96 @@ void QtSyncDialog::keyringReceived(int rc){
 		
 		QMessageBox b(this);
 		b.setText(tr("Key not found"));
-		b.setInformativeText(tr("No key for this Sync was found in the keyring. You need to enter it manually. If you just created the sync, recreate it so a key can be uploaded."));
+		b.setInformativeText(tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner can give you the key."));
 		b.setStandardButtons(QMessageBox::Ok);
 		b.setDefaultButton(QMessageBox::Ok);
 		b.setIcon(QMessageBox::Information);
 		b.exec();
+
+		// no key found
+		ui.keyEdit->setText("");
+		ui.okButton->setEnabled(true);
+
+	} else {
+		// getting the ring failed in some way, _actual might have rejected already
+		ui.keyEdit->setText("");
+		ui.okButton->setEnabled(true);
+	}	
+}
+
+void QtSyncDialog::keyringReceivedAdding(int rc){
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceivedAdding(int)));
+
+	keyringReceived_actual(rc);
+
+	if(keyringloaded){
+
+		bool found = false;
+		bool needsend = true;
+		for(mc_keyringentry& entry : keyring){
+			if(entry.sid == worksync->id){
+				if(entry.sname == worksync->name && memcmp(entry.key,worksync->cryptkey,32) == 0){
+					needsend = false;
+					found = true;
+				} else {
+					entry.sname = worksync->name;
+					memcpy(entry.key,newkey.constData(),newkey.size());
+					found = true;
+				}
+			}
+		}
+		if(!found){
+			mc_keyringentry newentry;
+			newentry.sid = worksync->id;
+			newentry.sname = worksync->name;
+			memcpy(newentry.key,newkey.constData(),newkey.size());
+			keyring.push_back(newentry);
+		}
+
+		if(needsend){
+			
+			if(keyringpass == ""){
+				bool ok = false;
+				while(!ok){
+					keyringpass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+				}
+			}
+
+			string keyringdata;
+			rc = crypt_keyring_tosrv(&keyring,keyringpass.toStdString(),&keyringdata);
+			if(rc){
+				reject();
+				return;
+			}
+
+			ui.keyEdit->setText(tr("// Uploading Keyring..."));
+			connect(performer,SIGNAL(finished(int)),this,SLOT(keyringSent(int)));
+			srv_setkeyring_async(&netibuf,&netobuf,performer,&keyringdata);
+		} else {
+			accept_step2();
+		}
+		
+	} else {
+		// getting the ring failed in some way, _actual might have rejected already
+		ui.keyEdit->setText(QByteArray::fromRawData((const char*)worksync->cryptkey,32).toHex());
+		ui.okButton->setEnabled(true);
+	}	
+}
+
+void QtSyncDialog::keyringSent(int rc){
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(keyringSent(int)));
+	if(rc) {
+		reject();
+		return;
 	}
 
-	keyringloaded = true;
-
-	// no key found
-	ui.keyEdit->setText("");
-	ui.okButton->setEnabled(true);
-	return;
+	rc = srv_setkeyring_process(&netobuf);
+	if(rc){
+		reject();
+		return;
+	}
 	
+	accept_step2();
 }
 
 void QtSyncDialog::accept(){
@@ -555,7 +644,24 @@ void QtSyncDialog::accept(){
 			if (hexMatcher.exactMatch(ui.keyEdit->text())){
 				QByteArray ckey = QByteArray::fromHex(ui.keyEdit->text().toLatin1());
 				memcpy(worksync->cryptkey,ckey.constData(),32);
-				accept_step2();
+
+				
+				QMessageBox b(this);
+				b.setText(tr("Keyring"));
+				b.setInformativeText(tr("This key might not be in the keyring yet. Do you want to check and add it?"));
+				b.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+				b.setDefaultButton(QMessageBox::Yes);
+				b.setIcon(QMessageBox::Question);
+				if(b.exec() == QMessageBox::Yes){
+					ui.keyEdit->setText(tr("// Downloading Keyring..."));
+					connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceivedAdding(int)));
+					srv_getkeyring_async(&netibuf,&netobuf,performer);
+					ui.okButton->setEnabled(false);
+
+					return;
+				} else {
+					accept_step2();
+				}
 			} else {
 				QMessageBox b(this);
 				b.setText(tr("Please enter a valid 256-bit key in hex format"));
@@ -570,7 +676,7 @@ void QtSyncDialog::accept(){
 			// fetch keyring and check
 			// will call step2
 			ui.keyEdit->setText(tr("// Downloading Keyring..."));
-			connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceived(int)));
+			connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceivedLooking(int)));
 			srv_getkeyring_async(&netibuf,&netobuf,performer);
 			ui.okButton->setEnabled(false);
 		}

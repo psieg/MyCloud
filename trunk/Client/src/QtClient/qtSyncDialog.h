@@ -38,7 +38,10 @@ private slots:
 	void filterDeleteReceived(int);
 	void shareDeleteReceived(int);
 	void syncDeleteReceived(int);
-	void keyringReceived(int);
+	void keyringReceived_actual(int);
+	void keyringReceivedLooking(int);
+	void keyringReceivedAdding(int);
+	void keyringSent(int);
 
 	void on_deleteSyncButton_clicked();
 	void on_browseButton_clicked();
@@ -87,6 +90,7 @@ private:
 	mc_sync_db newsync;
 	list<mc_keyringentry> keyring;
 	bool keyringloaded;
+	QString keyringpass;
 };
 
 #endif // QTSYNCDIALOG_H

@@ -38,6 +38,7 @@ private:
 	mc_buf *netibuf,*netobuf;
 	mc_sync sync;
 	list<mc_keyringentry> keyring;
+	QString keyringpass;
 
 };
 
