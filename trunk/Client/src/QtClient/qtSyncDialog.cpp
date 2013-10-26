@@ -35,6 +35,7 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	keyringloaded = false;
 	SetBuf(&netibuf);
 	SetBuf(&netobuf);
+	memset(newsync.cryptkey,0,32); // for change-comparison of new syncs
 }
 
 QtSyncDialog::~QtSyncDialog()
@@ -159,7 +160,7 @@ void QtSyncDialog::syncListReceived(int rc){
 			i++;
 		}
 		ui.nameBox->addItem(add,tr("New..."));
-		ui.keyEdit->setEnabled(srvsynclist[0].crypted);
+		ui.keyEdit->setEnabled(srvsynclist[ui.nameBox->currentIndex()].crypted);
 
 		//populate db list
 		rc = db_list_sync(&sl);
@@ -258,6 +259,8 @@ void QtSyncDialog::filterListReceived(int rc){
 
 void QtSyncDialog::shareListReceived(int rc){
 	std::list<mc_share> list;
+	std::list<int> idlist;
+	mc_user u;
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(shareListReceived(int)));
 	
 	rc = srv_listshares_process(&netobuf,&list);
@@ -271,6 +274,15 @@ void QtSyncDialog::shareListReceived(int rc){
 		reject();
 		return;
 	}
+	
+	// Find out whether we know the owner
+	u.id = dbsynclist[dbindex].uid;
+	rc = db_select_user(&u);
+	if(rc == SQLITE_DONE) idlist.push_back(u.id);
+	else if(rc){ 
+		reject(); 
+		return; 
+	}
 
 	for(mc_share& s : list){
 		rc = db_insert_share(&s);
@@ -278,8 +290,17 @@ void QtSyncDialog::shareListReceived(int rc){
 			reject();
 			return;
 		}
+
+		// Find out which users we don't know yet
+		u.id = s.uid;
+		rc = db_select_user(&u);
+		if(rc == SQLITE_DONE) idlist.push_back(u.id);
+		else if(rc){ 
+			reject(); 
+			return; 
+		}
 	}
-	
+
 
 	dbsynclist[dbindex].shareversion = srvsynclist[ui.nameBox->currentIndex()].shareversion;
 	rc = db_update_sync(&dbsynclist[dbindex]);
@@ -288,8 +309,40 @@ void QtSyncDialog::shareListReceived(int rc){
 		return;
 	}
 
+	if(idlist.size() != 0){ // some unknown users		
+		connect(performer,SIGNAL(finished(int)),this,SLOT(userListReceived(int)));
+		srv_idusers_async(&netibuf,&netobuf,performer,&idlist);
+	} else {
+		ui.fetchShareLabel->setVisible(false);
+		listShares();
+	}
+}
+
+void QtSyncDialog::userListReceived(int rc){
+	std::list<mc_user> list;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(userListReceived(int)));
+	if(rc) {
+		reject();
+		return;
+	}
+	
+	rc = srv_idusers_process(&netobuf,&list);
+	if(rc){
+		reject();
+		return;
+	}
+
+	for(mc_user& u : list){
+		rc = db_insert_user(&u);
+		if(rc){
+			reject();
+			return;
+		}
+	}
+	
 	ui.fetchShareLabel->setVisible(false);
 	listShares();
+
 }
 
 void QtSyncDialog::filterDeleteReceived(int rc){
@@ -535,7 +588,7 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 					found = true;
 				} else {
 					entry.sname = worksync->name;
-					memcpy(entry.key,newkey.constData(),newkey.size());
+					memcpy(entry.key,worksync->cryptkey,32);
 					found = true;
 				}
 			}
@@ -544,7 +597,7 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 			mc_keyringentry newentry;
 			newentry.sid = worksync->id;
 			newentry.sname = worksync->name;
-			memcpy(newentry.key,newkey.constData(),newkey.size());
+			memcpy(newentry.key,worksync->cryptkey,32);
 			keyring.push_back(newentry);
 		}
 
@@ -554,7 +607,7 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 				bool ok = false;
 				keyringpass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 				if(!ok || keyringpass == ""){
-					ui.keyEdit->setText(QByteArray::fromRawData((const char*)worksync->cryptkey,32).toHex());
+					ui.keyEdit->setText(QByteArray::fromRawData((const char*)worksync->cryptkey,32).toHex().toUpper());
 					ui.okButton->setEnabled(true);
 					return;
 				}
@@ -576,7 +629,7 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 		
 	} else {
 		// getting the ring failed in some way, _actual might have rejected already
-		ui.keyEdit->setText(QByteArray::fromRawData((const char*)worksync->cryptkey,32).toHex());
+		ui.keyEdit->setText(QByteArray::fromRawData((const char*)worksync->cryptkey,32).toHex().toUpper());
 		ui.okButton->setEnabled(true);
 	}	
 }
@@ -912,6 +965,9 @@ void QtSyncDialog::filldbdata(){
 		ui.shareList->setEnabled(false);
 		ui.addShareButton->setEnabled(false);
 		ui.removeShareButton->setEnabled(false);
+		ui.addShareButton->setVisible(true);
+		ui.removeShareButton->setVisible(true);
+		ui.ownerLabel->setVisible(false);
 		
 		for(mc_sync_db& s : dbsynclist){
 			if(s.id == sid){
@@ -919,7 +975,7 @@ void QtSyncDialog::filldbdata(){
 				//Path, Key
 				ui.pathEdit->setText(s.path.c_str());
 				if(s.crypted){
-					ui.keyEdit->setText(QByteArray((const char*)s.cryptkey,32).toHex());
+					ui.keyEdit->setText(QByteArray((const char*)s.cryptkey,32).toHex().toUpper());
 				} else {
 					ui.keyEdit->setText("");
 				}
@@ -1021,21 +1077,41 @@ void QtSyncDialog::listShares(){
 
 void QtSyncDialog::listShares_actual(){
 	std::list<mc_share> sl;
+	mc_user u;
 	int rc;
 	rc = db_list_share_sid(&sl,dbsynclist[dbindex].id);
 	if(rc) return;
 	sharelist.assign(sl.begin(),sl.end());
 	ui.shareList->clear();
 	for(mc_share& s : sharelist){
-		if(s.uid == myUID)
+		if(s.uid == myUID){
 			ui.shareList->addItem(new QListWidgetItem(user,tr("me")));
-		else
-			ui.shareList->addItem(new QListWidgetItem(user,s.uname.c_str()));
+		} else {
+			u.id = s.uid;
+			rc = db_select_user(&u);
+			if(rc == SQLITE_DONE) u.name = "(unkown)";
+			else if(rc) return;
+			ui.shareList->addItem(new QListWidgetItem(user,QString::fromStdString(u.name)));
+		}
 	}
+
+	// owner
+	u.id = dbsynclist[dbindex].uid;
+	rc = db_select_user(&u);
+	if(rc == SQLITE_DONE) u.name = "(unkown)";
+	else if(rc) return;
 	
 	ui.shareList->setEnabled(true);
 	if(dbsynclist[dbindex].uid == myUID){
 		ui.addShareButton->setEnabled(true);
+		ui.addShareButton->setVisible(true);
+		ui.removeShareButton->setVisible(true);
+		ui.ownerLabel->setVisible(false);
+	} else  {
+		ui.addShareButton->setVisible(false);
+		ui.removeShareButton->setVisible(false);
+		ui.ownerLabel->setVisible(true);
+		ui.ownerLabel->setText(tr("Owner: ")+QString::fromStdString(u.name));
 	}
 }
 

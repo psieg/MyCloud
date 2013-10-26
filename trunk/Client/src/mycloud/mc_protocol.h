@@ -3,8 +3,8 @@
 #include "mc.h"
 /* This unit defines the Codes used in our protocol and functions to pack/unpack messages */
 
-#define MC_CLIENT_PROTOCOL_VERSION		10
-#define MC_MIN_SERVER_PROTOCOL_VERSION	10
+#define MC_CLIENT_PROTOCOL_VERSION		11
+#define MC_MIN_SERVER_PROTOCOL_VERSION	11
 
 typedef int MC_SRVQUERY;
 #define MC_SRVQRY_STATUS		100	// What's your status
@@ -19,6 +19,7 @@ typedef int MC_SRVQUERY;
 #define MC_SRVQRY_PUTSHARE		401 // Add / Replace a share
 #define MC_SRVQRY_DELSHARE		402 // Delete a share
 #define MC_SRVQRY_LISTUSERS		403	// List all users (so user can choose s.b. to share to)
+#define MC_SRVQRY_IDUSERS		404 // Identify users from UID
 #define MC_SRVQRY_LISTDIR		501	// List all files in a dir (with their stats)
 #define MC_SRVQRY_GETFILE		502	// Get the content of a file
 #define MC_SRVQRY_GETMETA		503	// Get a file's metadata
@@ -75,6 +76,7 @@ void pack_listshares(mc_buf *buf, unsigned char authtoken[16], int syncid);
 void pack_putshare(mc_buf *buf, unsigned char authtoken[16], mc_share *share);
 void pack_delshare(mc_buf *buf, unsigned char authtoken[16], mc_share *share);
 void pack_listusers(mc_buf *buf, unsigned char authtoken[16]);
+void pack_idusers(mc_buf *buf, unsigned char authtoken[16], list<int> *l);
 void pack_listdir(mc_buf *buf, unsigned char authtoken[16], int parent);
 void pack_getfile(mc_buf *buf, unsigned char authtoken[16], int id, int64 offset, int64 blocksize, unsigned char hash[16]);
 void pack_getoffset(mc_buf *buf, unsigned char authtoken[16], int id);

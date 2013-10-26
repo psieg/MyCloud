@@ -33,6 +33,10 @@ int db_insert_share(mc_share *var);
 int db_delete_share(mc_share *var);
 int db_delete_share_sid(int sid);
 
+int db_select_user(mc_user *var);
+int db_insert_user(mc_user *var);
+// no reason to update / delete users
+
 int db_select_file_name(mc_file *var);
 int db_select_file_id(mc_file *var);
 int db_list_file_parent(list<mc_file> *l, int parent);

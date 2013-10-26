@@ -664,13 +664,32 @@ int srv_listusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf){
 
 	return perf->perform(ibuf,obuf,false);
 }
-int srv_listusers_process(mc_buf *obuf, list<mc_user> *l){	int rc;
+int srv_listusers_process(mc_buf *obuf, list<mc_user> *l){
+	int rc;
 	rc = srv_eval(MC_SRVSTAT_USERLIST,-1,obuf);
 	MC_CHKERR(rc);
 
 	unpack_userlist(obuf,l);
 	return 0;
 }
+
+int srv_idusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<int> *l){
+	MC_DBGL("Identifying users (async)");
+	token_mutex.lock();
+	pack_idusers(ibuf,authtoken,l);
+	token_mutex.unlock();
+
+	return perf->perform(ibuf,obuf,false);
+}
+int srv_idusers_process(mc_buf *obuf, list<mc_user> *l){
+	int rc;
+	rc = srv_eval(MC_SRVSTAT_USERLIST,-1,obuf);
+	MC_CHKERR(rc);
+
+	unpack_userlist(obuf,l);
+	return 0;
+}
+
 
 SAFEFUNC2(srv_listdir,list<mc_file> *l, int parent,l,parent)
 int _srv_listdir(list<mc_file> *l, int parent){

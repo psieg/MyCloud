@@ -98,7 +98,6 @@ void QtShareDialog::accept(){
 	int rc;
 	
 	share.uid = userlist[ui.userBox->currentIndex()].id;
-	share.uname = userlist[ui.userBox->currentIndex()].name;
 	
 	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
 	srv_putshare_async(netibuf,netobuf,performer,&share);
