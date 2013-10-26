@@ -399,7 +399,7 @@ Hit OK to subscribe</string>
         <number>0</number>
        </property>
        <item>
-        <widget class="QLabel" name="label_5">
+        <widget class="QLabel" name="label_7">
          <property name="text">
           <string>Shared To</string>
          </property>
@@ -450,6 +450,16 @@ Hit OK to subscribe</string>
            </property>
            <property name="autoRaise">
             <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="ownerLabel">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>22</height>
+            </size>
            </property>
           </widget>
          </item>
@@ -556,7 +566,6 @@ Hit OK to subscribe</string>
   <tabstop>globalFilterButton</tabstop>
   <tabstop>addShareButton</tabstop>
   <tabstop>removeShareButton</tabstop>
-  <tabstop>shareList</tabstop>
   <tabstop>okButton</tabstop>
   <tabstop>cancelButton</tabstop>
  </tabstops>

@@ -35,6 +35,7 @@ private slots:
 	void globalFilterListReceived(int);
 	void filterListReceived(int);
 	void shareListReceived(int);
+	void userListReceived(int);
 	void filterDeleteReceived(int);
 	void shareDeleteReceived(int);
 	void syncDeleteReceived(int);
@@ -85,7 +86,6 @@ private:
 	bool loadcompleted;
 	int deletingfilterid;
 	mc_share deletingshare;
-	QByteArray newkey;
 	mc_sync_db *worksync;
 	mc_sync_db newsync;
 	list<mc_keyringentry> keyring;

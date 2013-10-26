@@ -183,7 +183,6 @@ typedef struct _mc_filter {
 typedef struct _mc_share {
 	int sid;
 	int uid;
-	string uname; //not on server but we don't need a user table here
 } mc_share;
 
 typedef struct _mc_user {
