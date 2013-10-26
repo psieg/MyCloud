@@ -58,6 +58,7 @@ if($ready){
 		case MC_SRVQRY_PUTSHARE:
 		case MC_SRVQRY_DELSHARE:
 		case MC_SRVQRY_LISTUSERS:
+		case MC_SRVQRY_IDUSERS:
 		case MC_SRVQRY_LISTDIR:
 		case MC_SRVQRY_GETFILE:
 		case MC_SRVQRY_GETOFFSET:
@@ -108,6 +109,9 @@ if($ready){
 							break;
 						case MC_SRVQRY_LISTUSERS:
 							$res = handle_listusers($ibuf,$uid);
+							break;
+						case MC_SRVQRY_IDUSERS:
+							$res = handle_idusers($ibuf,$uid);
 							break;
 						case MC_SRVQRY_LISTDIR:
 							$res = handle_listdir($ibuf,$uid);

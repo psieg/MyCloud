@@ -1,5 +1,5 @@
 <?php
-define('MC_SERVER_PROTOCOL_VERSION',10);
+define('MC_SERVER_PROTOCOL_VERSION',11);
 define('MC_MIN_CLIENT_PROTOCOL_VERSION',9);
 
 define("MC_SRVQRY_STATUS",		100);	// What's your status
@@ -13,7 +13,8 @@ define("MC_SRVQRY_DELFILTER",	302);	// Delete a filter
 define("MC_SRVQRY_LISTSHARES",	400);	// List all shares for async
 define("MC_SRVQRY_PUTSHARE",	401);	// Add / Replace a share
 define("MC_SRVQRY_DELSHARE",	402);	// Delete a share
-define("MC_SRVQRY_LISTUSERS",	403);	// LIst all users (so user can choose s.b. to share to)
+define("MC_SRVQRY_LISTUSERS",	403);	// List all users (so user can choose s.b. to share to)
+define("MC_SRVQRY_IDUSERS",	404);	// Identify users from UID
 define("MC_SRVQRY_LISTDIR",		501);	// List all files in a dir (with their stats)
 define("MC_SRVQRY_GETFILE",		502);	// Get the content of a file
 define("MC_SRVQRY_GETMETA",		503);	// Get a file's metadata

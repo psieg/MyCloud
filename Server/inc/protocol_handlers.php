@@ -238,6 +238,19 @@ function handle_listusers($ibuf,$uid){
 	return pack_userlist($l);
 }
 
+function handle_idusers($ibuf,$uid){
+	global $mysqli;
+	$ids = unpack_idusers($ibuf);
+	//If the user may only know those he is related to, some checks must be done here!
+	$list = "";
+	foreach($ids as $id) $list .= $id.", ";
+	$list = substr($list,0,-2);
+	$q = $mysqli->query("SELECT id,name FROM mc_users WHERE id IN (".$list.")");
+	if(!q) return pack_interror($mysqli->error);
+	$l = $q->fetch_all();
+	return pack_userlist($l);
+}
+
 function handle_listdir($ibuf,$uid){
 	global $mysqli;
 	$parent = unpack_listdir($ibuf);
