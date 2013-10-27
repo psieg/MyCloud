@@ -57,7 +57,8 @@ void QtSyncDialog::showEvent(QShowEvent *event){
 	}
 	
 	if(s.url == ""){
-		QMessageBox::warning(myparent, tr("No server configured"), tr("To subscribe syncs, you need to set the server first."), QMessageBox::Ok);
+		QMessageBox::warning(myparent, tr("No server configured"), 
+			tr("To subscribe syncs, you need to set the server first."), QMessageBox::Ok);
 		QMetaObject::invokeMethod(this,"reject",Qt::QueuedConnection);
 		return;
 	}
@@ -86,7 +87,8 @@ void QtSyncDialog::authed(int rc){
 	rc = srv_auth_process(&netobuf,&authtime,&basedatedummy,&myUID);
 	if(rc){
 		if((rc) == MC_ERR_TIMEDIFF){	
-			QMessageBox::warning(this, tr("Time difference too high"), tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."), QMessageBox::Ok);
+			QMessageBox::warning(this, tr("Time difference too high"),
+				tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."), QMessageBox::Ok);
 		}
 		reject();
 		return;
@@ -493,7 +495,8 @@ void QtSyncDialog::keyringReceived_actual(int rc){
 
 		if(keyringpass == ""){
 			bool ok = false;
-			pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please enter the password to your keyring"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+			pass = QInputDialog::getText(this, tr("Keyring Password"), 
+				tr("Please enter the password to your keyring"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
 			if(!ok){
 				return;
@@ -505,7 +508,8 @@ void QtSyncDialog::keyringReceived_actual(int rc){
 		// decrypt
 		rc = crypt_keyring_fromsrv(keyringdata,pass.toStdString(),&keyring);
 		if(rc){
-			QMessageBox::critical(this, tr("Keyring Decryption failed"), tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
+			QMessageBox::critical(this, tr("Keyring Decryption failed"), 
+				tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
 			return;
 		}
 		keyringpass = pass;
@@ -534,7 +538,8 @@ void QtSyncDialog::keyringReceivedLooking(int rc){
 			}
 		}
 				
-		QMessageBox::information(this, tr("Key not found"), tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner can give you the key."), QMessageBox::Ok);
+		QMessageBox::information(this, tr("Key not found"), 
+			tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner can give you the key."), QMessageBox::Ok);
 		// no key found
 		ui.keyEdit->setText("");
 		ui.okButton->setEnabled(true);
@@ -568,14 +573,18 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 			if(keyringpass == ""){
 				bool ok = false;
 				QString pass, confirm;
-				pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
-				if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+				pass = QInputDialog::getText(this, tr("Keyring Password"), 
+					tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+				if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), 
+					tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 				if(ok && pass != confirm){
-					QMessageBox::warning(this, tr("Password Mismatch"), tr("The passwords didn't match. Try again"), QMessageBox::Ok);
+					QMessageBox::warning(this, tr("Password Mismatch"),
+						tr("The passwords didn't match. Try again"), QMessageBox::Ok);
 					ok = false;
 				}
 				if(ok && pass.length() < 10){
-					QMessageBox::warning(this, tr("Insecure Password"), tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
+					QMessageBox::warning(this, tr("Insecure Password"), 
+						tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
 					ok = false;
 				}
 				if(ok)
@@ -646,7 +655,8 @@ void QtSyncDialog::accept(){
 	int maxprio=0;
 
 	if(ui.pathEdit->text().length() == 0){
-		QMessageBox::warning(this, tr("No path specified"), tr("Please specify where the files are to be synced."), QMessageBox::Ok);
+		QMessageBox::warning(this, tr("No path specified"), 
+			tr("Please specify where the files are to be synced."), QMessageBox::Ok);
 		return;
 	}
 
@@ -708,7 +718,8 @@ void QtSyncDialog::accept(){
 				// not changed or doesn't want to upload
 				accept_step2();
 			} else {
-				QMessageBox::warning(this, tr("Please enter a valid 256-bit key in hex format"), tr("Alternatively, you can leave the field empty to generate a new key, if you don't have one yet."), QMessageBox::Ok);
+				QMessageBox::warning(this, tr("Please enter a valid 256-bit key in hex format"), 
+					tr("Alternatively, you can leave the field empty to generate a new key, if you don't have one yet."), QMessageBox::Ok);
 				return;
 			}
 		} else {
