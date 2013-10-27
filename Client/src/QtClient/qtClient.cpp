@@ -289,6 +289,12 @@ void QtClient::__notifyStart(int evt, QString object){
 			listSyncs(); //refresh listing
 			setStatus(tr("Fully synced (") + object + ")","",icon_ok);
 			break;
+		case MC_NT_NOSYNCWARN: //Even more out of row
+			trayIcon->showMessage(tr("No Server Connection"), tr("Last successful server connection: ") + object + tr(".\n") +
+				tr("You might want to check the server settings"), QSystemTrayIcon::Critical);
+			disconnect(trayIcon,SIGNAL(messageClicked()));
+			connect(trayIcon,SIGNAL(messageClicked()),this,SLOT(show()));
+			break;
 		case MC_NT_CONN:
 			currentConnectString = object;
 			setStatus(tr("Connected to "),object,icon_conn);
@@ -638,9 +644,10 @@ void QtClient::trayIconActivated(QSystemTrayIcon::ActivationReason reason){
 }
 
 void QtClient::newVersion(QString newver){
-	trayIcon->showMessage("Client Update available", "Version " + newver + " is available (currently at " + MC_VERSION + "). Click to update");
+	trayIcon->showMessage(tr("Client Update available"), tr("Version ") + newver + tr(" is available.\nCurrent Version: ") + MC_VERSION + tr(". Click to update"));
+	disconnect(trayIcon,SIGNAL(messageClicked()));
 	connect(trayIcon,SIGNAL(messageClicked()),&updateChecker,SLOT(getUpdate()));
-	ui.updateButton->setText("new Version " + newver + " available!");
+	ui.updateButton->setText(tr("new Version ") + newver + tr(" available!"));
 	ui.updateButton->setVisible(true);
 	connect(ui.updateButton,SIGNAL(clicked()),&updateChecker,SLOT(getUpdate()));
 }

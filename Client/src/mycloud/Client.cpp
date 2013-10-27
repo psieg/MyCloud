@@ -1,5 +1,3 @@
-// Client.cpp : Defines the entry point for the console application.
-//
 
 #include <iostream>
 #include "mc.h"
@@ -24,7 +22,8 @@ ofstream mc_logfile;
 int runmc()
 {
 	int rc,wrc,uid;
-	time_t basedate;
+	int64 basedate;
+	int64 lastnosynccheck = 0;
 	mc_status status;
 	unsigned char hash[16];
 	
@@ -92,6 +91,9 @@ int runmc()
 							rc = db_update_status(&status);
 							if(rc) throw rc;
 						}
+						status.lastconn = time(NULL);
+						rc = db_update_status(&status);
+						if(rc) throw rc;
 					
 
 						//TODO: resume and stuff
@@ -211,7 +213,6 @@ int runmc()
 								else
 									mc_sleep_checkterminate(-status.watchmode);
 								continue;
-									//{ if(rc == MC_ERR_CRYPTOALERT) MC_INF("Got cryptoalert"); throw rc; }
 							}
 							srv_standby();
 
@@ -248,6 +249,16 @@ int runmc()
 					cerr << "Error while connecting" << endl;
 					MC_NOTIFYSTART(MC_NT_ERROR,"Failed to connect to server");
 
+					// No-sync warning
+					if(time(NULL) - lastnosynccheck > MC_NOSYNCCHECK){ //only warn every x seconds
+						lastnosynccheck = time(NULL);
+						rc = db_select_status(&status);
+						if(rc) return rc;
+						if(status.lastconn > 0 && time(NULL) - status.lastconn > MC_NOSYNCWARN){
+							MC_WRN("No server connection in the last 24 hours!");
+							MC_NOTIFYSTART(MC_NT_NOSYNCWARN,TimeToString(status.lastconn));
+						}
+					}
 				}
 				srv_close();
 				if(MC_TERMINATING()) break;
