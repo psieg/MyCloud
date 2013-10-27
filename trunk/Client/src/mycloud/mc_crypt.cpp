@@ -238,6 +238,7 @@ int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string
 
 
 	// parse to string
+	*data = "";
 	for(mc_keyringentry& item : *l){
 		data->append((char*)&item.sid,sizeof(int));
 		num = item.sname.length();
