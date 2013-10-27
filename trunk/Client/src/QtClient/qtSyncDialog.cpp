@@ -551,8 +551,7 @@ void QtSyncDialog::keyringReceivedLooking(int rc){
 
 			}
 		}
-
-		
+				
 		QMessageBox b(this);
 		b.setText(tr("Key not found"));
 		b.setInformativeText(tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner can give you the key."));
@@ -583,34 +582,51 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 		bool needsend = true;
 		for(mc_keyringentry& entry : keyring){
 			if(entry.sid == worksync->id){
-				if(entry.sname == worksync->name && memcmp(entry.key,worksync->cryptkey,32) == 0){
+				if(entry.sname == worksync->name && memcmp(entry.key,worksync->cryptkey,32) == 0){ //exact match
 					needsend = false;
-					found = true;
-				} else {
-					entry.sname = worksync->name;
-					memcpy(entry.key,worksync->cryptkey,32);
-					found = true;
 				}
 			}
-		}
-		if(!found){
-			mc_keyringentry newentry;
-			newentry.sid = worksync->id;
-			newentry.sname = worksync->name;
-			memcpy(newentry.key,worksync->cryptkey,32);
-			keyring.push_back(newentry);
 		}
 
 		if(needsend){
 			
 			if(keyringpass == ""){
 				bool ok = false;
-				keyringpass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
-				if(!ok || keyringpass == ""){
+				QString pass, confirm;
+				pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+				if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+				if(ok && pass != confirm){
+					QMessageBox::warning(this, tr("Password Mismatch"), tr("The passwords didn't match. Try again"), QMessageBox::Ok);
+					ok = false;
+				}
+				if(ok && pass.length() < 10){
+					QMessageBox::warning(this, tr("Insecure Password"), tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
+					ok = false;
+				}
+				if(ok)
+					keyringpass = pass;
+
+				if(keyringpass == ""){
 					ui.keyEdit->setText(QByteArray::fromRawData((const char*)worksync->cryptkey,32).toHex().toUpper());
 					ui.okButton->setEnabled(true);
 					return;
 				}
+			}
+
+			bool found = false;
+			for(mc_keyringentry& entry : keyring){
+				if(entry.sid == worksync->id){
+					entry.sname = worksync->name;
+					memcpy(entry.key,worksync->cryptkey,32);
+					found = true;
+				}
+			}
+			if(!found){
+				mc_keyringentry newentry;
+				newentry.sid = worksync->id;
+				newentry.sname = worksync->name;
+				memcpy(newentry.key,worksync->cryptkey,32);
+				keyring.push_back(newentry);
 			}
 
 			string keyringdata;

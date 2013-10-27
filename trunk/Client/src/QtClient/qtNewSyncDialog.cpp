@@ -153,8 +153,20 @@ void QtNewSyncDialog::keyringReceived(int rc){
 
 			
 		bool ok = false;
-		while(!ok || keyringpass == ""){
-			keyringpass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+		while(keyringpass == ""){
+			QString pass, confirm;
+			pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+			if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+			if(ok && pass != confirm){
+				QMessageBox::warning(this, tr("Password Mismatch"), tr("The passwords didn't match. Try again"), QMessageBox::Ok);
+				ok = false;
+			}
+			if(ok && pass.length() < 10){
+				QMessageBox::warning(this, tr("Insecure Password"), tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
+				ok = false;
+			}
+			if(ok)
+				keyringpass = pass;
 		}
 
 		rc = crypt_keyring_tosrv(&keyring,keyringpass.toStdString(),&keyringdata);
