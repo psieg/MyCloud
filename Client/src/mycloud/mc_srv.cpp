@@ -214,7 +214,7 @@ int QtNetworkPerformer::processReply(){
 				return QNetworkReply::OperationCanceledError; //User abort
 			}
 		} else {
-			int rc = MC_ERR_NETWORK; //rep->error();
+			int rc = rep->error();
 			MC_WRN("Network failure: " << qPrintable(rep->errorString()) << " (Code " << rep->error() << ")");
 			if(rep){ if(async) rep->deleteLater(); else delete rep; }
 			rep = NULL;
