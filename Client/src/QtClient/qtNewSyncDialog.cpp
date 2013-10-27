@@ -90,13 +90,15 @@ void QtNewSyncDialog::keyringReceived(int rc){
 		while(!ok){
 			QString pass = "";
 			while(!ok){
-				pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please enter the password to your keyring"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+				pass = QInputDialog::getText(this, tr("Keyring Password"), 
+					tr("Please enter the password to your keyring"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 			}
 
 			// decrypt
 			rc = crypt_keyring_fromsrv(keyringdata,pass.toStdString(),&keyring);
 			if(rc){
-				QMessageBox::critical(this, tr("Keyring Decryption failed"), tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
+				QMessageBox::critical(this, tr("Keyring Decryption failed"), 
+					tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
 				ui.okButton->setEnabled(true);
 				ok = false;
 			}
@@ -109,7 +111,8 @@ void QtNewSyncDialog::keyringReceived(int rc){
 
 	QByteArray newkey = QByteArray(32,'\0');
 	while(crypt_randkey((unsigned char*)newkey.data())){
-		QMessageBox::warning(this, tr("Can't generate keys atm"), tr("Please do something else so the system can collect entropy"), QMessageBox::Ok);
+		QMessageBox::warning(this, tr("Can't generate keys atm"), 
+			tr("Please do something else so the system can collect entropy"), QMessageBox::Ok);
 		ui.okButton->setEnabled(true);
 		return;
 	} 
@@ -137,14 +140,18 @@ void QtNewSyncDialog::keyringReceived(int rc){
 		bool ok = false;
 		while(keyringpass == ""){
 			QString pass, confirm;
-			pass = QInputDialog::getText(this, tr("Keyring Password"), tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
-			if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+			pass = QInputDialog::getText(this, tr("Keyring Password"), 
+				tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+			if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), 
+				tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 			if(ok && pass != confirm){
-				QMessageBox::warning(this, tr("Password Mismatch"), tr("The passwords didn't match. Try again"), QMessageBox::Ok);
+				QMessageBox::warning(this, tr("Password Mismatch"), 
+					tr("The passwords didn't match. Try again"), QMessageBox::Ok);
 				ok = false;
 			}
 			if(ok && pass.length() < 10){
-				QMessageBox::warning(this, tr("Insecure Password"), tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
+				QMessageBox::warning(this, tr("Insecure Password"), 
+					tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
 				ok = false;
 			}
 			if(ok)
