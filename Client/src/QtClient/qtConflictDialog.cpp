@@ -10,6 +10,11 @@ QtConflictDialog::QtConflictDialog(QWidget *parent)
 	quittimer.setInterval(2000);
 	quittimer.start();
 	connect(&quittimer,SIGNAL(timeout()),this,SLOT(checkquit()));
+	skiptime = 60;
+	skiptimer.setSingleShot(false);
+	skiptimer.setInterval(1000);
+	skiptimer.start();
+	connect(&skiptimer,SIGNAL(timeout()),this,SLOT(checkskip()));
 }
 
 QtConflictDialog::~QtConflictDialog()
@@ -44,7 +49,16 @@ int QtConflictDialog::exec(std::string *fullPath, std::string *descLocal, std::s
 				ui.skipButton->setFocus();
 			}
 	}
+	//this->setFocus(Qt::FocusReason::ActiveWindowFocusReason);
 	return QDialog::exec();
+}
+
+void QtConflictDialog::forceSetFocus(){
+	//this->setFocus();
+	this->activateWindow();
+	this->raise();
+	skiptimer.stop();
+	ui.skipButton->setText(tr("skip this time"));
 }
 
 void QtConflictDialog::closeEvent(QCloseEvent *event)
@@ -54,8 +68,22 @@ void QtConflictDialog::closeEvent(QCloseEvent *event)
 }
 
 void QtConflictDialog::keyPressEvent(QKeyEvent *e) {
-    //if(e->key() != Qt::Key_Escape) //No one may close or ignore us, this choice needs to be made
-        QDialog::keyPressEvent(e);
+	// Unfortunately does not fire when using the arrow keys to shift focus
+	if(skiptimer.isActive()){
+		skiptimer.stop();
+		ui.skipButton->setText(tr("skip this time"));
+	}
+
+	QDialog::keyPressEvent(e);
+}
+
+void QtConflictDialog::enterEvent(QEvent *e) {
+	if(skiptimer.isActive()){
+		skiptimer.stop();
+		ui.skipButton->setText(tr("skip this time"));
+	}
+
+	QDialog::enterEvent(e);
 
 }
 
@@ -71,6 +99,14 @@ void QtConflictDialog::checkquit(){
 	if(MC_TERMINATING()){
 		done(Terminating);
 	}
+}
+
+void QtConflictDialog::checkskip(){
+	skiptime -= 1;
+	if(skiptime <= 0){
+		done(Skip);
+	}
+	ui.skipButton->setText(tr("skip this time") + " (" + QVariant(skiptime).toString() + ")");
 }
 
 void QtConflictDialog::on_downloadButton_clicked()
