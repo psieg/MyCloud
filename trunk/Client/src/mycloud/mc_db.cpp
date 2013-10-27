@@ -16,8 +16,8 @@ sqlite3_stmt *stmt_select_status, *stmt_update_status, \
 				*stmt_select_user, *stmt_insert_user, \
 				*stmt_select_file_name, *stmt_select_file_id, *stmt_list_file_parent, *stmt_insert_file, *stmt_update_file, *stmt_delete_file;
 /* the respective queries */
-#define QRY_SELECT_STATUS "SELECT locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,uid FROM status"
-#define QRY_UPDATE_STATUS "UPDATE status SET locked = ?, url = ?, uname = ?, passwd = ?, acceptallcerts = ?, watchmode = ?, basedate = ?, updatecheck = ?, updateversion = ?, uid = ?"
+#define QRY_SELECT_STATUS "SELECT locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,uid,lastconn FROM status"
+#define QRY_UPDATE_STATUS "UPDATE status SET locked = ?, url = ?, uname = ?, passwd = ?, acceptallcerts = ?, watchmode = ?, basedate = ?, updatecheck = ?, updateversion = ?, uid = ?, lastconn = ?"
 
 #define QRY_SELECT_SYNC "SELECT id,uid,priority,name,path,filterversion,shareversion,crypted,status,lastsync,hash,cryptkey FROM syncs WHERE id = ?"
 #define QRY_LIST_SYNC "SELECT id,uid,priority,name,path,filterversion,shareversion,crypted,status,lastsync,hash,cryptkey FROM syncs"
@@ -155,23 +155,23 @@ int _db_open(const string& fname){
 				/* db does not exist yet, so we create a new one */
 				rc = sqlite3_open_v2(fname.c_str(),&db,SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE,NULL);
 				MC_CHKERR_MSG(rc, "Can't create db file");
-				rc = _db_execstr("CREATE TABLE status (locked BOOLEAN NOT NULL, url TEXT NOT NULL, uname TEXT NOT NULL, passwd TEXT NOT NULL, acceptallcerts BOOLEAN NOT NULL, \
-									watchmode INTEGER NOT NULL, basedate INTEGER NOT NULL, updatecheck INTEGER NOT NULL, updateversion TEXT NOT NULL, uid INTEGER NOT NULL)");
+				rc = _db_execstr("CREATE TABLE status (locked BOOLEAN NOT NULL, url TEXT NOT NULL, uname TEXT NOT NULL, passwd TEXT NOT NULL, acceptallcerts BOOLEAN NOT NULL, "
+									"watchmode INTEGER NOT NULL, basedate INTEGER NOT NULL, updatecheck INTEGER NOT NULL, updateversion TEXT NOT NULL, uid INTEGER NOT NULL, lastconn INTEGER NOT NULL)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
-				rc = _db_execstr("INSERT INTO status (locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,uid) VALUES (0,'','','',0,300,0,0,'',0)");
+				rc = _db_execstr("INSERT INTO status (locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,uid,lastconn) VALUES (0,'','','',0,300,0,0,'',0,0)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
-				rc = _db_execstr("CREATE TABLE syncs (id INTEGER PRIMARY KEY, uid INTEGER NOT NULL, priority INTEGER NOT NULL, name TEXT NOT NULL, path TEXT NOT NULL, \
-									filterversion INTEGER NOT NULL, shareversion INTEGER NOT NULL, crypted INTEGER NOT NULL, status INTEGER NOT NULL, lastsync INTEGER NOT NULL, hash BLOB, cryptkey BLOB)");
+				rc = _db_execstr("CREATE TABLE syncs (id INTEGER PRIMARY KEY, uid INTEGER NOT NULL, priority INTEGER NOT NULL, name TEXT NOT NULL, path TEXT NOT NULL, "
+									"filterversion INTEGER NOT NULL, shareversion INTEGER NOT NULL, crypted INTEGER NOT NULL, status INTEGER NOT NULL, lastsync INTEGER NOT NULL, hash BLOB, cryptkey BLOB)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
-				rc = _db_execstr("CREATE TABLE filters (id INTEGER PRIMARY KEY, sid INTEGER NOT NULL, files BOOLEAN NOT NULL, directories BOOLEAN NOT NULL, \
-									type INTEGER NOT NULL, rule TEXT NOT NULL)");
+				rc = _db_execstr("CREATE TABLE filters (id INTEGER PRIMARY KEY, sid INTEGER NOT NULL, files BOOLEAN NOT NULL, directories BOOLEAN NOT NULL, "
+									"type INTEGER NOT NULL, rule TEXT NOT NULL)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("CREATE TABLE shares (sid INTEGER NOT NULL, uid INTEGER NOT NULL)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
-				rc = _db_execstr("CREATE TABLE files (id INTEGER PRIMARY KEY, name TEXT NOT NULL, cryptname TEXT NOT NULL, ctime INTEGER NOT NULL, mtime INTERGER NOT NULL, size INTEGER NOT NULL, \
-									is_dir BOOLEAN NOT NULL, parent INTEGER NOT NULL, hash BLOB, status INTEGER NOT NULL)");
+				rc = _db_execstr("CREATE TABLE files (id INTEGER PRIMARY KEY, name TEXT NOT NULL, cryptname TEXT NOT NULL, ctime INTEGER NOT NULL, mtime INTERGER NOT NULL, size INTEGER NOT NULL, "
+									"is_dir BOOLEAN NOT NULL, parent INTEGER NOT NULL, hash BLOB, status INTEGER NOT NULL)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
 				rc = _db_execstr("CREATE INDEX byparent ON files (parent)");
 				MC_CHKERR_MSG(rc, "Failed to setup new db.");
@@ -328,6 +328,7 @@ int _db_select_status(mc_status *var){
 		var->updatecheck = sqlite3_column_int64(stmt_select_status,7);
 		var->updateversion.assign((const char*)sqlite3_column_text(stmt_select_status,8));
 		var->uid = sqlite3_column_int(stmt_select_status,9);
+		var->lastconn = sqlite3_column_int64(stmt_select_status,10);
 	}
 	return 0;
 }
@@ -358,6 +359,8 @@ int _db_update_status(mc_status *var){
 	rc = sqlite3_bind_text(stmt_update_status,9,var->updateversion.c_str(),var->updateversion.length(),SQLITE_STATIC);
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_bind_int(stmt_update_status,10,var->uid);
+	MC_CHKERR_MSG(rc,"Bind failed");
+	rc = sqlite3_bind_int64(stmt_update_status,11,var->lastconn);
 	MC_CHKERR_MSG(rc,"Bind failed");
 	rc = sqlite3_step(stmt_update_status);
 	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
