@@ -57,13 +57,7 @@ void QtSyncDialog::showEvent(QShowEvent *event){
 	}
 	
 	if(s.url == ""){
-		QMessageBox b(myparent);
-		b.setText("No server configured");
-		b.setInformativeText("To subscribe syncs, you need to set the server first.");
-		b.setStandardButtons(QMessageBox::Ok);
-		b.setDefaultButton(QMessageBox::Ok);
-		b.setIcon(QMessageBox::Warning);
-		b.exec();
+		QMessageBox::warning(myparent, tr("No server configured"), tr("To subscribe syncs, you need to set the server first."), QMessageBox::Ok);
 		QMetaObject::invokeMethod(this,"reject",Qt::QueuedConnection);
 		return;
 	}
@@ -92,13 +86,7 @@ void QtSyncDialog::authed(int rc){
 	rc = srv_auth_process(&netobuf,&authtime,&basedatedummy,&myUID);
 	if(rc){
 		if((rc) == MC_ERR_TIMEDIFF){	
-			QMessageBox b(this);
-			b.setText(tr("Time difference too high"));
-			b.setInformativeText(tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."));
-			b.setStandardButtons(QMessageBox::Ok);
-			b.setDefaultButton(QMessageBox::Ok);
-			b.setIcon(QMessageBox::Warning);
-			b.exec();
+			QMessageBox::warning(this, tr("Time difference too high"), tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."), QMessageBox::Ok);
 		}
 		reject();
 		return;
@@ -517,13 +505,7 @@ void QtSyncDialog::keyringReceived_actual(int rc){
 		// decrypt
 		rc = crypt_keyring_fromsrv(keyringdata,pass.toStdString(),&keyring);
 		if(rc){
-			QMessageBox b(this);
-			b.setText(tr("Keyring Decryption failed"));
-			b.setInformativeText(tr("The keyring could not be decrypted! Re-check your password or enter the key manually."));
-			b.setStandardButtons(QMessageBox::Ok);
-			b.setDefaultButton(QMessageBox::Ok);
-			b.setIcon(QMessageBox::Critical);
-			b.exec();
+			QMessageBox::critical(this, tr("Keyring Decryption failed"), tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
 			return;
 		}
 		keyringpass = pass;
@@ -552,14 +534,7 @@ void QtSyncDialog::keyringReceivedLooking(int rc){
 			}
 		}
 				
-		QMessageBox b(this);
-		b.setText(tr("Key not found"));
-		b.setInformativeText(tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner can give you the key."));
-		b.setStandardButtons(QMessageBox::Ok);
-		b.setDefaultButton(QMessageBox::Ok);
-		b.setIcon(QMessageBox::Information);
-		b.exec();
-
+		QMessageBox::information(this, tr("Key not found"), tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner can give you the key."), QMessageBox::Ok);
 		// no key found
 		ui.keyEdit->setText("");
 		ui.okButton->setEnabled(true);
@@ -671,13 +646,7 @@ void QtSyncDialog::accept(){
 	int maxprio=0;
 
 	if(ui.pathEdit->text().length() == 0){
-		QMessageBox b(this);
-		b.setText(tr("No path specified"));
-		b.setInformativeText(tr("Please specify where the files are to be synced."));
-		b.setStandardButtons(QMessageBox::Ok);
-		b.setDefaultButton(QMessageBox::Ok);
-		b.setIcon(QMessageBox::Warning);
-		b.exec();
+		QMessageBox::warning(this, tr("No path specified"), tr("Please specify where the files are to be synced."), QMessageBox::Ok);
 		return;
 	}
 
@@ -739,13 +708,7 @@ void QtSyncDialog::accept(){
 				// not changed or doesn't want to upload
 				accept_step2();
 			} else {
-				QMessageBox b(this);
-				b.setText(tr("Please enter a valid 256-bit key in hex format"));
-				b.setInformativeText(tr("Alternatively, you can leave the field empty to generate a new key, if you don't have one yet."));
-				b.setStandardButtons(QMessageBox::Ok);
-				b.setDefaultButton(QMessageBox::Ok);
-				b.setIcon(QMessageBox::Warning);
-				b.exec();
+				QMessageBox::warning(this, tr("Please enter a valid 256-bit key in hex format"), tr("Alternatively, you can leave the field empty to generate a new key, if you don't have one yet."), QMessageBox::Ok);
 				return;
 			}
 		} else {

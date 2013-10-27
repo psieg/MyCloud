@@ -24,13 +24,7 @@ void QtNewSyncDialog::showEvent(QShowEvent *event){
 void QtNewSyncDialog::accept(){
 	int rc;
 	if(ui.nameEdit->text().length() == 0){
-		QMessageBox b(this);
-		b.setText(tr("No name set"));
-		b.setInformativeText(tr("Please choose a name for the new Sync."));
-		b.setStandardButtons(QMessageBox::Ok);
-		b.setDefaultButton(QMessageBox::Ok);
-		b.setIcon(QMessageBox::Warning);
-		b.exec();
+		QMessageBox::warning(this, tr("No name set"), tr("Please choose a name for the new Sync."), QMessageBox::Ok);
 		return;
 	}
 	
@@ -102,13 +96,7 @@ void QtNewSyncDialog::keyringReceived(int rc){
 			// decrypt
 			rc = crypt_keyring_fromsrv(keyringdata,pass.toStdString(),&keyring);
 			if(rc){
-				QMessageBox b(this);
-				b.setText(tr("Keyring Decryption failed"));
-				b.setInformativeText(tr("The keyring could not be decrypted! Re-check your password."));
-				b.setStandardButtons(QMessageBox::Ok);
-				b.setDefaultButton(QMessageBox::Ok);
-				b.setIcon(QMessageBox::Critical);
-				b.exec();
+				QMessageBox::critical(this, tr("Keyring Decryption failed"), tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
 				ui.okButton->setEnabled(true);
 				ok = false;
 			}
@@ -121,13 +109,7 @@ void QtNewSyncDialog::keyringReceived(int rc){
 
 	QByteArray newkey = QByteArray(32,'\0');
 	while(crypt_randkey((unsigned char*)newkey.data())){
-		QMessageBox b(this);
-		b.setText(tr("Can't generate keys atm"));
-		b.setInformativeText(tr("Please do something else so the system can collect entropy"));
-		b.setStandardButtons(QMessageBox::Ok);
-		b.setDefaultButton(QMessageBox::Ok);
-		b.setIcon(QMessageBox::Warning);
-		b.exec();
+		QMessageBox::warning(this, tr("Can't generate keys atm"), tr("Please do something else so the system can collect entropy"), QMessageBox::Ok);
 		ui.okButton->setEnabled(true);
 		return;
 	} 
