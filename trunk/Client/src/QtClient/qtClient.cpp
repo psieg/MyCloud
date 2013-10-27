@@ -429,7 +429,13 @@ int  QtClient::_execConflictDialog(std::string *fullPath, std::string *descLocal
 		if(this->isVisible()) parent = this;
 		conflictDialog = new QtConflictDialog(parent);
 	}
+	if(!this->isActiveWindow()){
+		trayIcon->showMessage(tr("Conflict Detected"), tr("A file conflict has been detected, you need to choose what to do.\nClick to view"), QSystemTrayIcon::Warning);
+	}
+	disconnect(trayIcon,SIGNAL(messageClicked()));
+	bool test  = connect(trayIcon,SIGNAL(messageClicked()),conflictDialog,SLOT(forceSetFocus()));
 	rc = conflictDialog->exec(fullPath,descLocal,descServer,defaultValue,manualSolvePossible);
+	disconnect(trayIcon,SIGNAL(messageClicked()));
 	progressBar->show();
 	progressLabel->show();
 	setStatus(tr("Syncing "),currentSyncString,icon_sync);

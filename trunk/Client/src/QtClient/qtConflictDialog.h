@@ -40,14 +40,20 @@ public:
 	};
 	bool quit;
 
+public slots:
+	void forceSetFocus();
+
 protected:
 	void closeEvent(QCloseEvent *event);
 	void keyPressEvent(QKeyEvent *e);
+	void enterEvent(QEvent *e);
 	void reject();
 
 private:
 	Ui::QtConflictDialog ui;
 	QTimer quittimer;
+	QTimer skiptimer;
+	int skiptime;
 
 private slots:
 	void on_downloadButton_clicked();
@@ -55,6 +61,7 @@ private slots:
 	void on_keepButton_clicked();
 	void on_skipButton_clicked();
 	void checkquit();
+	void checkskip();
 };
 
 #endif // QTCONFLICTDIALOG_H
