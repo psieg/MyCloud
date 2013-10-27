@@ -537,6 +537,21 @@ void QtSyncDialog::keyringReceivedLooking(int rc){
 
 			}
 		}
+
+		// if no id match, try just the name
+		for(mc_keyringentry& entry : keyring){
+			if(entry.sname == worksync->name){
+				QMessageBox::information(this, tr("Uncertain match"),
+					tr("A possibly matching key was found in the keyring, but the SyncID does not match. This might occur after a server reset.\n"
+						"Consider reseting your keyring."), QMessageBox::Ok);
+				//memcpy(worksync->cryptkey,entry.key,32);
+				ui.keyEdit->setText(QByteArray::fromRawData((const char*)entry.key,32).toHex().toUpper());
+				//accept_step2();
+				accept();
+				return;
+
+			}
+		}
 				
 		QMessageBox::information(this, tr("Key not found"), 
 			tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner can give you the key."), QMessageBox::Ok);
@@ -574,7 +589,9 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 				bool ok = false;
 				QString pass, confirm;
 				pass = QInputDialog::getText(this, tr("Keyring Password"), 
-					tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, especially not related to your account password!\nMake sure you do not forget it!"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+					tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, "
+						"especially not related to your account password!\nMake sure you do not forget it!"), 
+					QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 				if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), 
 					tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 				if(ok && pass != confirm){
