@@ -210,6 +210,7 @@ int crypt_keyring_fromsrv(string data, const string& password, list<mc_keyringen
 
 	// parse from string
 	try {
+		l->clear();
 		while(index < data.length()){
 			item.sid = (int)data.c_str()[index];
 			index += sizeof(int);
