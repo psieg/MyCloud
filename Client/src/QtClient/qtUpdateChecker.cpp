@@ -55,6 +55,12 @@ int QtUpdateChecker::checkResult(){
 	splitnew = newver.split(".");
 	splitme = QString(MC_VERSION_PLAIN).split(".");
 	for(int i = 0; i < 3; i++) if(splitnew.at(i).toInt() > splitme.at(i).toInt()) { newer = true; break; } else if(splitnew.at(i).toInt() < splitme.at(i).toInt()){ break; }
+#ifdef MC_VERSION_DEVBUILD // equal version = release build is there
+	if(!newer){
+		newer = true;
+		for(int i = 0; i < 3; i++) if(splitnew.at(i).toInt() != splitme.at(i).toInt()) { newer = false; break; }
+	}
+#endif
 	if(newer){
 		MC_INF("New version " << qPrintable(newver) << " available");
 		rc = db_select_status(&s);
