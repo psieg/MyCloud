@@ -51,3 +51,10 @@
 * new updateCA certificate
 * fixed some large file support issues
 * minor memory fixes
+
+0.3.1
++ Keyring encrypted with user-password stored on server
++ View owner if Sync is shared
++ "dev" builds where updatechecker notifies about same version too
++ 30 second timeout on conflict dialog
+* accept all certificates option hidden in release mode
