@@ -46,7 +46,7 @@ public slots:
 protected:
 	void closeEvent(QCloseEvent *event);
 	void keyPressEvent(QKeyEvent *e);
-	void enterEvent(QEvent *e);
+	void mouseMoveEvent(QMouseEvent *e);
 	void reject();
 
 private:

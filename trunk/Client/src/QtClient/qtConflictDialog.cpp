@@ -8,12 +8,9 @@ QtConflictDialog::QtConflictDialog(QWidget *parent)
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 	quittimer.setSingleShot(false);
 	quittimer.setInterval(2000);
-	quittimer.start();
 	connect(&quittimer,SIGNAL(timeout()),this,SLOT(checkquit()));
-	skiptime = 60;
 	skiptimer.setSingleShot(false);
 	skiptimer.setInterval(1000);
-	skiptimer.start();
 	connect(&skiptimer,SIGNAL(timeout()),this,SLOT(checkskip()));
 }
 
@@ -24,6 +21,10 @@ QtConflictDialog::~QtConflictDialog()
 
 int QtConflictDialog::exec(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible)
 {
+	quittimer.start();
+	skiptimer.start();
+	skiptime = 60;
+	setMouseTracking(true);
 	setWindowTitle(tr("Conflict: ") + fullPath->c_str());
 	ui.downloadButton->setDescription(descServer->c_str());
 	ui.uploadButton->setDescription(descLocal->c_str());
@@ -51,6 +52,8 @@ int QtConflictDialog::exec(std::string *fullPath, std::string *descLocal, std::s
 	}
 	//this->setFocus(Qt::FocusReason::ActiveWindowFocusReason);
 	return QDialog::exec();
+	skiptimer.stop();
+	quittimer.stop();
 }
 
 void QtConflictDialog::forceSetFocus(){
@@ -77,13 +80,13 @@ void QtConflictDialog::keyPressEvent(QKeyEvent *e) {
 	QDialog::keyPressEvent(e);
 }
 
-void QtConflictDialog::enterEvent(QEvent *e) {
+void QtConflictDialog::mouseMoveEvent(QMouseEvent *e) {
 	if(skiptimer.isActive()){
 		skiptimer.stop();
 		ui.skipButton->setText(tr("skip this time"));
 	}
 
-	QDialog::enterEvent(e);
+	QDialog::mouseMoveEvent(e);
 
 }
 
