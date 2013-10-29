@@ -57,4 +57,5 @@
 + View owner if Sync is shared
 + "dev" builds where updatechecker notifies about same version too
 + 30 second timeout on conflict dialog
+* Update to Qt5.1.1
 * accept all certificates option hidden in release mode
