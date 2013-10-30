@@ -1,0 +1,61 @@
+...
+
+0.2.0
++ aes-256 encryption for files and filenames
+
+...
+
+0.2.5
++ new crypt format for filenames (same name = same cryptname, depends on path)
++ Server Code for Offset mismatch (rather than badqry)
+* changed autoconflict options: For this dir and below
+
+0.2.6
++ restored Client "compilability", terminal-based frontend (low priority but working)
++ Update to Qt5.1.0 for x86 and x64, switched x86 to MSVC2012
+* shorter popup-messages
+* Conflict window spawns center screen when main window not visible / at previous position
+* minor progressbar fix (short reset of last block)
+* Quitting App while Conflict Dialog active causes crash
+* minor fix of caching of encrypted filenames
+
+0.2.7
+* max timediff is now 10 (timediff almost never is an issue and 90% annoying)
+* complete functions call up/download when the file has been modified (rather than looping errors)
+* fix for incorrect file state after completed resume
+* fix for incorrect sync state after one failed sync
+* refactoring + protocol update
+
+0.2.8
++ Added Application Icon and Details for QtClient binary (windows)
++ Syncs can be edited (change local path, cryptokey)
++ User Interface to view and edit filters
++ Filters are encrypted for encrypted syncs
+* resume functions restart up/download on verification failure (=file change)
+* mtime set to current time when replacing a deleted file
+* new hashing includes file state
+* fixed loop when a remote file is incomlete_up
+
+0.2.9
++ Tooltips for most Buttons
++ Build + Run on linux
++ UI for managing Syncs
++ Ability to change password
++ Automatic Startup on Windows
+* Autoresolve conflicts between deleted files
+* Automatic readjust of Syncs after reset
+
+0.3
++ sharing Syncs between users (one is owner)
++ detection of case changes
+* new updateCA certificate
+* fixed some large file support issues
+* minor memory fixes
+
+0.3.1
++ Keyring encrypted with user-password stored on server
++ View owner if Sync is shared
++ "dev" builds where updatechecker notifies about same version too
++ 30 second timeout on conflict dialog
+* Update to Qt5.1.1
+* accept all certificates option hidden in release mode
