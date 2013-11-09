@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\Client\main.cpp" />
     <ClCompile Include="..\..\src\mycloud\Client.cpp" />
+    <ClCompile Include="..\..\src\mycloud\mc_conflict.cpp" />
     <ClCompile Include="..\..\src\mycloud\mc_crypt.cpp" />
     <ClCompile Include="..\..\src\mycloud\mc_db.cpp" />
     <ClCompile Include="..\..\src\mycloud\mc_filter.cpp" />
@@ -62,6 +63,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\mycloud\Client.h" />
     <ClInclude Include="..\..\src\mycloud\mc.h" />
+    <ClInclude Include="..\..\src\mycloud\mc_conflict.h" />
     <ClInclude Include="..\..\src\mycloud\mc_crypt.h" />
     <ClInclude Include="..\..\src\mycloud\mc_db.h" />
     <ClInclude Include="..\..\src\mycloud\mc_filter.h" />

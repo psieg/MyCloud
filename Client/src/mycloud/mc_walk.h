@@ -9,14 +9,6 @@
 #include "mc_crypt.h"
 #include "mc_util.h"
 #include <regex>
-#include <sstream>
-
-
-typedef int MC_WALKMODE;
-#define MC_WALKMODE_NORMAL 0
-#define MC_WALKMODE_DELLOCAL 1	// Files have been deleted locally, don't attempt to list them.
-								// When downloading/uploading make sure to restore parents on fs
-#define MC_WALKMODE_DELREMOTE 2	// Files are deleted remotely, when downloading/uploading make sure to restore parents on srv
 
 /* The main sync functions. Walk and others decide what to do with what file */
 

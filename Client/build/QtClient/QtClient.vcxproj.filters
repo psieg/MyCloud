@@ -151,6 +151,9 @@
     <ClInclude Include="..\..\src\mycloud\mc_version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\mc_conflict.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GeneratedFiles\Debug\moc_qtClient.cpp">
@@ -307,6 +310,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\qrc_qtClient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\mc_conflict.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
