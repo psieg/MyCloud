@@ -94,6 +94,9 @@
     <ClCompile Include="..\..\src\sqlite-amalgamation\sqlite3.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\mc_conflict.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\mycloud\Client.h">
@@ -136,6 +139,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\mycloud\mc_version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\mc_conflict.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

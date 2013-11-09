@@ -1,5 +1,5 @@
 For Win x64:
-1. Install Qt5.0.2 msvc2012 x64
+1. Install Qt msvc2012 x64
 2. Extract sqlite-amalgamtion
 3. Get OpenSSL sources (include+crypto, replace include-paths with #include "")
 4. Get OpenSSL x64 binaries (libeay+ssleay)
@@ -7,7 +7,7 @@ For Win x64:
 6. Add openssl/binx64/ dlls to output directory
 
 For Win x86:
-1. Install Qt5.0.1 msvc2008 x86
+1. Install Qt msvc2008 x86
 2. Extract sqlite-amalgamtion
 3. Get OpenSSL sources (include+crypto, replace include-paths with #include "")
 4. Get OpenSSL x86 binaries (libeay+ssleay)
