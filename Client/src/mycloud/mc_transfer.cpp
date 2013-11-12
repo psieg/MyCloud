@@ -648,7 +648,7 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				MC_CHKERR(rc);
 
 				if(recursive){
-					*rrc = walk_nolocal(ctx,rpath,db->id,NULL);
+					*rrc = walk_nolocal(ctx,rpath,db->id,db->hash);
 
 					rc = dirempty(db->id,&empty);
 					MC_CHKERR(rc);
