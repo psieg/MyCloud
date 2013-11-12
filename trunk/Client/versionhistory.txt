@@ -59,3 +59,6 @@
 + 30 second timeout on conflict dialog
 * Update to Qt5.1.1
 * accept all certificates option hidden in release mode
+
+0.3.2
+* fix crash when uploading a dir replaced with a file
