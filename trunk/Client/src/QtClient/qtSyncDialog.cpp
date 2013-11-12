@@ -589,7 +589,7 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 				bool ok = false;
 				QString pass, confirm;
 				pass = QInputDialog::getText(this, tr("Keyring Password"), 
-					tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, "
+					tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should be as secure as possible, "
 						"especially not related to your account password!\nMake sure you do not forget it!"), 
 					QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 				if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), 
