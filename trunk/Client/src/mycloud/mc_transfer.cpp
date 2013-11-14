@@ -660,6 +660,7 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 					MC_CHKERR(rc);
 							
 					db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
+					db->is_dir = false;
 					rc = crypt_filemd5_new(&cctx,db->hash,fpath,db->size);
 					MC_CHKERR(rc);	
 					//db->mtime = time(NULL);
