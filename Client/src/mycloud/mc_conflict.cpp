@@ -14,6 +14,8 @@
 /* Ask the user which of the conflicting versions he wants to keep, recommend doubtaction
 *	db may be NULL	*/
 int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr, MC_CONFLICTRECOMMENDATION doubtaction){
+	Q_ASSERT(fs != NULL);
+	Q_ASSERT(db != NULL);
 	string p, fpath;
 	mc_crypt_ctx cctx;
 	unsigned char chkhash[16];
@@ -163,6 +165,7 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 /* Ask ...
 *	db may be null	*/
 int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_file *srv, string *hashstr){
+	Q_ASSERT(srv != NULL);
 	list<mc_file> tree;
 	list<string> ptree;
 	list<mc_file>::iterator tbegin, tit, tend;
@@ -335,6 +338,8 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 /* Ask ...
 *	srv must be NULL or srv->status must be deleted	*/
 int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr){
+	Q_ASSERT(fs != NULL);
+	Q_ASSERT(db != NULL);
 	list<mc_file> tree;
 	list<string> ptree;
 	list<mc_file>::iterator tbegin, tit, tend;

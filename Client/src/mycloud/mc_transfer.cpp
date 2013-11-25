@@ -288,6 +288,7 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 /* Download the file from the server
 *	fs and db may be NULL	*/
 int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr, bool recursive, mc_crypt_ctx *extcctx){
+	Q_ASSERT(srv != NULL);
 	unsigned char serverhash[16];
 	int rc;
 	int rrc = 0; //recursive return value, only changed by walk-calls
@@ -716,6 +717,8 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 *	if db is NULL, fs and parent must be set
 *	if fs is NULL, db and srv must be set and we treat the file as MC_FILESTAT_DELETED	*/
 int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr, int parent, bool recursive, mc_crypt_ctx *extcctx){
+	Q_ASSERT(db != NULL || (fs != NULL && parent != 0));
+	Q_ASSERT(fs != NULL || (db != NULL && srv != NULL));
 	mc_file newdb;
 	int rc;
 	int rrc = 0; //recursive return value, only changed by walk-calls

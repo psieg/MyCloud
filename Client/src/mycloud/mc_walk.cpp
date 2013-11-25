@@ -28,8 +28,11 @@ int checkmissedpurge(mc_file *db, mc_file *srv){
 
 /* Verify the files match (react if not) and make sure the same data is on all stores
 *	Assumes the mtime is equal on all files.
-*	db may be NULL	*/
+*	db may be NULL
+*	if fs is NULL, db and srv must be set */
 int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr){
+	Q_ASSERT(fs != NULL || (db != NULL && srv != NULL));
+	Q_ASSERT(srv != NULL);
 	unsigned char orighash[16];
 	string spath,fpath;
 	int rc;
@@ -70,7 +73,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 	} else {
 		if(fs == NULL){
 			if(srv->is_dir != db->is_dir)
-				return conflicted(ctx,path,fs,db,srv,hashstr,MC_CONFLICTREC_DONTKNOW);
+				return conflicted_nolocal(ctx,path,db,srv,hashstr);
 			if(db->status == MC_FILESTAT_INCOMPLETE_UP){
 				return download(ctx,path,fs,db,srv,hashstr);
 			} else if(srv->status != MC_FILESTAT_DELETED)
