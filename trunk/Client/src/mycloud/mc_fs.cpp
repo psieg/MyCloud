@@ -173,8 +173,10 @@ int fs_listdir(list<mc_file_fs> *l, const string& path){
 	scanpath.assign(path).append("*");
 	MC_NOTIFYIOSTART(MC_NT_FS);
 	hFile = FindFirstFileW(utf8_to_unicode(scanpath).c_str(),&fd); /* Project Encoding set to Mutlibyte (...A) (correct?) */
-	if(hFile == INVALID_HANDLE_VALUE) 
+	if(hFile == INVALID_HANDLE_VALUE){		
+		MC_NOTIFYIOEND(MC_NT_FS);
 		MC_ERR_MSG(MC_ERR_IO,"FindFirstFile failed for " << scanpath << ": " << GetLastError());
+	}
 	/* First result "." can be skipped */
 	while (FindNextFileW(hFile,&fd) != 0) {
 		memset(&file,0,sizeof(mc_file_fs));
@@ -192,9 +194,9 @@ int fs_listdir(list<mc_file_fs> *l, const string& path){
 			l->push_back(file);
 		}
 	}
-	MC_CHKERR_EXP(GetLastError(),ERROR_NO_MORE_FILES,"FindNextFile failed: " << GetLastError());
 	FindClose(hFile);
 	MC_NOTIFYIOEND(MC_NT_FS);
+	MC_CHKERR_EXP(GetLastError(),ERROR_NO_MORE_FILES,"FindNextFile failed: " << GetLastError());
 	return 0;
 }
 #else
@@ -206,9 +208,13 @@ int fs_listdir(list<mc_file_fs> *l, const string& path){
 	string fpath;
 	int rc;
 	MC_DBGL("Listing " << path);
-
+	
+	MC_NOTIFYIOSTART(MC_NT_FS);
 	d = opendir(path.c_str());
-	if(d == NULL) MC_ERR_MSG(MC_ERR_IO,"opendir failed: " << errno);
+	if(d == NULL){
+		MC_NOTIFYIOEND(MC_NT_FS);
+		MC_ERR_MSG(MC_ERR_IO,"opendir failed: " << errno);
+	}
 
 	errno = 0;
 	while((dent = readdir(d)) != NULL){
@@ -224,8 +230,9 @@ int fs_listdir(list<mc_file_fs> *l, const string& path){
 		file.size = (file.is_dir?0:st.st_size);
 		l->push_back(file);
 	}
-	if(errno) MC_ERR_MSG(MC_ERR_IO,"readdir failed: " << errno);
 	closedir(d);
+	MC_NOTIFYIOEND(MC_NT_FS);
+	if(errno) MC_ERR_MSG(MC_ERR_IO,"readdir failed: " << errno);
 
 	return 0;
 }
