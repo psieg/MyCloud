@@ -200,6 +200,7 @@ using namespace std;
 
 #ifdef MC_QTCLIENT
 	/* notify the UI thread of these events */
+#	define MC_NOTIFY(evt,param)				QtClient::instance()->notify(evt,param);
 #	define MC_NOTIFYSTART(evt,param)		QtClient::instance()->notifyStart(evt,param);
 #	define MC_NOTIFYEND(evt)				QtClient::instance()->notifyEnd(evt);
 #	define MC_NOTIFYPROGRESS(val,tot)		QtClient::instance()->notifyProgress(val,tot);
@@ -212,6 +213,7 @@ using namespace std;
 #		define MC_NOTIFYIOEND(evt)
 #	endif
 #else
+#	define MC_NOTIFY(evt,param)
 #	define MC_NOTIFYSTART(evt,param)
 #	define MC_NOTIFYEND(evt)
 #	define MC_NOTIFYPROGRESS(val,tot)

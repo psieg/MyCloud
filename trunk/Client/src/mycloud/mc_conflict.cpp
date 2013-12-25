@@ -324,7 +324,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 		rc = download(ctx, path, NULL, db, srv, hashstr);
 		break;
 	case MC_CONFLICTACT_UP:
-		rc = upload(ctx, path, NULL, db, srv, hashstr);
+		rc = upload(ctx, path, NULL, db, srv, hashstr, srv->parent);
 		break;
 	case MC_CONFLICTACT_SKIP:
 		rc = MC_ERR_CONFLICT_SKIP;

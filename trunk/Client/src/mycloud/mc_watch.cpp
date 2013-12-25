@@ -235,7 +235,7 @@ int QtWatcher::changeTimeout(){
 	rc = fullsync();
 	if(!rc){
 		//MC_INFL("Update completed, cloud is fully synced");
-		MC_NOTIFYSTART(MC_NT_FULLSYNC,TimeToString(time(NULL)));
+		MC_NOTIFY(MC_NT_FULLSYNC,TimeToString(time(NULL)));
 	} else if(rc == MC_ERR_NOTFULLYSYNCED){
 		//MC_INFL("Update completed");
 	} else return rc;
@@ -303,7 +303,7 @@ int QtWatcher::remoteChange(int status){
 		rc = fullsync();
 		if(!rc){
 			//MC_INFL("Update completed, cloud is fully synced");
-			MC_NOTIFYSTART(MC_NT_FULLSYNC,TimeToString(time(NULL)));
+			MC_NOTIFY(MC_NT_FULLSYNC,TimeToString(time(NULL)));
 		} else if(rc == MC_ERR_NOTFULLYSYNCED){
 			//MC_INFL("Update completed");
 		} else return rc;

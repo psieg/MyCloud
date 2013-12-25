@@ -96,11 +96,14 @@ void QtShareDialog::userListReceived(int rc){
 
 void QtShareDialog::accept(){
 	int rc;
-	
 	share.uid = userlist[ui.userBox->currentIndex()].id;
 	
 	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
-	srv_putshare_async(netibuf,netobuf,performer,&share);
+	rc = srv_putshare_async(netibuf,netobuf,performer,&share);
+	if(rc){
+		reject();
+		return;
+	}
 	
 	ui.okButton->setVisible(false);
 	ui.sendLabel->setVisible(true);

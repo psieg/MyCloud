@@ -24,6 +24,7 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	//charWidth = (met.width("ABCDEFKHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")/50.0);
 
 	connect(this,SIGNAL(_logOutput(QString)),this,SLOT(__logOutput(QString)),Qt::QueuedConnection);
+	connect(this,SIGNAL(_notify(int, QString)),this,SLOT(__notify(int, QString)),Qt::BlockingQueuedConnection); //Notify presents dialogs to the user, wait for it
 	connect(this,SIGNAL(_notifyEnd(int)),this,SLOT(__notifyEnd(int)),Qt::QueuedConnection);
 	connect(this,SIGNAL(_notifyStart(int, QString)),this,SLOT(__notifyStart(int, QString)),Qt::QueuedConnection);
 #ifdef MC_IONOTIFY
@@ -217,6 +218,9 @@ void QtClient::__logOutput(QString s){
 	//ui.textEdit->setHtml(ui.textEdit->toHtml() + s);
 }
 
+void QtClient::notify(int evt, std::string object){
+	emit _notify(evt,object.c_str());
+}
 void QtClient::notifyEnd(int evt){
 	emit _notifyEnd(evt);
 }
@@ -244,11 +248,36 @@ void QtClient::notifySubProgress(double value, double total)
 }
 
 
+void QtClient::__notify(int evt, QString object){
+	switch(evt){
+		case MC_NT_ERROR:
+			progressBar->hide();
+			progressLabel->hide();
+			setStatus(tr("Error: "),object,icon_err);
+			break;
+		case MC_NT_FULLSYNC: //A little out of row
+			listSyncs(); //refresh listing
+			setStatus(tr("Fully synced (") + object + ")","",icon_ok);
+			break;
+		case MC_NT_NOSYNCWARN: //Even more out of row
+			trayIcon->showMessage(tr("No Server Connection"), tr("Last successful server connection: ") + object + tr(".\n") +
+				tr("You might want to check the server settings"), QSystemTrayIcon::Critical);
+			disconnect(trayIcon,SIGNAL(messageClicked()));
+			connect(trayIcon,SIGNAL(messageClicked()),this,SLOT(show()));
+			break;
+		case MC_NT_CASECONFLICT:
+			QMessageBox::warning(this, tr("Case Conflict Detected"), tr("MyCoud is case-insensitive, but your filesystem contains multiple files named ") + object + tr(".\n") +
+				tr("Please rename the conflicting files or add them to the ignore filters. The files are ignored for now but this might lead to errors."));
+			break;
+		default:
+			setStatus(tr("Unknown Notify Type received"),"",icon);
+	}
+}
 void QtClient::__notifyEnd(int evt)
 {
 	uploading = false;
 	downloading = false;
-	switch((MC_NOTIFYTYPE)evt){
+	switch((MC_NOTIFYSTATETYPE)evt){
 		case MC_NT_CONN:
 			setStatus(tr("idle"),"",icon);
 			break;
@@ -280,21 +309,6 @@ void QtClient::__notifyStart(int evt, QString object){
 	uploading = false;
 	downloading = false;
 	switch(evt){
-		case MC_NT_ERROR:
-			progressBar->hide();
-			progressLabel->hide();
-			setStatus(tr("Error: "),object,icon_err);
-			break;
-		case MC_NT_FULLSYNC: //A little out of row
-			listSyncs(); //refresh listing
-			setStatus(tr("Fully synced (") + object + ")","",icon_ok);
-			break;
-		case MC_NT_NOSYNCWARN: //Even more out of row
-			trayIcon->showMessage(tr("No Server Connection"), tr("Last successful server connection: ") + object + tr(".\n") +
-				tr("You might want to check the server settings"), QSystemTrayIcon::Critical);
-			disconnect(trayIcon,SIGNAL(messageClicked()));
-			connect(trayIcon,SIGNAL(messageClicked()),this,SLOT(show()));
-			break;
 		case MC_NT_CONN:
 			currentConnectString = object;
 			setStatus(tr("Connected to "),object,icon_conn);
@@ -433,7 +447,7 @@ int  QtClient::_execConflictDialog(std::string *fullPath, std::string *descLocal
 		trayIcon->showMessage(tr("Conflict Detected"), tr("A file conflict has been detected, you need to choose what to do.\nClick to view"), QSystemTrayIcon::Warning);
 	}
 	disconnect(trayIcon,SIGNAL(messageClicked()));
-	bool test  = connect(trayIcon,SIGNAL(messageClicked()),conflictDialog,SLOT(forceSetFocus()));
+	connect(trayIcon,SIGNAL(messageClicked()),conflictDialog,SLOT(forceSetFocus()));
 	rc = conflictDialog->exec(fullPath,descLocal,descServer,defaultValue,manualSolvePossible);
 	disconnect(trayIcon,SIGNAL(messageClicked()));
 	progressBar->show();
@@ -461,6 +475,7 @@ void QtClient::on_addButton_clicked(){
 	d.exec();
 
 	listSyncs();
+	ui.syncTable->selectRow(ui.syncTable->rowCount()-1);
 }
 
 void QtClient::on_removeButton_clicked(){
@@ -547,7 +562,7 @@ void QtClient::on_upButton_clicked(){
 	if(rc) return;
 	listSyncs();
 	ui.syncTable->setEnabled(true);
-	ui.syncTable->setRangeSelected(QTableWidgetSelectionRange(index-1,0,index-1,ui.syncTable->columnCount()-1),true);
+	ui.syncTable->selectRow(index-1);
 }
 
 void QtClient::on_downButton_clicked(){
@@ -564,7 +579,7 @@ void QtClient::on_downButton_clicked(){
 	if(rc) return;
 	listSyncs();
 	ui.syncTable->setEnabled(true);
-	ui.syncTable->setRangeSelected(QTableWidgetSelectionRange(index+1,0,index+1,ui.syncTable->columnCount()-1),true);
+	ui.syncTable->selectRow(index+1);
 }
 
 void QtClient::on_editButton_clicked(){
@@ -572,7 +587,7 @@ void QtClient::on_editButton_clicked(){
 	QtSyncDialog d(this,synclist[index].id);
 	d.exec();
 	listSyncs();
-	ui.syncTable->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.syncTable->columnCount()-1),true);
+	ui.syncTable->selectRow(index);
 }
 
 void QtClient::on_settingsButton_clicked(){
@@ -609,7 +624,7 @@ void QtClient::on_disableButton_clicked(){
 	if(rc) return;
 	listSyncs();
 	ui.syncTable->setEnabled(true);
-	ui.syncTable->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.syncTable->columnCount()-1),true);
+	ui.syncTable->selectRow(index);
 }
 
 void QtClient::on_syncTable_itemSelectionChanged(){

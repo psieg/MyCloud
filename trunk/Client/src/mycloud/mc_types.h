@@ -22,21 +22,30 @@ using namespace std;
 #include "openssl/evp.h"
 
 #ifdef MC_QTCLIENT
-/* Events sent to QtClient with the MC_NOTIFY macro, -Start have a string parameter */
-enum MC_NOTIFYTYPE : int {
+/* Events sent to QtClient with the MC_NOTIFY macros */
+// for MC_NOTIFY
+enum MC_NOTIFYSINGLETYPE : int {
+	MC_NT_FULLSYNC		= 0,
+	MC_NT_ERROR			= 1,
+	MC_NT_NOSYNCWARN	= 2,
+	MC_NT_CASECONFLICT	= 3
+};
+// form MC_NOTIFYSTART / MC_NOTIFYEND
+enum MC_NOTIFYSTATETYPE : int {
 	MC_NT_CONN			= 0,
 	MC_NT_SYNC			= 1,
 	MC_NT_UL			= 2,
 	MC_NT_DL			= 3,
-	MC_NT_FULLSYNC		= 4, //A little out of row, has no end
-	MC_NT_ERROR			= 5,
-	MC_NT_NOSYNCWARN	= 6 //Even more...
-#	ifdef MC_IONOTIFY
-	,	MC_NT_DB	= 6,
-		MC_NT_FS	= 7,
-		MC_NT_SRV	= 8
-#	endif
 };
+// form MC_NOTIFYIOSTART / MC_NOTIFYIOEND
+#ifdef MC_IONOTIFY
+enum MC_NOTIFYIOTYPE : int {
+	MC_NT_DB	= 0,
+	MC_NT_FS	= 1,
+	MC_NT_SRV	= 2
+};
+#endif
+
 /* conflict dialog filename maxlen */
 #	define MC_QTCONFLICTMAXLEN	35
 #endif

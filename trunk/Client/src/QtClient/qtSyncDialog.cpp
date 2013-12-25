@@ -691,6 +691,7 @@ void QtSyncDialog::accept(){
 		newsync.id = srvsynclist[ui.nameBox->currentIndex()].id;
 		newsync.uid = srvsynclist[ui.nameBox->currentIndex()].uid;
 		newsync.name = srvsynclist[ui.nameBox->currentIndex()].name;
+		newsync.path = "";
 
 		worksync = &newsync;
 
@@ -702,8 +703,15 @@ void QtSyncDialog::accept(){
 			return;
 		}
 	}
-	worksync->path = qPrintable(ui.pathEdit->text().replace("\\","/"));
-	if(worksync->path[worksync->path.length()-1] != '/') worksync->path.append("/");
+
+	string newpath = qPrintable(ui.pathEdit->text().replace("\\","/"));
+	if(newpath[newpath.length()-1] != '/') newpath.append("/");
+	if(worksync->path != "" && newpath != worksync->path){
+		QMessageBox::warning(this, tr("Moving Syncs"), 
+			tr("Be sure to move the files to the new path as well,\notherwise the system will assume the files were deleted."), QMessageBox::Ok);
+	}
+	worksync->path = newpath;
+
 	worksync->crypted = srvsynclist[ui.nameBox->currentIndex()].crypted;
 
 	if(worksync->crypted){
@@ -855,6 +863,7 @@ void QtSyncDialog::on_addFilterButton_clicked(){
 	}
 
 	listFilters();
+	ui.filterTable->selectRow(ui.filterTable->rowCount()-1);
 }
 
 void QtSyncDialog::on_removeFilterButton_clicked(){
@@ -882,7 +891,7 @@ void QtSyncDialog::on_editFilterButton_clicked(){
 		return;
 	}
 	listFilters();
-	ui.filterTable->setRangeSelected(QTableWidgetSelectionRange(index,0,index,ui.filterTable->columnCount()-1),true);
+	ui.filterTable->selectRow(index);
 }
 
 void QtSyncDialog::on_addShareButton_clicked(){
