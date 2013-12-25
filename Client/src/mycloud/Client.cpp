@@ -201,13 +201,13 @@ int runmc()
 							rc = fullsync(&dbsyncs);
 							if(!rc){
 								MC_INFL("Run completed, fully synced");
-								MC_NOTIFYSTART(MC_NT_FULLSYNC,TimeToString(time(NULL)));
+								MC_NOTIFY(MC_NT_FULLSYNC,TimeToString(time(NULL)));
 							} else if(rc == MC_ERR_NOTFULLYSYNCED){
 								MC_INFL("Run completed, not synced, running again");
 								MC_NOTIFYEND(MC_NT_SYNC); //Trigger ListSyncs
 								continue;
 							} else if(rc == MC_ERR_NETWORK){
-								MC_NOTIFYSTART(MC_NT_ERROR, "Network Error");						
+								MC_NOTIFY(MC_NT_ERROR, "Network Error");						
 								if(status.watchmode > 0)
 									mc_sleep_checkterminate(status.watchmode);
 								else
@@ -235,19 +235,19 @@ int runmc()
 								break;
 							case MC_ERR_PROTOCOL:
 								cerr << "Error while processing protocol. Aborting" << endl;
-								MC_NOTIFYSTART(MC_NT_ERROR,"Protocol Error");
+								MC_NOTIFY(MC_NT_ERROR,"Protocol Error");
 								break;
 							case MC_ERR_CRYPTOALERT:
 								return cryptopanic();
 							default:
 								cerr << "Internal error: " << i << " Aborting." << endl;
-								MC_NOTIFYSTART(MC_NT_ERROR,"Internal error");
+								MC_NOTIFY(MC_NT_ERROR,"Internal error");
 						}
 					}
 					MC_NOTIFYEND(MC_NT_CONN);
 				} else {
 					cerr << "Error while connecting" << endl;
-					MC_NOTIFYSTART(MC_NT_ERROR,"Failed to connect to server");
+					MC_NOTIFY(MC_NT_ERROR,"Failed to connect to server");
 
 					// No-sync warning
 					if(time(NULL) - lastnosynccheck > MC_NOSYNCCHECK){ //only warn every x seconds
@@ -256,7 +256,7 @@ int runmc()
 						if(rc) return rc;
 						if(status.lastconn > 0 && time(NULL) - status.lastconn > MC_NOSYNCWARN){
 							MC_WRN("No server connection in the last 24 hours!");
-							MC_NOTIFYSTART(MC_NT_NOSYNCWARN,TimeToString(status.lastconn));
+							MC_NOTIFY(MC_NT_NOSYNCWARN,TimeToString(status.lastconn));
 						}
 					}
 				}
@@ -269,7 +269,7 @@ int runmc()
 			}
 		} else {
 			cerr << "Database Error" << endl;
-			MC_NOTIFYSTART(MC_NT_ERROR,"Failed to open database");
+			MC_NOTIFY(MC_NT_ERROR,"Failed to open database");
 		}
 	}
 	//db_close();

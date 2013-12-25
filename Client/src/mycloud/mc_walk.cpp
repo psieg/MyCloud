@@ -23,7 +23,38 @@ int checkmissedpurge(mc_file *db, mc_file *srv){
 	return 0;
 }
 
-
+/* Check for case conflicts in onfs, if found remove all matching entries in the other lists */
+string badval; //this isn't really beautiful, any better ideas?
+bool isbadvalfs(const mc_file_fs& val){ return nocase_equals(val.name, badval); }
+bool isbadval(const mc_file& val){ return nocase_equals(val.name, badval); }
+void detectcaseconflict(list<mc_file_fs> *onfs, list<mc_file> *indb, list<mc_file> *onsrv){
+	if(onfs->size() > 1){
+		list<mc_file_fs>::iterator onfsit = onfs->begin();
+		list<mc_file_fs>::iterator next = ++onfs->begin();
+		list<mc_file_fs>::iterator onfsend = onfs->end();
+		string bad = "";
+		while(onfsit != onfsend && next != onfsend){
+			if(nocase_equals(onfsit->name, next->name)){ //found a conflict
+				bad = onfsit->name;
+				// forward next to the next different entry and onfsit to the last "bad" entry
+				while(next != onfsend && nocase_equals(bad, next->name)){
+					++onfsit;
+					++next;
+				}
+				// remove the bad entries from all lists
+				badval = bad;
+				onfs->remove_if(isbadvalfs);
+				indb->remove_if(isbadval);
+				onsrv->remove_if(isbadval);
+				// inform the user
+				MC_INF("Found case-conflict: " << badval);
+				MC_NOTIFY(MC_NT_CASECONFLICT, badval);
+			}
+			++onfsit;
+			++next;
+		}
+	}
+}
 
 
 /* Verify the files match (react if not) and make sure the same data is on all stores
@@ -42,7 +73,6 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 	spath.assign(path).append(srv->name);
 	fpath.assign(ctx->sync->path).append(spath);
 	MC_DBG("Verifying file " << srv->id << ": " << printname(srv));
-	//mc_sleepms(10);
 
 	if(db == NULL){
 		if(fs->is_dir != srv->is_dir) 
@@ -221,8 +251,10 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 	indb.sort(compare_mc_file);
 	onsrv.sort(compare_mc_file);
 
-	rc = filter_lists(path,&onfs, &indb, &onsrv, ctx->filter);
+	rc = filter_lists(path, &onfs, &indb, &onsrv, ctx->filter);
 	MC_CHKERR(rc);
+
+	detectcaseconflict(&onfs, &indb, &onsrv);
 
 	onfsit = onfs.begin();
 	onfsend = onfs.end();
@@ -465,6 +497,8 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	rc = filter_lists(path,&onfs,&indb,&srvdummy,ctx->filter);
 	MC_CHKERR(rc);
 
+	detectcaseconflict(&onfs, &indb, &srvdummy);
+
 	onfsit = onfs.begin();
 	onfsend = onfs.end();
 	indbit = indb.begin();
@@ -565,6 +599,8 @@ int walk_nolocal(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 
 	rc = filter_lists(path,NULL,&indb,&onsrv,ctx->filter);
 	MC_CHKERR(rc);
+
+	//can't have any case conflicts in fs
 
 	indbit = indb.begin();
 	indbend = indb.end();
@@ -672,6 +708,8 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	
 	rc = filter_lists(path,&onfs,&indb,NULL,ctx->filter);
 	MC_CHKERR(rc);
+
+	detectcaseconflict(&onfs, &indb, &onsrv);
 
 	onfsit = onfs.begin();
 	onfsend = onfs.end();

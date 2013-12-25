@@ -21,6 +21,7 @@ INCLUDEPATH += . \
 HEADERS += ../../src/mycloud/Client.h \
            ../../src/mycloud/mc.h \
            ../../src/mycloud/mc_crypt.h \
+           ../../src/mycloud/mc_conflict.h \
            ../../src/mycloud/mc_db.h \
            ../../src/mycloud/mc_filter.h \
            ../../src/mycloud/mc_fs.h \
@@ -42,6 +43,7 @@ HEADERS += ../../src/mycloud/Client.h \
            ../../src/QtClient/qtNewSyncDialog.h \
            ../../src/QtClient/qtPasswordChangeDialog.h \
            ../../src/QtClient/qtSettingsDialog.h \
+           ../../src/QtClient/qtShareDialog.h \
            ../../src/QtClient/qtSyncDialog.h \
            ../../src/QtClient/qtUpdateChecker.h \
            ../../src/sqlite-amalgamation/sqlite3.h
@@ -52,10 +54,12 @@ FORMS += ../../src/QtClient/qtClient.ui \
          ../../src/QtClient/qtNewSyncDialog.ui \
          ../../src/QtClient/qtPasswordChangeDialog.ui \
          ../../src/QtClient/qtSettingsDialog.ui \
+         ../../src/QtClient/qtShareDialog.ui \
          ../../src/QtClient/qtSyncDialog.ui
 RESOURCES += ../../src/QtClient/qtClient.qrc
 SOURCES += ../../src/mycloud/Client.cpp \
            ../../src/mycloud/mc_crypt.cpp \
+           ../../src/mycloud/mc_conflict.cpp \
            ../../src/mycloud/mc_db.cpp \
            ../../src/mycloud/mc_filter.cpp \
            ../../src/mycloud/mc_fs.cpp \
@@ -75,6 +79,7 @@ SOURCES += ../../src/mycloud/Client.cpp \
            ../../src/QtClient/qtNewSyncDialog.cpp \
            ../../src/QtClient/qtPasswordChangeDialog.cpp \
            ../../src/QtClient/qtSettingsDialog.cpp \
+           ../../src/QtClient/qtShareDialog.cpp \
            ../../src/QtClient/qtSyncDialog.cpp \
            ../../src/QtClient/qtUpdateChecker.cpp \
            ../../src/sqlite-amalgamation/sqlite3.c

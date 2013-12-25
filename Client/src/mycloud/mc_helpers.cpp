@@ -119,6 +119,6 @@ int cryptopanic(){
 	cerr << "Changing server url to force manual interaction." << endl;
 	db_execstr("UPDATE status SET url = 'UNTRUSTED: ' || url");
 	MC_NOTIFYEND(MC_NT_SYNC); //Trigger ListSyncs
-	MC_NOTIFYSTART(MC_NT_ERROR,"Crypt Verify Fail: Server can't be trusted");
+	MC_NOTIFY(MC_NT_ERROR,"Crypt Verify Fail: Server can't be trusted");
 	return MC_ERR_CRYPTOALERT;
 }

@@ -20,6 +20,7 @@ INCLUDEPATH += . \
 HEADERS += ../../src/mycloud/Client.h \
            ../../src/mycloud/mc.h \
            ../../src/mycloud/mc_crypt.h \
+           ../../src/mycloud/mc_conflict.h \
            ../../src/mycloud/mc_db.h \
            ../../src/mycloud/mc_filter.h \
            ../../src/mycloud/mc_fs.h \
@@ -36,6 +37,7 @@ HEADERS += ../../src/mycloud/Client.h \
            ../../src/sqlite-amalgamation/sqlite3.h
 SOURCES += ../../src/mycloud/Client.cpp \
            ../../src/mycloud/mc_crypt.cpp \
+           ../../src/mycloud/mc_conflict.cpp \
            ../../src/mycloud/mc_db.cpp \
            ../../src/mycloud/mc_filter.cpp \
            ../../src/mycloud/mc_fs.cpp \

@@ -27,6 +27,7 @@ class QtClient : public QMainWindow
 	Q_OBJECT
 signals:
 	void _logOutput(QString s);
+	void _notify(int evt, QString object);
 	void _notifyEnd(int evt);
 	void _notifyStart(int evt, QString object);
 //#ifdef MC_IONOTIFY //QtDisallow
@@ -42,6 +43,7 @@ public:
 	static QtClient* instance(){ return _instance; }
 
 	void logOutput(QString s);
+	void notify(int evt, std::string object);
 	void notifyEnd(int evt);
 	void notifyStart(int evt, std::string object);
 #ifdef MC_IONOTIFY
@@ -67,6 +69,7 @@ public slots:
 
 private slots:
 	void __logOutput(QString s);
+	void __notify(int evt, QString object);
 	void __notifyEnd(int evt);
 	void __notifyStart(int evt, QString object);
 //#ifdef MC_IONOTIFY //Qt disallow
