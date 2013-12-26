@@ -24,9 +24,6 @@ int checkmissedpurge(mc_file *db, mc_file *srv){
 }
 
 /* Check for case conflicts in onfs, if found remove all matching entries in the other lists */
-string badval; //this isn't really beautiful, any better ideas?
-bool isbadvalfs(const mc_file_fs& val){ return nocase_equals(val.name, badval); }
-bool isbadval(const mc_file& val){ return nocase_equals(val.name, badval); }
 void detectcaseconflict(list<mc_file_fs> *onfs, list<mc_file> *indb, list<mc_file> *onsrv){
 	if(onfs->size() > 1){
 		list<mc_file_fs>::iterator onfsit = onfs->begin();
@@ -42,13 +39,13 @@ void detectcaseconflict(list<mc_file_fs> *onfs, list<mc_file> *indb, list<mc_fil
 					++next;
 				}
 				// remove the bad entries from all lists
-				badval = bad;
-				onfs->remove_if(isbadvalfs);
-				indb->remove_if(isbadval);
-				onsrv->remove_if(isbadval);
+				onfs->remove_if([&](mc_file_fs& f){ return nocase_equals(bad, f.name); });
+				indb->remove_if([&](mc_file& f){ return nocase_equals(bad, f.name); });
+				onsrv->remove_if([&](mc_file& f){ return nocase_equals(bad, f.name); });
+
 				// inform the user
-				MC_INF("Found case-conflict: " << badval);
-				MC_NOTIFY(MC_NT_CASECONFLICT, badval);
+				MC_INF("Found case-conflict: " << bad);
+				MC_NOTIFY(MC_NT_CASECONFLICT, bad);
 			}
 			++onfsit;
 			++next;
