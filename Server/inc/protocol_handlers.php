@@ -555,7 +555,9 @@ function handle_delfile($ibuf,$uid){
 	$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry[0]." AND status != ".MC_FILESTAT_DELETED.
 		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
-	if($q->num_rows != 0) return pack_code(MC_SRVSTAT_NOTEMPTY);
+	if($q->num_rows != 0) return pack_interror("SELECT id FROM mc_files WHERE parent = ".$qry[0]." AND status != ".MC_FILESTAT_DELETED.
+		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
+#pack_code(MC_SRVSTAT_NOTEMPTY);
 
 	$q = $mysqli->query("SELECT status FROM mc_files WHERE id = ".$qry[0].
 		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
@@ -573,12 +575,14 @@ function handle_delfile($ibuf,$uid){
 			" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 		if(!$q) return pack_interror($mysqli->error);
 		$filedata = filedata($qry[0]);
-		if(is_dir($filedata[0])){
-			$rc = rmdir($filedata[0]);
-			if(!$rc) return pack_interror("Failed to rmdir the file");
-		} else {
-			$rc = unlink($filedata[0]);
-			if(!$rc) return pack_interror("Failed to unlink the file");
+		if(file_exists($filedata[0])){
+			if(is_dir($filedata[0])){
+				$rc = rmdir($filedata[0]);
+				if(!$rc) return pack_interror("Failed to rmdir the file");
+			} else {
+				$rc = unlink($filedata[0]);
+				if(!$rc) return pack_interror("Failed to unlink the file");
+			}
 		}
 	}
 	updateHash($qry[0]);
@@ -622,13 +626,15 @@ function handle_purgefile($ibuf,$uid){
 
 	//If file deletion failed (normally because the file doesnt exist) we want the db entry removed
 	if($status != MC_FILESTAT_DELETED){
-		if(is_dir($filedata[0])){
-			$rc = rmdir($filedata[0]);
-			if(!$rc) return pack_interror("Failed to rmdir the file");
-		} else {
-			$rc = unlink($filedata[0]);
-			if(!$rc) return pack_interror("Failed to unlink the file");
-		}
+		if(file_exists($filedata[0])){
+			if(is_dir($filedata[0])){
+				$rc = rmdir($filedata[0]);
+				if(!$rc) return pack_interror("Failed to rmdir the file");
+			} else {
+				$rc = unlink($filedata[0]);
+				if(!$rc) return pack_interror("Failed to unlink the file");
+			}
+}
 	}
 
 	updateHash($parent);
