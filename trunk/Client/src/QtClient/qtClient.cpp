@@ -190,10 +190,12 @@ void QtClient::closeEvent(QCloseEvent *event)
 
 void QtClient::startNewRun(){
 	//ui.textEdit->clear();
+	std::cout << "<i>start</i>" << std::endl;
 	worker.start();
 }
 
 void QtClient::stopCurrentRun(){
+	std::cout << "<i>stop</i>" << std::endl;
 	worker.quit();
 }
 
@@ -271,14 +273,21 @@ void QtClient::__notify(int evt, QString object){
 			setStatus(tr("Fully synced (") + object + ")","",icon_ok);
 			break;
 		case MC_NT_NOSYNCWARN: //Even more out of row
-			trayIcon->showMessage(tr("No Server Connection"), tr("Last successful server connection: ") + object + tr(".\n") +
-				tr("You might want to check the server settings"), QSystemTrayIcon::Critical);
+			trayIcon->showMessage(tr("No Server Connection"), tr("Last successful server connection: ") + object + tr(".\n"
+				"You might want to check the server settings"), QSystemTrayIcon::Critical);
 			disconnect(trayIcon,SIGNAL(messageClicked()));
 			connect(trayIcon,SIGNAL(messageClicked()),this,SLOT(show()));
 			break;
 		case MC_NT_CASECONFLICT:
-			QMessageBox::warning(this, tr("Case Conflict Detected"), tr("MyCoud is case-insensitive, but your filesystem contains multiple files named ") + object + tr(".\n") +
-				tr("Please rename the conflicting files or add them to the ignore filters. The files are ignored for now but this might lead to errors."));
+			QMessageBox::warning(this, tr("Case Conflict Detected"), tr("MyCoud is case-insensitive, but your filesystem contains multiple files named ") + object + tr(".\n"
+				"Please rename the conflicting files or add them to the ignore filters. The files are ignored for now but this might lead to errors."));
+			break;
+		case MC_NT_CRYPTOFAIL:
+			QMessageBox::critical(this, tr("Server untrusted"), tr("The decryption of data from the server failed.\n"
+																	"This can only occur if the data was modified on the server or in case of a bug in the software!\n"
+																	"The server is not considered trusted any more and we will not sync any more data.\n"
+																	"Check the log for details where exactly the failure occured.\n"
+																	"If you absolutely trust the server, remove the prefix from the server URL."));
 			break;
 		default:
 			setStatus(tr("Unknown Notify Type received"),"",icon);
@@ -473,11 +482,9 @@ void QtClient::on_quitButton_clicked(){
 }
 
 void QtClient::on_pushButton_clicked(){
-	std::cout << "<i>start</i>" << std::endl;
 	startNewRun();
 }
 void QtClient::on_pushButton2_clicked(){
-	std::cout << "<i>stop</i>" << std::endl;
 	stopCurrentRun();
 }
 
@@ -677,6 +684,15 @@ void QtClient::trayIconActivated(QSystemTrayIcon::ActivationReason reason){
 			} else {
 				startAction->setVisible(true);
 				stopAction->setVisible(false);
+			}
+			if(qApp->activeModalWidget()){
+				startAction->setEnabled(false);
+				stopAction->setEnabled(false);
+				quitAction->setEnabled(false);
+			} else {
+				startAction->setEnabled(true);
+				stopAction->setEnabled(true);
+				quitAction->setEnabled(true);
 			}
 			break;
 		default:
