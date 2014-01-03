@@ -27,7 +27,7 @@
 * refactoring + protocol update
 
 0.2.8
-+ Added Application Icon and Details for QtClient binary (windows)
++ Application Icon and Details for QtClient binary (windows)
 + Syncs can be edited (change local path, cryptokey)
 + User Interface to view and edit filters
 + Filters are encrypted for encrypted syncs
@@ -61,4 +61,7 @@
 * accept all certificates option hidden in release mode
 
 0.3.2
++ Detection of case conflicts (with message)
++ Run/Abort entries to the tray icon
++ Error message on decryption failure
 * fix crash when uploading a dir replaced with a file
