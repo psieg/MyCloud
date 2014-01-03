@@ -112,13 +112,10 @@ int fullsync(list<mc_sync_db> *dbsyncs){
 
 /* panic action when decryption failed */
 int cryptopanic(){
-	cerr << "Crypt Verify Fail. Aborting." << endl;
+	MC_WRN("Crypt Verify Fail. Aborting.");
 	srv_close();
-	cerr << "Server can't be trusted. Disabling all Syncs." << endl;
-	db_execstr(string("UPDATE syncs SET status = ") + to_string(MC_SYNCSTAT_DISABLED));
-	cerr << "Changing server url to force manual interaction." << endl;
-	db_execstr("UPDATE status SET url = 'UNTRUSTED: ' || url");
+	db_execstr("UPDATE status SET url = '" MC_UNTRUSTEDPREFIX "' || url");
 	MC_NOTIFYEND(MC_NT_SYNC); //Trigger ListSyncs
-	MC_NOTIFY(MC_NT_ERROR,"Crypt Verify Fail: Server can't be trusted");
+	MC_NOTIFY(MC_NT_CRYPTOFAIL,"");
 	return MC_ERR_CRYPTOALERT;
 }

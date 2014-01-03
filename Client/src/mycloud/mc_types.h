@@ -28,7 +28,8 @@ enum MC_NOTIFYSINGLETYPE : int {
 	MC_NT_FULLSYNC		= 0,
 	MC_NT_ERROR			= 1,
 	MC_NT_NOSYNCWARN	= 2,
-	MC_NT_CASECONFLICT	= 3
+	MC_NT_CASECONFLICT	= 3,
+	MC_NT_CRYPTOFAIL	= 4
 };
 // form MC_NOTIFYSTART / MC_NOTIFYEND
 enum MC_NOTIFYSTATETYPE : int {
@@ -53,6 +54,8 @@ enum MC_NOTIFYIOTYPE : int {
 //what to add to conflict files to be solve manually
 //should be on the server's ignore list!
 #define MC_CONFLICTEXTENSION	".mc_conflict"
+
+#define MC_UNTRUSTEDPREFIX		"UNTRUSTED:"
 
 #define MC_OK					0	//implicit, cant change
 #define MC_ERR_DB				1

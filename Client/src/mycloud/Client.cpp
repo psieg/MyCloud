@@ -37,6 +37,10 @@ int runmc()
 				if(status.url == ""){ //TODO: ask
 					MC_ERR_MSG(MC_ERR_NOT_CONFIGURED,"No server configured");
 				}
+				if(status.url.substr(0, strlen(MC_UNTRUSTEDPREFIX)) == MC_UNTRUSTEDPREFIX){ //If a previous run failed, don't try
+					MC_NOTIFY(MC_NT_CRYPTOFAIL,"");
+					MC_ERR_MSG(MC_ERR_CRYPTOALERT, "Untrusted server, aborting");
+				}
 				rc = srv_open(status.url,CAFILE,status.uname,status.passwd,&basedate,&uid,status.acceptallcerts);
 				if(!rc){
 					try {
