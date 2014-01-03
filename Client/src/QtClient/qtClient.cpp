@@ -119,11 +119,18 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	//TrayIcon stuff
 	showAction = new QAction(tr("&Show"), this);
     connect(showAction, SIGNAL(triggered()), this, SLOT(showNormal()));
+	startAction = new QAction(tr("&Run"), this);
+    connect(startAction, SIGNAL(triggered()), this, SLOT(startNewRun()));
+	stopAction = new QAction(tr("&Abort"), this);
+    connect(stopAction, SIGNAL(triggered()), this, SLOT(stopCurrentRun()));
 	quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
 
 	trayIconMenu = new QMenu(this);
 	trayIconMenu->addAction(showAction);
+	trayIconMenu->addSeparator();
+	trayIconMenu->addAction(startAction);
+	trayIconMenu->addAction(stopAction);
 	trayIconMenu->addAction(quitAction);
 
 	trayIcon = new QSystemTrayIcon(this);
@@ -158,7 +165,7 @@ QtClient::QtClient(QWidget *parent, int autorun)
 QtClient::~QtClient()
 {
 	if(conflictDialog) delete conflictDialog;
-	worker.quit();
+	stopCurrentRun();
 	QtClient::_instance = NULL;
 }
 
@@ -182,8 +189,12 @@ void QtClient::closeEvent(QCloseEvent *event)
 }
 
 void QtClient::startNewRun(){
-	ui.textEdit->clear();
+	//ui.textEdit->clear();
 	worker.start();
+}
+
+void QtClient::stopCurrentRun(){
+	worker.quit();
 }
 
 void QtClient::quit(){
@@ -191,7 +202,7 @@ void QtClient::quit(){
 		worker.terminating = true;
 		conflictDialog->quit = true;
 	} else {
-		worker.quit();
+		stopCurrentRun();
 		qApp->quit();
 	}
 }
@@ -213,7 +224,7 @@ void QtClient::logOutput(QString s){
 }
 
 void QtClient::__logOutput(QString s){
-	if(ui.textEdit->toPlainText().length() > 1024*1024) ui.textEdit->clear();
+	if(ui.textEdit->document()->lineCount() > 1024) ui.textEdit->clear();
 	ui.textEdit->append(s);
 	//ui.textEdit->setHtml(ui.textEdit->toHtml() + s);
 }
@@ -467,7 +478,7 @@ void QtClient::on_pushButton_clicked(){
 }
 void QtClient::on_pushButton2_clicked(){
 	std::cout << "<i>stop</i>" << std::endl;
-	worker.quit();
+	stopCurrentRun();
 }
 
 void QtClient::on_addButton_clicked(){
@@ -501,7 +512,7 @@ void QtClient::on_removeButton_clicked(){
 			if(b2.exec() == QMessageBox::Ok){
 				if(worker.isRunning()){
 					MC_INF("Stopping Worker");
-					worker.quit();
+					stopCurrentRun();
 				}
 			} else {
 				cando = false;
@@ -603,8 +614,8 @@ void QtClient::on_settingsButton_clicked(){
 			if(b.exec() == QMessageBox::Ok){
 				if(worker.isRunning()){
 					MC_INF("Restarting Worker");
-					worker.quit();
-					worker.start();
+					stopCurrentRun();
+					startNewRun();
 				}
 			}
 		}
@@ -658,6 +669,15 @@ void QtClient::trayIconActivated(QSystemTrayIcon::ActivationReason reason){
 			else { this->show(); this->activateWindow(); }
 			break;
 		case QSystemTrayIcon::MiddleClick:
+			break;
+		case QSystemTrayIcon::Context:
+			if(worker.isRunning()){
+				startAction->setVisible(false);
+				stopAction->setVisible(true);
+			} else {
+				startAction->setVisible(true);
+				stopAction->setVisible(false);
+			}
 			break;
 		default:
 			;

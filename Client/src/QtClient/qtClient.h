@@ -65,6 +65,7 @@ protected:
 
 public slots:
 	void startNewRun();
+	void stopCurrentRun();
 	void quit();
 
 private slots:
@@ -107,7 +108,7 @@ private:
 	QLabel *progressLabel;
 	QSystemTrayIcon *trayIcon;
 	QMenu *trayIconMenu;
-	QAction *quitAction, *showAction;
+	QAction *quitAction, *showAction, *startAction, *stopAction;
 	QTimer *delayTimer;
 	QIcon icon,icon_conn,icon_sync,icon_ul,icon_dl,icon_cf,icon_err,icon_ok;
 	QIcon status_sync,status_err,status_done,status_ok,status_new,status_disabled,status_unknown;
