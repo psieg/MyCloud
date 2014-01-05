@@ -39,6 +39,7 @@ private slots:
 	void filterDeleteReceived(int);
 	void shareDeleteReceived(int);
 	void syncDeleteReceived(int);
+	void userReceived(int);
 	void keyringReceived_actual(int);
 	void keyringReceivedLooking(int);
 	void keyringReceivedAdding(int);
@@ -62,6 +63,7 @@ protected:
 private:
 	void generateNewKey();
 	void accept_step2();
+	void accept_step3();
 	void filldbdata();
 	void listFilters();
 	void listFilters_actual();
@@ -88,6 +90,7 @@ private:
 	mc_share deletingshare;
 	mc_sync_db *worksync;
 	mc_sync_db newsync;
+	mc_user worksyncowner;
 	list<mc_keyringentry> keyring;
 	bool keyringloaded;
 	QString keyringpass;

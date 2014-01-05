@@ -89,6 +89,11 @@ void QtNewSyncDialog::userReceived(int rc){
 	}
 
 	self = l.front();
+	rc = db_insert_user(&self);
+	if(rc){
+		reject();
+		return;
+	}
 	
 	ui.sendLabel->setText(tr("<i>sending request...</i>"));
 	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
