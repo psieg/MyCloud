@@ -155,12 +155,14 @@ int QtWatcher::changeTimeout(){
 		rc = db_list_sync(&newsyncs);
 		MC_CHKERR(rc);
 		for(mc_sync_db& s : newsyncs){
-			if(s.status != MC_SYNCSTAT_DISABLED) watchsyncs->push_back(s);
+			if(s.status != MC_SYNCSTAT_DISABLED || s.status != MC_SYNCSTAT_CRYPTOFAIL) watchsyncs->push_back(s);
 		}
 		dbsyncsit = watchsyncs->begin();
 		dbsyncsend = watchsyncs->end();
 		for(;dbsyncsit != dbsyncsend; ++dbsyncsit){
-			if(s.startsWith(dbsyncsit->path.c_str()) && dbsyncsit->status != MC_SYNCSTAT_DISABLED) break;
+			if(s.startsWith(dbsyncsit->path.c_str()) 
+				&& dbsyncsit->status != MC_SYNCSTAT_DISABLED
+				&& dbsyncsit->status != MC_SYNCSTAT_CRYPTOFAIL) break;
 		}
 		if(dbsyncsit == dbsyncsend) MC_ERR_MSG(-1,"Path " << qPrintable(s) << " not in any watched sync");
 
@@ -207,14 +209,12 @@ int QtWatcher::changeTimeout(){
 			}
 			sp = sp.left(sp.length()-1); //remove trailing /
 			MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
-			rc = walk_nochange(&context,qPrintable(sp),f.id,f.hash);
-			if(rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
-			else if(rc == MC_ERR_CRYPTOALERT) return cryptopanic();
-			else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
+			int wrc = walk_nochange(&context,qPrintable(sp),f.id,f.hash);
+			if(wrc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+			else if(wrc == MC_ERR_CRYPTOALERT) return cryptopanic();
+			else if(MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
 			else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
-			dbsyncsit->lastsync = time(NULL); //TODO: not always a full sync!
-			//rc = db_update_sync(&*dbsyncsit);
-			//MC_CHKERR(rc);
+			dbsyncsit->lastsync = time(NULL); 
 
 			rc = db_update_file(&f);
 			MC_CHKERR(rc);
@@ -224,6 +224,8 @@ int QtWatcher::changeTimeout(){
 
 			rc = db_update_sync(&*dbsyncsit); //Hash must be written back to watchsyncs
 			MC_CHKERR(rc);
+			
+			if(wrc == MC_ERR_CRYPTOALERT) return cryptopanic();
 
 			MC_NOTIFYEND(MC_NT_SYNC);
 
@@ -267,12 +269,14 @@ int QtWatcher::remoteChange(int status){
 		rc = db_list_sync(&newsyncs);
 		MC_CHKERR(rc);
 		for(mc_sync_db& s : newsyncs){
-			if(s.status != MC_SYNCSTAT_DISABLED) watchsyncs->push_back(s);
+			if(s.status != MC_SYNCSTAT_DISABLED && s.status != MC_SYNCSTAT_CRYPTOFAIL) watchsyncs->push_back(s);
 		}
 		dbsyncsit = watchsyncs->begin();
 		dbsyncsend = watchsyncs->end();
 		for(;dbsyncsit != dbsyncsend; ++dbsyncsit){
-			if(id == dbsyncsit->id && dbsyncsit->status != MC_SYNCSTAT_DISABLED) break;
+			if(id == dbsyncsit->id 
+				&& dbsyncsit->status != MC_SYNCSTAT_DISABLED
+				&& dbsyncsit->status != MC_SYNCSTAT_CRYPTOFAIL) break;
 		}
 		if(dbsyncsit == dbsyncsend) MC_ERR_MSG(MC_ERR_SERVER,"Remote Change Notify for non-watched sync");
 		//Filters
@@ -287,14 +291,15 @@ int QtWatcher::remoteChange(int status){
 		//Run
 		init_sync_ctx(&context,&*dbsyncsit,&filter);
 		MC_NOTIFYSTART(MC_NT_SYNC,dbsyncsit->name);
-		rc = walk(&context,"",-dbsyncsit->id,dbsyncsit->hash);
-		if(rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
-		else if(rc == MC_ERR_CRYPTOALERT) return cryptopanic();
-		else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
+		int wrc = walk(&context,"",-dbsyncsit->id,dbsyncsit->hash);
+		if(wrc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+		else if(wrc == MC_ERR_CRYPTOALERT) dbsyncsit->status = MC_SYNCSTAT_CRYPTOFAIL;
+		else if(MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
 		else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
 		dbsyncsit->lastsync = time(NULL);
 		rc = db_update_sync(&*dbsyncsit);
 		MC_CHKERR(rc);
+		if(wrc == MC_ERR_CRYPTOALERT) return cryptopanic();
 		MC_NOTIFYEND(MC_NT_SYNC);
 		
 		if(MC_TERMINATING()) return MC_ERR_TERMINATING;
@@ -358,7 +363,7 @@ int enter_watchmode(int timeout){
 	dbsyncsit = dbsyncs.begin();
 	dbsyncsend = dbsyncs.end();
 	for(;dbsyncsit != dbsyncsend; ++dbsyncsit){ //Foreach db sync
-		if(dbsyncsit->status != MC_SYNCSTAT_DISABLED){
+		if(dbsyncsit->status != MC_SYNCSTAT_DISABLED && dbsyncsit->status != MC_SYNCSTAT_CRYPTOFAIL){
 			rdepth = 0;
 			rc = add_dir(dbsyncsit->path,-dbsyncsit->id,&l,rdepth);
 			MC_CHKERR(rc);

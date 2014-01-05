@@ -62,6 +62,7 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	status_ok = QIcon(":/Resources/status_ok.png");
 	status_new = QIcon(":/Resources/status_new.png");
 	status_disabled = QIcon(":/Resources/status_disabled.png");
+	status_warn = QIcon(":/Resources/status_warn.png");
 	status_unknown = QIcon(":/Resources/status_unknown.png");
 	lock = QIcon(":/Resources/lock.png");
 	enable = QIcon(":/Resources/enable.png");
@@ -226,7 +227,8 @@ void QtClient::logOutput(QString s){
 }
 
 void QtClient::__logOutput(QString s){
-	if(ui.textEdit->document()->lineCount() > 1024) ui.textEdit->clear();
+	if(ui.textEdit->document()->lineCount() > 1024) 
+		ui.textEdit->clear();
 	ui.textEdit->append(s);
 	//ui.textEdit->setHtml(ui.textEdit->toHtml() + s);
 }
@@ -284,9 +286,12 @@ void QtClient::__notify(int evt, QString object){
 			break;
 		case MC_NT_CRYPTOFAIL:
 			QMessageBox::critical(this, tr("Server untrusted"), tr("The decryption of data from the server failed.\n"
-																	"This can only occur if the data was modified on the server or in case of a bug in the software!\n"
+																	"This can only occur if:\n"
+																	"* the data was modified on the server\n"
+																	"* the owner deleted and re-created the sync with a different key\n"
+																	"* in case of a bug in the software\n"
 																	"The server is not considered trusted any more and we will not sync any more data.\n"
-																	"Check the log for details where exactly the failure occured.\n"
+																	"The  sync has been disabled, log for details where exactly the failure occured.\n"
 																	"If you absolutely trust the server, remove the prefix from the server URL."));
 			break;
 		default:
@@ -632,7 +637,7 @@ void QtClient::on_settingsButton_clicked(){
 void QtClient::on_disableButton_clicked(){
 	int rc;
 	int index = ui.syncTable->selectedItems().at(0)->row();
-	if(synclist[index].status == MC_SYNCSTAT_DISABLED)
+	if(synclist[index].status == MC_SYNCSTAT_DISABLED || synclist[index].status == MC_SYNCSTAT_CRYPTOFAIL)
 		synclist[index].status = MC_SYNCSTAT_UNKOWN;
 	else
 		synclist[index].status = MC_SYNCSTAT_DISABLED;
@@ -661,7 +666,7 @@ void QtClient::on_syncTable_itemSelectionChanged(){
 		else ui.downButton->setEnabled(false);
 		ui.disableButton->setEnabled(true);
 		ui.editButton->setEnabled(true);
-		if(synclist[r].status == MC_SYNCSTAT_DISABLED) ui.disableButton->setIcon(enable);
+		if(synclist[r].status == MC_SYNCSTAT_DISABLED || synclist[r].status == MC_SYNCSTAT_CRYPTOFAIL) ui.disableButton->setIcon(enable);
 		else ui.disableButton->setIcon(disable);
 	}
 }
@@ -768,6 +773,10 @@ int QtClient::listSyncs(){
 			case MC_SYNCSTAT_DISABLED:
 				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_disabled,tr("disabled")));
 				break;
+			case MC_SYNCSTAT_CRYPTOFAIL:
+				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_warn,tr("Decryption failure!")));
+				break;
+
 			default:
 				ui.syncTable->setItem(ui.syncTable->rowCount()-1,3,new QTableWidgetItem(status_unknown,tr("Unkown Status")));
 		}

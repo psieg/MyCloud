@@ -56,7 +56,7 @@ void QtSyncDialog::showEvent(QShowEvent *event){
 	
 	if(s.url == ""){
 		QMessageBox::warning(myparent, tr("No server configured"), 
-			tr("To subscribe syncs, you need to set the server first."), QMessageBox::Ok);
+			tr("To subscribe syncs, you need to set the server first."));
 		QMetaObject::invokeMethod(this,"reject",Qt::QueuedConnection);
 		return;
 	}
@@ -73,7 +73,7 @@ void QtSyncDialog::showEvent(QShowEvent *event){
 }
 
 void QtSyncDialog::authed(int rc){
-	int64 basedatedummy;	
+	int64 basedate;	
 	mc_status s;
 
 	disconnect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
@@ -82,11 +82,11 @@ void QtSyncDialog::authed(int rc){
 		return;
 	}
 
-	rc = srv_auth_process(&netobuf,&authtime,&basedatedummy,&myUID);
+	rc = srv_auth_process(&netobuf,&authtime,&basedate,&myUID);
 	if(rc){
 		if((rc) == MC_ERR_TIMEDIFF){	
 			QMessageBox::warning(this, tr("Time difference too high"),
-				tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."), QMessageBox::Ok);
+				tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."));
 		}
 		reject();
 		return;
@@ -98,13 +98,13 @@ void QtSyncDialog::authed(int rc){
 		reject();
 		return;
 	}
-	if(s.uid != myUID){
-		s.uid = myUID;
-		rc = db_update_status(&s);
-		if(rc){
-			reject();
-			return;
-		}
+	if(s.basedate < basedate){
+		// we can't do the routine in the UI thread, start the worker
+		QMessageBox::warning(this, tr("Server reset"),
+			tr("The server has been reset, which changed all IDs.\n"
+			"Start the worker to adjust to the changes."));
+		reject();
+		return;
 	}
 
 	connect(performer,SIGNAL(finished(int)),this,SLOT(syncListReceived(int)));
@@ -540,7 +540,7 @@ void QtSyncDialog::keyringReceived_actual(int rc){
 		rc = crypt_keyring_fromsrv(keyringdata,pass.toStdString(),&keyring);
 		if(rc){
 			QMessageBox::critical(this, tr("Keyring Decryption failed"), 
-				tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
+				tr("The keyring could not be decrypted! Re-check your password or enter the key manually."));
 			return;
 		}
 		keyringpass = pass;
@@ -571,7 +571,7 @@ void QtSyncDialog::keyringReceivedLooking(int rc){
 				
 		QMessageBox::information(this, tr("Key not found"), 
 			tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner (") +
-			worksyncowner.name.c_str() + tr(") can give you the key."), QMessageBox::Ok);
+			worksyncowner.name.c_str() + tr(") can give you the key."));
 	
 	}
 
@@ -612,12 +612,12 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 					tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 				if(ok && pass != confirm){
 					QMessageBox::warning(this, tr("Password Mismatch"),
-						tr("The passwords didn't match. Try again"), QMessageBox::Ok);
+						tr("The passwords didn't match. Try again"));
 					ok = false;
 				}
 				if(ok && pass.length() < 10){
 					QMessageBox::warning(this, tr("Insecure Password"), 
-						tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
+						tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."));
 					ok = false;
 				}
 				if(ok)
@@ -688,7 +688,7 @@ void QtSyncDialog::accept(){
 
 	if(ui.pathEdit->text().length() == 0){
 		QMessageBox::warning(this, tr("No path specified"), 
-			tr("Please specify where the files are to be synced."), QMessageBox::Ok);
+			tr("Please specify where the files are to be synced."));
 		return;
 	}
 
@@ -723,7 +723,7 @@ void QtSyncDialog::accept(){
 	if(newpath[newpath.length()-1] != '/') newpath.append("/");
 	if(worksync->path != "" && newpath != worksync->path){
 		QMessageBox::warning(this, tr("Moving Syncs"), 
-			tr("Be sure to move the files to the new path as well,\notherwise the system will assume the files were deleted."), QMessageBox::Ok);
+			tr("Be sure to move the files to the new path as well,\notherwise the system will assume the files were deleted."));
 	}
 	worksync->path = newpath;
 
@@ -778,7 +778,7 @@ void QtSyncDialog::accept_step2(){
 				accept_step3();
 			} else {
 				QMessageBox::warning(this, tr("Please enter a valid 256-bit key in hex format"), 
-					tr("Alternatively, you can leave the field empty to generate a new key, if you don't have one yet."), QMessageBox::Ok);
+					tr("Alternatively, you can leave the field empty to generate a new key, if you don't have one yet."));
 				return;
 			}
 		} else {

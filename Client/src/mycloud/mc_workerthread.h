@@ -22,11 +22,6 @@ public:
 	~QtWorkerThread(){
 		QtWorkerThread::_instance = NULL;
 	};
-	
-	enum WorkerCommand {
-		NormalRun = 0,
-		DeleteSync = 1
-	};
 
 	void run(){
 		runmc();
