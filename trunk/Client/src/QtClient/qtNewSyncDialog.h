@@ -24,6 +24,7 @@ public slots:
 	void accept();
 	
 private slots:
+	void userReceived(int);
 	void replyReceived(int);
 	void keyringReceived(int);
 	void keyringSent(int);
@@ -39,6 +40,7 @@ private:
 	mc_sync sync;
 	list<mc_keyringentry> keyring;
 	QString keyringpass;
+	mc_user self;
 
 };
 

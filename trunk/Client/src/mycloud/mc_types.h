@@ -209,6 +209,7 @@ typedef struct _mc_user {
 typedef struct _mc_keyringentry {
 	int sid;
 	string sname;
+	string uname; // fallback: if sid+sname don't match (server reset), we can try sname+uname
 	unsigned char key[32];
 } mc_keyringentry;
 
@@ -275,8 +276,6 @@ typedef struct _mc_file {
 } mc_file;
 inline bool compare_mc_file(mc_file a, mc_file b){ return nocase_smaller(a.name,b.name); }
 inline bool compare_mc_file_id(mc_file a, mc_file b){ return a.id < b.id; }
-//DRAFT for walk_nochange to avoid side effects
-//inline mc_file fakesrv(mc_file* db){ mc_file f; memcpy(&f,db,sizeof(mc_file)); f.name = std::string(db->name); return f; }
 
 /* used by fs */
 /* smaller mc_file with information available directly from the os (= without md5 hashes) */
