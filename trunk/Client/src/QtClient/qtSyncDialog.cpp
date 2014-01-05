@@ -17,8 +17,6 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	ui.fetchFilterLabel->setVisible(false);
 	ui.fetchShareLabel->setVisible(false);
 	ui.needSubscribeLabel->setVisible(false);
-	ui.deleteLabel->setVisible(false);
-	ui.sendLabel->setVisible(false);
 	connect(ui.filterTable,SIGNAL(itemActivated(QTableWidgetItem*)),ui.editFilterButton,SLOT(click()));
 	myparent = parent;
 	syncID = editID;
@@ -368,7 +366,7 @@ void QtSyncDialog::filterDeleteReceived(int rc){
 		return;
 	}
 
-	ui.sendLabel->setVisible(false);
+	ui.statusLabel->setText("");
 	listFilters();
 }
 
@@ -405,7 +403,7 @@ void QtSyncDialog::shareDeleteReceived(int rc){
 		return;
 	}
 
-	ui.sendLabel->setVisible(false);
+	ui.statusLabel->setText("");
 	listShares();
 }
 
@@ -423,7 +421,7 @@ void QtSyncDialog::syncDeleteReceived(int rc){
 		return;
 	}
 
-	ui.deleteLabel->setText(tr("<i>deleting locally...</i>"));
+	ui.statusLabel->setText(tr("<i>deleting locally...</i>"));
 
 
 	std::list<mc_file> l;
@@ -473,8 +471,38 @@ void QtSyncDialog::syncDeleteReceived(int rc){
 	}
 
 
-	ui.deleteLabel->setVisible(false);
+	ui.statusLabel->setText("");
 	startOver();
+}
+
+void QtSyncDialog::userReceived(int rc){	
+	std::list<mc_user> list;
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(userReceived(int)));
+	if(rc) {
+		reject();
+		return;
+	}
+	
+	rc = srv_idusers_process(&netobuf,&list);
+	if(rc){
+		reject();
+		return;
+	}
+
+	if(list.size() != 1){ // owner doesn't exist or exist multiple times?!
+		MC_WRN("Failed to identify owner, probably a server reset");
+		reject();
+		return;
+	}
+	worksyncowner = list.front();
+
+	rc = db_insert_user(&worksyncowner);	
+	if(rc){
+		reject();
+		return;
+	}
+
+	accept_step2();
 }
 
 void QtSyncDialog::keyringReceived_actual(int rc){
@@ -499,6 +527,7 @@ void QtSyncDialog::keyringReceived_actual(int rc){
 				tr("Please enter the password to your keyring"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
 			if(!ok){
+				ui.statusLabel->setText("");
 				return;
 			}
 		} else {
@@ -510,6 +539,7 @@ void QtSyncDialog::keyringReceived_actual(int rc){
 		if(rc){
 			QMessageBox::critical(this, tr("Keyring Decryption failed"), 
 				tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
+			ui.statusLabel->setText("");
 			return;
 		}
 		keyringpass = pass;
@@ -532,7 +562,7 @@ void QtSyncDialog::keyringReceivedLooking(int rc){
 		for(mc_keyringentry& entry : keyring){
 			if(entry.sid == worksync->id && entry.sname == worksync->name){
 				memcpy(worksync->cryptkey,entry.key,32);
-				accept_step2();
+				accept_step3();
 				return;
 
 			}
@@ -546,7 +576,7 @@ void QtSyncDialog::keyringReceivedLooking(int rc){
 						"Consider reseting your keyring."), QMessageBox::Ok);
 				//memcpy(worksync->cryptkey,entry.key,32);
 				ui.keyEdit->setText(QByteArray::fromRawData((const char*)entry.key,32).toHex().toUpper());
-				//accept_step2();
+				//accept_step3();
 				accept();
 				return;
 
@@ -637,11 +667,11 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 				return;
 			}
 
-			ui.keyEdit->setText(tr("// Uploading Keyring..."));
+			ui.statusLabel->setText(tr("<i>uploading keyring...</i>"));
 			connect(performer,SIGNAL(finished(int)),this,SLOT(keyringSent(int)));
 			srv_setkeyring_async(&netibuf,&netobuf,performer,&keyringdata);
 		} else {
-			accept_step2();
+			accept_step3();
 		}
 		
 	} else {
@@ -664,7 +694,7 @@ void QtSyncDialog::keyringSent(int rc){
 		return;
 	}
 	
-	accept_step2();
+	accept_step3();
 }
 
 void QtSyncDialog::accept(){
@@ -714,6 +744,25 @@ void QtSyncDialog::accept(){
 
 	worksync->crypted = srvsynclist[ui.nameBox->currentIndex()].crypted;
 
+	// Make sure we know the owner
+	worksyncowner.id = srvsynclist[ui.nameBox->currentIndex()].uid;
+	rc = db_select_user(&worksyncowner);
+	if(rc == SQLITE_DONE){
+		ui.statusLabel->setText(tr("<i>fetching user...</i>"));
+		connect(performer,SIGNAL(finished(int)),this,SLOT(userReceived(int)));
+		list<int> l;
+		l.push_back(worksyncowner.id);
+		srv_idusers_async(&netibuf,&netobuf,performer,&l);
+		//calls step2
+	} else if(rc){ 
+		reject(); 
+		return; 
+	} else {
+		accept_step2();
+	}
+}
+
+void QtSyncDialog::accept_step2(){
 	if(worksync->crypted){
 		if(ui.keyEdit->text() != ""){
 			QRegExp hexMatcher("^[0-9A-F]{64}$", Qt::CaseInsensitive);
@@ -732,7 +781,7 @@ void QtSyncDialog::accept(){
 					b.setDefaultButton(QMessageBox::Yes);
 					b.setIcon(QMessageBox::Question);
 					if(b.exec() == QMessageBox::Yes){
-						ui.keyEdit->setText(tr("// Downloading Keyring..."));
+						ui.statusLabel->setText(tr("<i>downloading keyring...</i>"));
 						connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceivedAdding(int)));
 						srv_getkeyring_async(&netibuf,&netobuf,performer);
 						ui.okButton->setEnabled(false);
@@ -741,7 +790,7 @@ void QtSyncDialog::accept(){
 					}
 				}
 				// not changed or doesn't want to upload
-				accept_step2();
+				accept_step3();
 			} else {
 				QMessageBox::warning(this, tr("Please enter a valid 256-bit key in hex format"), 
 					tr("Alternatively, you can leave the field empty to generate a new key, if you don't have one yet."), QMessageBox::Ok);
@@ -750,20 +799,18 @@ void QtSyncDialog::accept(){
 		} else {
 			// fetch keyring and check
 			// will call step2
-			ui.keyEdit->setText(tr("// Downloading Keyring..."));
+			ui.statusLabel->setText(tr("<i>downloading keyring...</i>"));
 			connect(performer,SIGNAL(finished(int)),this,SLOT(keyringReceivedLooking(int)));
 			srv_getkeyring_async(&netibuf,&netobuf,performer);
 			ui.okButton->setEnabled(false);
 		}
 	} else {
 		memset(worksync->cryptkey,0,32);
-		accept_step2();
+		accept_step3();
 	}
-
-
 }
 
-void QtSyncDialog::accept_step2(){
+void QtSyncDialog::accept_step3(){
 	int rc;
 
 	if(dbindex == -1){
@@ -814,8 +861,7 @@ void QtSyncDialog::on_deleteSyncButton_clicked(){
 			}
 		}
 		if(cando){
-			ui.deleteLabel->setVisible(true);
-			ui.deleteLabel->setText(tr("<i>sending request...</i>"));
+			ui.statusLabel->setText(tr("<i>sending request...</i>"));
 			disableAll();
 			connect(performer,SIGNAL(finished(int)),this,SLOT(syncDeleteReceived(int)));
 			srv_delsync_async(&netibuf,&netobuf,performer,sid);
@@ -872,7 +918,7 @@ void QtSyncDialog::on_removeFilterButton_clicked(){
 	ui.addFilterButton->setEnabled(false);
 	ui.removeFilterButton->setEnabled(false);
 	ui.editFilterButton->setEnabled(false);
-	ui.sendLabel->setVisible(true);
+	ui.statusLabel->setText(tr("<i>sending request...</i>"));
 	deletingfilterid = filterlist[index].id;
 	connect(performer,SIGNAL(finished(int)),this,SLOT(filterDeleteReceived(int)));
 	srv_delfilter_async(&netibuf,&netobuf,performer,&filterlist[index]);
@@ -914,7 +960,7 @@ void QtSyncDialog::on_removeShareButton_clicked(){
 	ui.shareList->setEnabled(false);
 	ui.addShareButton->setEnabled(false);
 	ui.removeShareButton->setEnabled(false);
-	ui.sendLabel->setVisible(true);
+	ui.statusLabel->setText(tr("<i>sending request...</i>"));
 	deletingshare.sid = sharelist[index].sid;
 	deletingshare.uid = sharelist[index].uid;
 	connect(performer,SIGNAL(finished(int)),this,SLOT(shareDeleteReceived(int)));
