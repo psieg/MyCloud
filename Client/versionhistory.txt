@@ -64,4 +64,6 @@
 + Detection of case conflicts (with message)
 + Run/Abort entries to the tray icon
 + Error message on decryption failure
++ ID independent keyring
+* improved server reset recovery
 * fix crash when uploading a dir replaced with a file
