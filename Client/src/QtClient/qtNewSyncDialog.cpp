@@ -35,16 +35,64 @@ void QtNewSyncDialog::accept(){
 	memset(sync.hash,0,16);
 	
 
-	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
-	srv_createsync_async(netibuf,netobuf,performer,sync.name,sync.crypted);
-
-	
 	ui.nameEdit->setEnabled(false);
 	ui.encryptedBox->setEnabled(false);
 	ui.okButton->setVisible(false);
 	ui.sendLabel->setVisible(true);
 
+
+	// make sure we know our own user (for resets and keyring)
+	mc_status s;
+	rc = db_select_status(&s);
+	if(rc){
+		reject();
+		return;
+	}
+
+	self.id = s.uid;
+	rc = db_select_user(&self);
+	if(rc == SQLITE_DONE){ //unkown
+		ui.sendLabel->setText(tr("<i>fetching user...</i>"));
+		connect(performer,SIGNAL(finished(int)),this,SLOT(userReceived(int)));
+		list<int> l;
+		l.push_back(s.uid);
+		srv_idusers_async(netibuf,netobuf,performer,&l);
+	} else if(rc){
+		reject();
+		return;
+	} else { //known
+		ui.sendLabel->setText(tr("<i>sending request...</i>"));
+		connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
+		srv_createsync_async(netibuf,netobuf,performer,sync.name,sync.crypted);
+	}
 	//replyReceived does the accept
+}
+
+void QtNewSyncDialog::userReceived(int rc){
+	disconnect(performer,SIGNAL(finished(int)),this,SLOT(userReceived(int)));
+	if(rc){
+		reject();
+		return;
+	}
+
+	list<mc_user> l;
+	rc = srv_idusers_process(netobuf,&l);
+	if(rc){
+		reject();
+		return;
+	}
+
+	if(l.size() != 1){ // we don't exist or exist multiple times?!
+		MC_WRN("Failed to identify self, probably a server reset");
+		reject();
+		return;
+	}
+
+	self = l.front();
+	
+	ui.sendLabel->setText(tr("<i>sending request...</i>"));
+	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
+	srv_createsync_async(netibuf,netobuf,performer,sync.name,sync.crypted);	
 }
 
 void QtNewSyncDialog::replyReceived(int rc){
@@ -117,61 +165,59 @@ void QtNewSyncDialog::keyringReceived(int rc){
 		return;
 	} 
 
-		int result = 0;
+	int result = 0;
 
-		// TODO: add to keyring and send to server
-		bool found = false;
-		for(mc_keyringentry& entry : keyring){
-			if(entry.sid == sync.id){
-				entry.sname = sync.name;
-				memcpy(entry.key,newkey.constData(),newkey.size());
-				found = true;
-			}
+	// add to keyring and send to server
+	bool found = false;
+	for(mc_keyringentry& entry : keyring){
+		if(entry.sid == sync.id){
+			entry.sname = sync.name;
+			memcpy(entry.key,newkey.constData(),newkey.size());
+			found = true;
 		}
-		if(!found){
-			mc_keyringentry newentry;
-			newentry.sid = sync.id;
-			newentry.sname = sync.name;
-			memcpy(newentry.key,newkey.constData(),newkey.size());
-			keyring.push_back(newentry);
-		}
+	}
+	if(!found){
+		mc_keyringentry newentry;
+		newentry.sid = sync.id;
+		newentry.sname = sync.name;
+		memcpy(newentry.key,newkey.constData(),newkey.size());
+		keyring.push_back(newentry);
+	}
 
 			
-		bool ok = false;
-		while(keyringpass == ""){
-			QString pass, confirm;
-			pass = QInputDialog::getText(this, tr("Keyring Password"), 
-				tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, "
-					"especially not related to your account password!\nMake sure you do not forget it!"),
-				QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
-			if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), 
-				tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
-			if(ok && pass != confirm){
-				QMessageBox::warning(this, tr("Password Mismatch"), 
-					tr("The passwords didn't match. Try again"), QMessageBox::Ok);
-				ok = false;
-			}
-			if(ok && pass.length() < 10){
-				QMessageBox::warning(this, tr("Insecure Password"), 
-					tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
-				ok = false;
-			}
-			if(ok)
-				keyringpass = pass;
+	bool ok = false;
+	while(keyringpass == ""){
+		QString pass, confirm;
+		pass = QInputDialog::getText(this, tr("Keyring Password"), 
+			tr("Please choose a password for your keyring.\nIt is used to encrypt the keyring and should not be as secure as possible, "
+				"especially not related to your account password!\nMake sure you do not forget it!"),
+			QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+		if(ok) confirm = QInputDialog::getText(this, tr("Keyring Password"), 
+			tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
+		if(ok && pass != confirm){
+			QMessageBox::warning(this, tr("Password Mismatch"), 
+				tr("The passwords didn't match. Try again"), QMessageBox::Ok);
+			ok = false;
 		}
-
-		rc = crypt_keyring_tosrv(&keyring,keyringpass.toStdString(),&keyringdata);
-		if(rc){
-			reject();
-			return;
+		if(ok && pass.length() < 10){
+			QMessageBox::warning(this, tr("Insecure Password"), 
+				tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
+			ok = false;
 		}
+		if(ok)
+			keyringpass = pass;
+	}
 
-		ui.sendLabel->setText(tr("<i>uploading keyring...</i>"));
-		connect(performer,SIGNAL(finished(int)),this,SLOT(keyringSent(int)));
-		srv_setkeyring_async(netibuf,netobuf,performer,&keyringdata);
+	rc = crypt_keyring_tosrv(&keyring,keyringpass.toStdString(),&keyringdata);
+	if(rc){
+		reject();
+		return;
+	}
 
-	return;
-	
+	ui.sendLabel->setText(tr("<i>uploading keyring...</i>"));
+	connect(performer,SIGNAL(finished(int)),this,SLOT(keyringSent(int)));
+	srv_setkeyring_async(netibuf,netobuf,performer,&keyringdata);
+
 }
 
 void QtNewSyncDialog::keyringSent(int rc){
