@@ -131,7 +131,7 @@ int runmc()
 							srvsyncsend = srvsyncs.end();
 							for(;dbsyncsit != dbsyncsend; ++dbsyncsit){ //Foreach db sync
 								if(MC_TERMINATING()) break;
-								if(dbsyncsit->status == MC_SYNCSTAT_DISABLED) continue;
+								if(dbsyncsit->status == MC_SYNCSTAT_DISABLED || dbsyncsit->status == MC_SYNCSTAT_CRYPTOFAIL) continue;
 
 								srvsyncsit = srvsyncs.begin();
 								while((srvsyncsit != srvsyncsend) && (dbsyncsit->id != srvsyncsit->id)) ++srvsyncsit;
@@ -187,7 +187,8 @@ int runmc()
 									if(rc) throw rc;
 									memcpy(dbsyncsit->hash,hash,16);
 									if(wrc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
-									else if (MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
+									else if(wrc == MC_ERR_CRYPTOALERT) dbsyncsit->status = MC_SYNCSTAT_CRYPTOFAIL; 
+									else if(MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
 									else if(memcmp(dbsyncsit->hash,srvsyncsit->hash,16) == 0) dbsyncsit->status = MC_SYNCSTAT_SYNCED;
 									else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
 									dbsyncsit->lastsync = time(NULL);

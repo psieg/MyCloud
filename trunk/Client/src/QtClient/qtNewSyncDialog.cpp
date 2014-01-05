@@ -24,7 +24,7 @@ void QtNewSyncDialog::showEvent(QShowEvent *event){
 void QtNewSyncDialog::accept(){
 	int rc;
 	if(ui.nameEdit->text().length() == 0){
-		QMessageBox::warning(this, tr("No name set"), tr("Please choose a name for the new Sync."), QMessageBox::Ok);
+		QMessageBox::warning(this, tr("No name set"), tr("Please choose a name for the new Sync."));
 		return;
 	}
 	
@@ -152,7 +152,7 @@ void QtNewSyncDialog::keyringReceived(int rc){
 			rc = crypt_keyring_fromsrv(keyringdata,pass.toStdString(),&keyring);
 			if(rc){
 				QMessageBox::critical(this, tr("Keyring Decryption failed"), 
-					tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
+					tr("The keyring could not be decrypted! Re-check your password or enter the key manually."));
 				ui.okButton->setEnabled(true);
 				ok = false;
 			}
@@ -166,7 +166,7 @@ void QtNewSyncDialog::keyringReceived(int rc){
 	QByteArray newkey = QByteArray(32,'\0');
 	while(crypt_randkey((unsigned char*)newkey.data())){
 		QMessageBox::warning(this, tr("Can't generate keys atm"), 
-			tr("Please do something else so the system can collect entropy"), QMessageBox::Ok);
+			tr("Please do something else so the system can collect entropy"));
 		ui.okButton->setEnabled(true);
 		return;
 	} 
@@ -201,12 +201,12 @@ void QtNewSyncDialog::keyringReceived(int rc){
 			tr("Please confirm your keyring password"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 		if(ok && pass != confirm){
 			QMessageBox::warning(this, tr("Password Mismatch"), 
-				tr("The passwords didn't match. Try again"), QMessageBox::Ok);
+				tr("The passwords didn't match. Try again"));
 			ok = false;
 		}
 		if(ok && pass.length() < 10){
 			QMessageBox::warning(this, tr("Insecure Password"), 
-				tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."), QMessageBox::Ok);
+				tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."));
 			ok = false;
 		}
 		if(ok)
