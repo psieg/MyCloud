@@ -9,7 +9,7 @@
 #include "mc_srv.h"
 
 #define MC_CRYPT_KEYSIZE	32	// 256bits Manually used in types.h!
-#define MC_CRYPT_IDENTIFIER			"MCC\x01"	//MCC-1	//Format: 4ID+12IV+DATA+16TAG
+#define MC_CRYPT_IDENTIFIER	"MCC\x01"	//MCC-1	//Format: 4ID+12IV+DATA+16TAG
 #define MC_CRYPT_IDOFFSET	4
 #define MC_CRYPT_IVSIZE		12
 #define MC_CRYPT_OFFSET		16	// 4ID + 12IV
@@ -25,7 +25,7 @@
 #define MC_CRYPTNAME_PADDING	16
 #define MC_CRYPTNAME_SIZEOVERHEAD 20
 
-#define MC_CRYPTRING_IDENTIFIER "MCR\x01"	//MCR-1 //Format: 4ID+32SALT+12IV+DATA+16TAG
+#define MC_CRYPTRING_IDENTIFIER "MCR\x02"	//MCR-2 //Format: 4ID+32SALT+12IV+DATA+16TAG (2 because of content format change)
 #define MC_CRYPTRING_IDOFFSET	4
 #define MC_CRYPTRING_SALTSIZE	32
 #define MC_CRYPTRING_ITERCOUNT	50000	//PBKDF2 iteration count

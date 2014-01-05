@@ -207,9 +207,8 @@ typedef struct _mc_user {
 } mc_user;
 
 typedef struct _mc_keyringentry {
-	int sid;
 	string sname;
-	string uname; // fallback: if sid+sname don't match (server reset), we can try sname+uname
+	string uname;
 	unsigned char key[32];
 } mc_keyringentry;
 

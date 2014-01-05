@@ -137,8 +137,9 @@ void QtNewSyncDialog::keyringReceived(int rc){
 		return;
 	}
 
-	if(keyringdata.length() > 0){ // don't ask for a password when there is no ring...
 
+	if(keyringdata.length() > 0){ // don't ask for a password when there is no ring...
+		ui.sendLabel->setText(tr("<i>decrypting...</i>"));
 		bool ok = false;
 		while(!ok){
 			QString pass = "";
@@ -175,21 +176,20 @@ void QtNewSyncDialog::keyringReceived(int rc){
 	// add to keyring and send to server
 	bool found = false;
 	for(mc_keyringentry& entry : keyring){
-		if(entry.sid == sync.id){
-			entry.sname = sync.name;
+		if(entry.sname == sync.name && entry.uname == self.name){
 			memcpy(entry.key,newkey.constData(),newkey.size());
 			found = true;
 		}
 	}
 	if(!found){
 		mc_keyringentry newentry;
-		newentry.sid = sync.id;
 		newentry.sname = sync.name;
+		newentry.uname = self.name;
 		memcpy(newentry.key,newkey.constData(),newkey.size());
 		keyring.push_back(newentry);
 	}
 
-			
+	ui.sendLabel->setText(tr("<i>encrypting...</i>"));			
 	bool ok = false;
 	while(keyringpass == ""){
 		QString pass, confirm;
