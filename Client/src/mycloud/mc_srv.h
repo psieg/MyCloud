@@ -33,6 +33,7 @@ int srv_delfile(mc_file *file);
 int srv_getmeta(int id, mc_file *file);
 int srv_purgefile(int id);
 int srv_notifychange(list<mc_sync_db> *l, int *id);
+int srv_idusers(list<int> *ids, list<mc_user> *l);
 
 //For internal or async use only
 class QtNetworkPerformer : public QObject
