@@ -189,7 +189,7 @@ function pack_authed($token,$timestamp,$basedate,$uid){
 function pack_synclist($list){
 	$r = pack("l1",MC_SRVSTAT_SYNCLIST);
 	foreach($list as $sync){
-		if($sync[4] === NULL) $sync[4] = str_repeat("\0",16);
+		if($sync[6] === NULL) $sync[6] = str_repeat("\0",16);
 		$r .= pack("l3",$sync[0],$sync[1],strlen($sync[2])).$sync[2].
 			pack("l2C1",$sync[3],$sync[4],$sync[5]).$sync[6];
 	}
