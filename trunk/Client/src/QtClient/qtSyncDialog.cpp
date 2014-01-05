@@ -366,7 +366,7 @@ void QtSyncDialog::filterDeleteReceived(int rc){
 		return;
 	}
 
-	ui.statusLabel->setText("");
+	ui.statusLabel->clear();
 	listFilters();
 }
 
@@ -403,7 +403,7 @@ void QtSyncDialog::shareDeleteReceived(int rc){
 		return;
 	}
 
-	ui.statusLabel->setText("");
+	ui.statusLabel->clear();
 	listShares();
 }
 
@@ -422,6 +422,7 @@ void QtSyncDialog::syncDeleteReceived(int rc){
 	}
 
 	ui.statusLabel->setText(tr("<i>deleting locally...</i>"));
+	QApplication::processEvents();
 
 
 	std::list<mc_file> l;
@@ -471,7 +472,7 @@ void QtSyncDialog::syncDeleteReceived(int rc){
 	}
 
 
-	ui.statusLabel->setText("");
+	ui.statusLabel->clear();
 	startOver();
 }
 
@@ -518,7 +519,9 @@ void QtSyncDialog::keyringReceived_actual(int rc){
 		return;
 	}
 
+
 	if(keyringdata.length() > 0){ // don't ask for a password when there is no ring...
+		ui.statusLabel->setText(tr("<i>decrypting...</i>"));
 		QString pass;
 
 		if(keyringpass == ""){
@@ -527,7 +530,6 @@ void QtSyncDialog::keyringReceived_actual(int rc){
 				tr("Please enter the password to your keyring"), QLineEdit::Password, NULL, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
 			if(!ok){
-				ui.statusLabel->setText("");
 				return;
 			}
 		} else {
@@ -539,7 +541,6 @@ void QtSyncDialog::keyringReceived_actual(int rc){
 		if(rc){
 			QMessageBox::critical(this, tr("Keyring Decryption failed"), 
 				tr("The keyring could not be decrypted! Re-check your password or enter the key manually."), QMessageBox::Ok);
-			ui.statusLabel->setText("");
 			return;
 		}
 		keyringpass = pass;
@@ -560,40 +561,25 @@ void QtSyncDialog::keyringReceivedLooking(int rc){
 
 		// find
 		for(mc_keyringentry& entry : keyring){
-			if(entry.sid == worksync->id && entry.sname == worksync->name){
+			if(entry.sname == worksync->name && entry.uname == worksyncowner.name){
 				memcpy(worksync->cryptkey,entry.key,32);
 				accept_step3();
 				return;
 
 			}
 		}
-
-		// if no id match, try just the name
-		for(mc_keyringentry& entry : keyring){
-			if(entry.sname == worksync->name){
-				QMessageBox::information(this, tr("Uncertain match"),
-					tr("A possibly matching key was found in the keyring, but the SyncID does not match. This might occur after a server reset.\n"
-						"Consider reseting your keyring."), QMessageBox::Ok);
-				//memcpy(worksync->cryptkey,entry.key,32);
-				ui.keyEdit->setText(QByteArray::fromRawData((const char*)entry.key,32).toHex().toUpper());
-				//accept_step3();
-				accept();
-				return;
-
-			}
-		}
 				
 		QMessageBox::information(this, tr("Key not found"), 
-			tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner can give you the key."), QMessageBox::Ok);
-		// no key found
-		ui.keyEdit->setText("");
-		ui.okButton->setEnabled(true);
+			tr("No key for this Sync was found in the keyring. You need to enter it manually. If the Sync is shared, the owner (") +
+			worksyncowner.name.c_str() + tr(") can give you the key."), QMessageBox::Ok);
+	
+	}
 
-	} else {
-		// getting the ring failed in some way, _actual might have rejected already
-		ui.keyEdit->setText("");
-		ui.okButton->setEnabled(true);
-	}	
+	// getting the ring failed in some way or no key found, _actual might have rejected already
+	ui.keyEdit->clear();
+	ui.statusLabel->clear();
+	ui.okButton->setEnabled(true);
+
 }
 
 void QtSyncDialog::keyringReceivedAdding(int rc){
@@ -606,15 +592,15 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 		bool found = false;
 		bool needsend = true;
 		for(mc_keyringentry& entry : keyring){
-			if(entry.sid == worksync->id){
-				if(entry.sname == worksync->name && memcmp(entry.key,worksync->cryptkey,32) == 0){ //exact match
+			if(entry.sname == worksync->name && entry.uname == worksyncowner.name){
+				if(memcmp(entry.key,worksync->cryptkey,32) == 0){ //exact match
 					needsend = false;
 				}
 			}
 		}
 
 		if(needsend){
-			
+			ui.statusLabel->setText(tr("<i>encrypting...</i>"));
 			if(keyringpass == ""){
 				bool ok = false;
 				QString pass, confirm;
@@ -646,16 +632,15 @@ void QtSyncDialog::keyringReceivedAdding(int rc){
 
 			bool found = false;
 			for(mc_keyringentry& entry : keyring){
-				if(entry.sid == worksync->id){
-					entry.sname = worksync->name;
+				if(entry.sname == worksync->name && entry.uname == worksyncowner.name){
 					memcpy(entry.key,worksync->cryptkey,32);
 					found = true;
 				}
 			}
 			if(!found){
 				mc_keyringentry newentry;
-				newentry.sid = worksync->id;
 				newentry.sname = worksync->name;
+				newentry.uname = worksyncowner.name;
 				memcpy(newentry.key,worksync->cryptkey,32);
 				keyring.push_back(newentry);
 			}
@@ -887,9 +872,7 @@ void QtSyncDialog::on_nameBox_currentIndexChanged(int index){
 			//Refresh listing
 			startOver();
 		} else {
-			if(srvsynclist[index].uid == myUID){
-				ui.deleteSyncButton->setEnabled(true);
-			}
+			ui.deleteSyncButton->setEnabled(srvsynclist[index].uid == myUID);
 			ui.keyEdit->setEnabled(srvsynclist[index].crypted);
 			filldbdata();
 		}
@@ -1015,8 +998,8 @@ void QtSyncDialog::filldbdata(){
 		//disable and clear stuff, when found it will be filled and enabled
 		dbindex = -1; // = there is no matching db entry
 		keychanged = false;
-		ui.pathEdit->setText("");
-		ui.keyEdit->setText("");
+		ui.pathEdit->clear();
+		ui.keyEdit->clear();
 		ui.filterTable->clearContents();
 		ui.filterTable->setRowCount(0);
 		ui.filterTable->setEnabled(false);
@@ -1039,7 +1022,7 @@ void QtSyncDialog::filldbdata(){
 				if(s.crypted){
 					ui.keyEdit->setText(QByteArray((const char*)s.cryptkey,32).toHex().toUpper());
 				} else {
-					ui.keyEdit->setText("");
+					ui.keyEdit->clear();
 				}
 				//Filters
 				listFilters();

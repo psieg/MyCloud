@@ -80,7 +80,7 @@ int crypt_decryptstring(mc_sync_ctx *ctx, const string& ivstr, const string& dat
 	init_crypt_ctx(&cctx,ctx);
 	memcpy(cctx.iv,buf.data(),MC_CRYPTNAME_OFFSET);
 	if(memcmp(cctx.iv,MC_CRYPTNAME_IDENTIFIER,MC_CRYPTNAME_IDOFFSET) != 0){
-			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized cryptoname format: " << data);
+			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized name encryption format: " << qPrintable(QByteArray(data.c_str(),MC_CRYPTNAME_IDOFFSET).toHex()));
 	};
 	MC_CHKERR(crypt_striv(&cctx,ivstr)); //the IV is not part of the string as it is implicit
 		
@@ -179,7 +179,7 @@ int crypt_keyring_fromsrv(string data, const string& password, list<mc_keyringen
 	// extract salt + iv, genrate key
 	if(data.length() == 0) return 0;
 	if(memcmp(data.c_str(),MC_CRYPTRING_IDENTIFIER,MC_CRYPTRING_IDOFFSET) != 0){
-			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized cryptoname format: " << data);
+			MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized keyring encryption format: " << qPrintable(QByteArray(data.c_str(),MC_CRYPTRING_IDOFFSET).toHex()));
 	};
 	buf = QByteArray(data.c_str(),data.length());
 	
@@ -214,12 +214,16 @@ int crypt_keyring_fromsrv(string data, const string& password, list<mc_keyringen
 	try {
 		l->clear();
 		while(index < data.length()){
-			item.sid = (int)data.c_str()[index];
-			index += sizeof(int);
 			num = (int)data.c_str()[index];
 			index += sizeof(int);
 			item.sname.assign((char*)&data.c_str()[index],num);
 			index += num;
+			
+			num = (int)data.c_str()[index];
+			index += sizeof(int);
+			item.uname.assign((char*)&data.c_str()[index],num);
+			index += num;
+
 			memcpy(item.key,(void*)&data.c_str()[index],32);
 			index += 32;
 			//memcpy(&num,(void*)data.c_str()[index],sizeof(int));
@@ -243,10 +247,12 @@ int crypt_keyring_tosrv(list<mc_keyringentry> *l, const string& password, string
 	// parse to string
 	*data = "";
 	for(mc_keyringentry& item : *l){
-		data->append((char*)&item.sid,sizeof(int));
 		num = item.sname.length();
 		data->append((char*)&num,sizeof(int));
 		data->append(item.sname);
+		num = item.uname.length();
+		data->append((char*)&num,sizeof(int));
+		data->append(item.uname);
 		data->append((char*)item.key,32);
 	}
 
@@ -554,7 +560,7 @@ int crypt_getfile(mc_crypt_ctx *cctx, int id, int64 offset, int64 blocksize, FIL
 
 					memcpy(cctx->iv,cctx->pbuf.mem,MC_CRYPT_OFFSET);								
 					if(memcmp(cctx->iv,MC_CRYPT_IDENTIFIER,MC_CRYPT_IDOFFSET) != 0){
-						MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized crypto format");
+						MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"Unrecognized encryption format: " << qPrintable(QByteArray((char*)cctx->iv,MC_CRYPT_IDOFFSET).toHex()));
 					};
 					cctx->hasiv = true;		
 
