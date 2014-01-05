@@ -246,7 +246,7 @@ function handle_idusers($ibuf,$uid){
 	foreach($ids as $id) $list .= $id.", ";
 	$list = substr($list,0,-2);
 	$q = $mysqli->query("SELECT id,name FROM mc_users WHERE id IN (".$list.")");
-	if(!q) return pack_interror($mysqli->error);
+	if(!$q) return pack_interror($mysqli->error);
 	$l = $q->fetch_all();
 	return pack_userlist($l);
 }
