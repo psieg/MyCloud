@@ -19,6 +19,92 @@ using namespace std;
 
 ofstream mc_logfile;
 
+int recoverReset(int olduid, int newuid){
+	int rc;
+	MC_WRN("Server has newer basedate, resetting");
+	rc = db_execstr("DELETE FROM files");
+	if(rc) throw rc;
+	rc = db_execstr("UPDATE syncs SET filterversion = 0");
+	if(rc) throw rc;
+	rc = db_execstr("DELETE FROM filters");
+	if(rc) throw rc;
+	//keep old users and syncs in memory and try to identify them in the new lists
+	std::list<mc_user> dbusers, srvusers;
+	std::list<mc_sync> srvsyncs;
+	std::list<mc_sync_db> dbsyncs;
+	rc = db_list_user(&dbusers);
+	if(rc) throw rc;
+	rc = db_execstr("DELETE FROM users");
+	if(rc) throw rc;
+	rc = db_list_sync(&dbsyncs);
+	if(rc) throw rc;
+	rc = db_execstr("DELETE FROM syncs");
+	if(rc) throw rc;
+
+	rc = srv_listsyncs(&srvsyncs);								
+	if(rc) throw rc;
+
+	list<int> newids;
+	for(mc_sync& srv : srvsyncs){
+		bool found = false;
+		for(int id : newids){
+			if(id == srv.uid){
+				found = true;
+				break;
+			}
+		}
+		if(!found)
+			newids.push_back(srv.uid);
+	}
+	rc = srv_idusers(&newids, &srvusers);
+	if(rc) throw rc;
+
+	int recovered = 0;
+	int notfound = 0;
+	for(mc_sync_db& db : dbsyncs){
+		bool found = false;
+		for(mc_sync& srv : srvsyncs){
+			if(db.name == srv.name && db.crypted == srv.crypted){
+				// find old and new user
+				mc_user *olduser = NULL;
+				mc_user *newuser = NULL;
+				for(mc_user& user : dbusers){
+					if(user.id == db.uid){
+						olduser = &user;
+						break;
+					}
+				}
+				for(mc_user& user : srvusers){
+					if(user.id == srv.uid){
+						newuser = &user;
+						break;
+					}
+				}
+				if(olduser && newuser && olduser->name == newuser->name){
+					db.id = srv.id;
+					db.uid = srv.uid;
+					db.filterversion = 0;
+					memset(db.hash,0,16);
+					db.status = MC_SYNCSTAT_UNKOWN;
+					rc = db_insert_sync(&db);
+					if(rc) throw rc;
+					found = true;
+					MC_INF("Recovered Sync " << db.name << " with new id " << srv.id);
+					recovered++;
+					break;
+				}
+			}
+		}
+		if(!found){
+			MC_WRN("Failed to find Sync " << db.id << ": " << db.name << " on Server");
+			notfound++;
+		}
+	}
+	stringstream s; s << recovered << " / " << recovered+notfound;
+	MC_NOTIFY(MC_NT_SERVERRESET, s.str());
+	return 0;
+}
+
 int runmc()
 {
 	int rc,wrc,uid;
@@ -45,55 +131,15 @@ int runmc()
 				if(!rc){
 					try {
 						MC_NOTIFYSTART(MC_NT_CONN,status.url);
-						if(status.basedate < basedate){
+						if(status.basedate != basedate){
 							if(status.basedate != 0){
-								MC_WRN("Server has newer basedate, resetting");
-								rc = db_execstr("DELETE FROM files");
-								if(rc) throw rc;
-								rc = db_execstr("UPDATE syncs SET filterversion = 0");
-								if(rc) throw rc;
-								rc = db_execstr("DELETE FROM filters");
-								if(rc) throw rc;
-								//Try to recover syncs
-								std::list<mc_sync> srvsyncs;
-								std::list<mc_sync_db> dbsyncs;
-								rc = srv_listsyncs(&srvsyncs);								
-								if(rc) throw rc;
-								rc = db_list_sync(&dbsyncs);
-								if(rc) throw rc;
-								//we're going to insert new, but for now all IDs must be free
-								rc = db_execstr("DELETE FROM syncs");
-								if(rc) throw rc;
-								for(mc_sync_db& db : dbsyncs){
-									bool found = false;
-									for(mc_sync& srv : srvsyncs){
-										//only recover own syncs, there might be name conflicts with shared ones
-										if(db.name == srv.name && db.crypted == srv.crypted 
-											&& status.uid == db.uid && uid == srv.uid){
-											db.id = srv.id;
-											db.uid = srv.uid;
-											db.crypted = srv.crypted;
-											db.filterversion = 0;
-											memset(db.hash,0,16);
-											db.status = MC_SYNCSTAT_UNKOWN;
-											rc = db_insert_sync(&db);
-											if(rc) throw rc;
-											found = true;
-											break;
-										}
-									}
-									if(!found) MC_WRN("Failed to find Sync " << db.id << ": " << db.name << " on Server");
-								}
-								MC_NOTIFYEND(MC_NT_SYNC); // Trigger listSyncs()
+								recoverReset(status.uid,uid);
 							}
 							status.basedate = basedate;
-							rc = db_update_status(&status);
-							if(rc) throw rc;
-						}
-						if(status.uid != uid){
 							status.uid = uid;
 							rc = db_update_status(&status);
 							if(rc) throw rc;
+							return 0; //RecoverReset has notified the user
 						}
 						status.lastconn = time(NULL);
 						rc = db_update_status(&status);

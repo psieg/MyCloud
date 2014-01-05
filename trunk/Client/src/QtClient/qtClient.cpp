@@ -294,6 +294,12 @@ void QtClient::__notify(int evt, QString object){
 																	"The  sync has been disabled, log for details where exactly the failure occured.\n"
 																	"If you absolutely trust the server, remove the prefix from the server URL."));
 			break;
+		case MC_NT_SERVERRESET:
+			QMessageBox::information(this, tr("Server reset"), tr("The server has been reset, which changed all IDs.\n") +
+																	object + tr(" Syncs could be recovered.\n"
+																	"We tried to automatically adopt the new IDs, please check the Sync list and restart the worker."));
+			listSyncs();
+			break;
 		default:
 			setStatus(tr("Unknown Notify Type received"),"",icon);
 	}

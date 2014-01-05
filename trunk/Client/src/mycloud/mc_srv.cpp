@@ -40,6 +40,7 @@ int _srv_delfile(mc_file *file);
 int _srv_getmeta(int id, mc_file *file);
 int _srv_purgefile(int id);
 int _srv_notifychange(list<mc_sync_db> *l, int *id);
+int _srv_idusers(list<int> *ids, list<mc_user> *l);
 
 #define SAFEFUNC(name,param,call)	int name(param){	\
 	int rc;												\
@@ -671,6 +672,23 @@ int srv_listusers_process(mc_buf *obuf, list<mc_user> *l){
 
 	unpack_userlist(obuf,l);
 	return 0;
+}
+
+SAFEFUNC2(srv_idusers,list<int> *ids, list<mc_user> *l, ids, l)
+int _srv_idusers(list<int> *ids, list<mc_user>*l){
+	MC_DBGL("Identifying users");
+	int rc;
+	token_mutex.lock();
+	pack_idusers(&ibuf,authtoken,ids);
+	token_mutex.unlock();
+
+	rc = srv_perform(MC_SRVSTAT_USERLIST);
+	if(rc == MC_ERR_LOGIN) { rc = _srv_reauth(); MC_CHKERR(rc); 
+		memcpy(&ibuf.mem[sizeof(int)],authtoken,16); rc = srv_perform(MC_SRVSTAT_USERLIST); }
+	MC_CHKERR(rc);
+
+	unpack_userlist(&obuf,l);
+	return 0;	
 }
 
 int srv_idusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<int> *l){

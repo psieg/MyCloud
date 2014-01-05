@@ -34,6 +34,7 @@ int db_delete_share(mc_share *var);
 int db_delete_share_sid(int sid);
 
 int db_select_user(mc_user *var);
+int db_list_user(list<mc_user> *l);
 int db_insert_user(mc_user *var);
 // no reason to update / delete users
 

@@ -13,7 +13,7 @@ sqlite3_stmt *stmt_select_status, *stmt_update_status, \
 				*stmt_select_sync, *stmt_list_sync, *stmt_insert_sync, *stmt_update_sync, *stmt_delete_sync, \
 				*stmt_select_filter, *stmt_list_filter_sid, *stmt_insert_filter, *stmt_update_filter, *stmt_delete_filter, *stmt_delete_filter_sid, \
 				*stmt_list_share_sid, *stmt_insert_share, *stmt_delete_share, *stmt_delete_share_sid, \
-				*stmt_select_user, *stmt_insert_user, \
+				*stmt_select_user, *stmt_list_user, *stmt_insert_user, \
 				*stmt_select_file_name, *stmt_select_file_id, *stmt_list_file_parent, *stmt_insert_file, *stmt_update_file, *stmt_delete_file;
 /* the respective queries */
 #define QRY_SELECT_STATUS "SELECT locked,url,uname,passwd,acceptallcerts,watchmode,basedate,updatecheck,updateversion,uid,lastconn FROM status"
@@ -38,6 +38,7 @@ sqlite3_stmt *stmt_select_status, *stmt_update_status, \
 #define QRY_DELETE_SHARE_SID "DELETE FROM shares WHERE sid = ?"
 
 #define QRY_SELECT_USER "SELECT id,name FROM users WHERE id = ?"
+#define QRY_LIST_USER "SELECT id,name FROM users"
 #define QRY_INSERT_USER "INSERT INTO users (id,name) VALUES (?,?)"
 
 #define QRY_SELECT_FILE_NAME "SELECT id,name,cryptname,ctime,mtime,size,is_dir,parent,hash,status FROM files WHERE parent = ? AND name = ?"
@@ -75,6 +76,7 @@ int _db_delete_share(mc_share *var);
 int _db_delete_share_sid(int sid);
 
 int _db_select_user(mc_user *var);
+int _db_list_user(list<mc_user> *l);
 int _db_insert_user(mc_user *var);
 
 int _db_select_file_name(mc_file *var);
@@ -215,6 +217,8 @@ int _db_open(const string& fname){
 		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
 		rc = sqlite3_prepare_v2(db, QRY_SELECT_USER, sizeof(QRY_SELECT_USER), &stmt_select_user, NULL);
 		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
+		rc = sqlite3_prepare_v2(db, QRY_LIST_USER, sizeof(QRY_LIST_USER), &stmt_list_user, NULL);
+		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
 		rc = sqlite3_prepare_v2(db, QRY_INSERT_USER, sizeof(QRY_INSERT_USER), &stmt_insert_user, NULL);
 		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
 		rc = sqlite3_prepare_v2(db, QRY_SELECT_FILE_NAME, sizeof(QRY_SELECT_FILE_NAME), &stmt_select_file_name, NULL);
@@ -279,6 +283,7 @@ int _db_close(){
 		sqlite3_finalize(stmt_delete_share);
 		sqlite3_finalize(stmt_delete_share_sid);
 		sqlite3_finalize(stmt_select_user);
+		sqlite3_finalize(stmt_list_user);
 		sqlite3_finalize(stmt_insert_user);
 		sqlite3_finalize(stmt_select_file_name);
 		sqlite3_finalize(stmt_select_file_id);
@@ -717,6 +722,23 @@ int _db_select_user(mc_user *var){
 		var->id = sqlite3_column_int(stmt_select_user,0);
 		var->name.assign((const char*)sqlite3_column_text(stmt_select_user,1));
 	}
+	return 0;
+}
+
+SAFEFUNC(db_list_user, list<mc_user> *l, l)
+int _db_list_user(list<mc_user> *l){
+	int rc;
+	mc_user var;
+	MC_DBGL("Listing user");
+	rc = sqlite3_reset(stmt_list_user);
+	rc = sqlite3_step(stmt_list_user);
+	while(rc == SQLITE_ROW){
+		var.id = sqlite3_column_int(stmt_list_user,0);
+		var.name.assign((const char*)sqlite3_column_text(stmt_list_user,1));
+		l->push_back(var);
+		rc = sqlite3_step(stmt_list_user);
+	}
+	MC_CHKERR_EXP(rc,SQLITE_DONE,"Query failed: " << sqlite3_errmsg(db));
 	return 0;
 }
 
