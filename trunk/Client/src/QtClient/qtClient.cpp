@@ -124,6 +124,7 @@ QtClient::QtClient(QWidget *parent, int autorun)
     connect(startAction, SIGNAL(triggered()), this, SLOT(startNewRun()));
 	stopAction = new QAction(tr("&Abort"), this);
     connect(stopAction, SIGNAL(triggered()), this, SLOT(stopCurrentRun()));
+	stopAction->setVisible(false);
 	quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
 
