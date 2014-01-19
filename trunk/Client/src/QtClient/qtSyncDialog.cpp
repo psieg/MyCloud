@@ -97,7 +97,15 @@ void QtSyncDialog::authed(int rc){
 		reject();
 		return;
 	}
-	if(s.basedate != basedate){
+
+	if(s.basedate == 0){
+		s.uid = myUID;
+		rc = db_update_status(&s);
+		if(rc){
+			reject();
+			return;
+		}
+	} else if (s.basedate != basedate){
 		// we can't do the routine in the UI thread, start the worker
 		QMessageBox::warning(this, tr("Server reset"),
 			tr("The server has been reset, which changed all IDs.\n"
