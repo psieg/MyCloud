@@ -3,7 +3,7 @@
 #define STRX(s)	STR(s)
 #define MC_VERSION_MAJOR	0
 #define MC_VERSION_MINOR	3
-#define MC_VERSION_REVISION	2
+#define MC_VERSION_REVISION	3
 
 //#define MC_VERSION_DEVBUILD	
 

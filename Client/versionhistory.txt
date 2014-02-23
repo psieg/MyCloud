@@ -67,3 +67,10 @@
 + ID independent keyring
 * improved server reset recovery
 * fix crash when uploading a dir replaced with a file
+
+0.3.3
++ Update to Qt 5.2.0
+* Net timeout increased to 60sec
+* Fix reset message on first run
+* Fix trayicon menu placement
+* Buffer size increased to 10M

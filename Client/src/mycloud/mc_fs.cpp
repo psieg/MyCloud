@@ -1,5 +1,4 @@
 #include "mc_fs.h"
-//#include <sys/stat.h> //needed for file stats //not on win
 #ifdef MC_QTCLIENT
 #	ifdef MC_IONOTIFY
 #		include "qtClient.h"

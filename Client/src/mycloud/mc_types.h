@@ -6,7 +6,7 @@ using namespace std;
 
 /* config */
 #define MC_MAXTIMEDIFF	10
-#define MC_NETTIMEOUT	30
+#define MC_NETTIMEOUT	60
 #define MC_NOSYNCCHECK	60*30
 #define MC_NOSYNCWARN	3600*24
 #define MC_SENDBLOCKSIZE 1024*1024*10 // 10MB
