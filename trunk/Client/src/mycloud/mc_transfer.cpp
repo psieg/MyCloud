@@ -298,7 +298,7 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 
 	if(srv->is_dir) { memcpy(serverhash,srv->hash,16); memset(srv->hash,0,16); } //Server (directory)hashes are never saved
 
-	if(fs && fs->name.compare(srv->name)){//case change
+	if(fs && fs->name.compare(srv->name) && srv->status != MC_FILESTAT_INCOMPLETE_UP){//case change
 		string fpathold;
 		fpathold.assign(ctx->sync->path).append(path).append(fs->name);
 		rc = fs_rename(fpathold,fpath);

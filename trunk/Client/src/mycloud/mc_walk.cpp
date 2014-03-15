@@ -391,7 +391,10 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 							if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 						}
 					} else if(indbit->mtime == onsrvit->mtime){
-						rc = upload(ctx,path,&*onfsit,&*indbit,&*onsrvit,&hashstr);
+						if(indbit->status == MC_FILESTAT_INCOMPLETE_UP) //incomplete_up files are written to db without downloading them
+							rc = download(ctx,path,&*onfsit,&*indbit,&*onsrvit,&hashstr);
+						else
+							rc = upload(ctx,path,&*onfsit,&*indbit,&*onsrvit,&hashstr);
 						if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 					} else { // indbit->mtime < onsrvit->mtime
 						rc = conflicted(ctx,path,&*onfsit,&*indbit,&*onsrvit,&hashstr,MC_CONFLICTREC_DOWN);
@@ -533,7 +536,10 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 			} else { // onfsit->mtime < indbit->mtime
 				// Should not happen, when a file is registered to the db, its mtime is registered
 				// as mtime normally only grows, the file must have been replaced
-				rc = upload(ctx,path,&*onfsit,&*indbit,&*indbit,&hashstr);
+				if(indbit->status == MC_FILESTAT_INCOMPLETE_UP) // incomplete_up files are written to db without downloading them
+					rc = download(ctx,path,&*onfsit,&*indbit,&*indbit,&hashstr);
+				else
+					rc = upload(ctx,path,&*onfsit,&*indbit,&*indbit,&hashstr);
 				if(MC_IS_CRITICAL_ERR(rc)) return rc; else if(rc) clean = false;
 					
 			}
