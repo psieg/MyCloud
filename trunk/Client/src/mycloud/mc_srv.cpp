@@ -120,6 +120,7 @@ QtNetworkPerformer::QtNetworkPerformer(const QString& url, const QString& certfi
 	rep = NULL;
 	timeouttimer.setSingleShot(true);
 	timeouttimer.setInterval(timeout*1000);
+	connect(&timeouttimer, SIGNAL(timeout()), this, SLOT(requestTimedout()));
 	quittimer.setInterval(2000);
 	connect(&quittimer,SIGNAL(timeout()),this,SLOT(checkquit()));
 	config.setProtocol(QSsl::TlsV1SslV3);
@@ -134,7 +135,7 @@ QtNetworkPerformer::QtNetworkPerformer(const QString& url, const QString& certfi
 }
 
 QtNetworkPerformer::~QtNetworkPerformer(){
-	if(rep) delete rep;
+	if(rep) { rep->abort(); delete rep; }
 }
 
 void QtNetworkPerformer::checkquit(){
@@ -144,6 +145,7 @@ void QtNetworkPerformer::checkquit(){
 }
 
 void QtNetworkPerformer::requestFinished(QNetworkReply *r){
+	MC_DBG("Request finished: " << this << " " << r);
 	timeouttimer.stop();
 	quittimer.stop();
 	
@@ -154,6 +156,7 @@ void QtNetworkPerformer::requestFinished(QNetworkReply *r){
 	}
 }
 void QtNetworkPerformer::requestTimedout(){
+	MC_DBG("Request timedout " << this);
 	timedout = true;
 	if(rep && rep->isRunning()) rep->abort();
 }
@@ -180,11 +183,11 @@ int QtNetworkPerformer::perform(mc_buf *inbuf, mc_buf *outbuf, bool withprogress
 	if(rep) MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED,"NetworkPerformer can only handle one query at a time");
 	req.setHeader(QNetworkRequest::ContentLengthHeader, QVariant::fromValue(inbuf->used));
 	rep = manager.post(req,QByteArray(inbuf->mem,inbuf->used));
+	MC_DBG("Request posted: " << this << " " << rep);
 	if(withprogress){
 		connect(rep, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(downloadProgress(qint64,qint64)));
 		connect(rep, SIGNAL(uploadProgress(qint64,qint64)), this, SLOT(uploadProgress(qint64,qint64)));
 	}
-	connect(&timeouttimer, SIGNAL(timeout()), this, SLOT(requestTimedout()));
 	this->outbuf = outbuf;
 	timedout = false;
 	timeouttimer.start();
