@@ -1,5 +1,5 @@
-#include "QtSyncDialog.h"
-#include "QtClient.h"
+#include "qtSyncDialog.h"
+#include "qtClient.h"
 
 QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	: QDialog(parent)
