@@ -1,4 +1,4 @@
-#include "QtNewSyncDialog.h"
+#include "qtNewSyncDialog.h"
 
 QtNewSyncDialog::QtNewSyncDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf)
 	: QDialog(parent)
