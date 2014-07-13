@@ -6,9 +6,9 @@
 #include <QtNetwork/QNetworkRequest>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QSslConfiguration>
-//#include <QtNetwork/QSsl>
 #include <QtCore/QEventLoop>
 #include <QtCore/QTimer>
+#define NetworkReplyHardTimeoutError	98 // see QNetworkReply::TimeoutError
 
 // Functions communicating with the server
 bool srv_isopen();
