@@ -13,11 +13,13 @@ QMutex srv_mutex, token_mutex; // srv_mutex protects the synchronous versions as
 QtNetworkPerformer *perf = NULL;
 mc_buf ibuf,obuf;
 unsigned char authtoken[16];
-string reauth_user, reauth_pass;
+string reauth_user, reauth_pass, reopen_url, reopen_certfile;
+bool reopen_acceptall, reopening;
 
 // the internal versions ignore the srv_mutex, only use when the srv_mutex is already held by you
 bool _srv_isopen();
 int _srv_open(const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall = false);
+int _srv_reopen();
 int _srv_standby();
 int _srv_close();
 int _srv_auth(const string& user, const string& passwd, int64 *basedate, int *uid);
@@ -204,7 +206,7 @@ int QtNetworkPerformer::perform(mc_buf *inbuf, mc_buf *outbuf, bool withprogress
 	}
 	return 0;
 }
-int QtNetworkPerformer::processReply(){		
+int QtNetworkPerformer::processReply(){
 	if(rep->error()){
 		if(rep->error() == QNetworkReply::OperationCanceledError){
 			if(timedout){
@@ -306,6 +308,15 @@ int srv_perform(MC_SRVSTATUS requiredcode, bool withprogress = false, MC_SRVSTAT
 				mc_sleep(5);
 				return srv_perform(requiredcode,withprogress,altcode,rdepth+1,inbuf,outbuf);
 			} else MC_ERR_MSG(MC_ERR_NETWORK,"Network error, see previous message");
+		case NetworkReplyHardTimeoutError:
+			if(!reopening){
+				// Fixes an issue with long-running instances (standby) where QNetwork doesn't seem to realize the connection is dead
+				// and calls neither error nor finished
+				MC_INF("Dead connection detected, attempting reconnect");
+				rc =_srv_reopen();
+				MC_CHKERR(rc);
+				return srv_perform(requiredcode,withprogress,altcode,rdepth+1,inbuf,outbuf);
+			} else MC_ERR_MSG(MC_ERR_NETWORK,"Dead connection detected, failed to reconnect");
 		default:
 			MC_ERR_MSG(MC_ERR_NETWORK,"Unknown network failure, see previous message");
 
@@ -316,6 +327,7 @@ int srv_perform(MC_SRVSTATUS requiredcode, bool withprogress = false, MC_SRVSTAT
 bool _srv_isopen(){
 	return (perf != NULL);
 }
+
 bool srv_isopen(){
 	bool rc;
 	srv_mutex.lock();
@@ -327,11 +339,11 @@ bool srv_isopen(){
 SAFEFUNC7(srv_open,const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall, \
 		  url,certfile,user,passwd,basedate,uid,acceptall)
 int _srv_open(const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall){
-	//CURLcode crc;
 	int rc;
-	//long httpstatus = 0;
-	//struct curl_slist *headers=NULL;
 	MC_DBGL("Initializing server module");
+	reopen_url = url;
+	reopen_certfile = certfile;
+	reopen_acceptall = acceptall;
 	MC_DBG("Opening srv at " << url);
 	string _url = "https://";
 	_url.append(url);
@@ -339,7 +351,6 @@ int _srv_open(const string& url, const string& certfile, const string& user, con
 	SetBuf(&ibuf);
 	SetBuf(&obuf);
 
-	
 	if(!QSslSocket::supportsSsl()) MC_ERR_MSG(MC_ERR_NETWORK,"No SSL Sockets supported");
 
 	perf = new QtNetworkPerformer(_url.c_str(),certfile.c_str(),acceptall);
@@ -354,7 +365,15 @@ int _srv_open(const string& url, const string& certfile, const string& user, con
 	if(rc) { _srv_close(); return rc; }
 
 	MC_INF("Server connection established");
+	reopening = false;
 	return 0;
+}
+
+int _srv_reopen(){
+	reopening = true;
+	_srv_close();
+	return _srv_open(reopen_url, reopen_certfile, reauth_user, reauth_pass, NULL, NULL, reopen_acceptall);
+	// open unsets the reopen flag
 }
 
 SAFEFUNC(srv_standby,,)
@@ -368,12 +387,9 @@ int _srv_standby(){
 SAFEFUNC(srv_close,,)
 int _srv_close(){
 	MC_DBGL("Finalizing server module");
-	//curl_easy_cleanup(curl);
-	//curl_global_cleanup();
 	delete perf;
 	FreeBuf(&ibuf);
 	FreeBuf(&obuf);
-	//curl = NULL;
 	perf = NULL;
 	return 0;
 }
@@ -400,7 +416,7 @@ int _srv_auth(const string& user, const string& passwd, int64 *basedate, int *ui
 		else unpack_authed(&obuf,&version,authtoken,&rtime,&localbasedate,uid);
 	else 
 		if(basedate) unpack_authed(&obuf,&version,authtoken,&rtime,basedate,&localuid);
-		else unpack_authed(&obuf,&version,authtoken,&rtime,&localbasedate,uid);
+		else unpack_authed(&obuf,&version,authtoken,&rtime,&localbasedate,&localuid);
 	token_mutex.unlock();
 	if(version < MC_MIN_SERVER_PROTOCOL_VERSION) MC_ERR_MSG(MC_ERR_PROTOCOL,"Protocol Mismatch, server uses too old protocol");
 	MC_DBG("Authenticated, token is " << MD5BinToHex(authtoken));
