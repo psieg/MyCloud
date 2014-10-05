@@ -149,7 +149,12 @@ function unpack_purgefile($fdesc){
 function unpack_notifychange($fdesc){
 	$l = array();
 	while(!feof($fdesc)){
-		$l[unpack("l1id",fread($fdesc,4))['id']] = fread($fdesc,16);
+		#since PHP 5.6 the feof fails here
+		$offset = ftell($fdesc);
+		$id = unpack("l1id",fread($fdesc,4))['id'];
+		if (ftell($fdesc) == $offset)
+			break;
+		$l[$id] = fread($fdesc,16);
 	}
 	return $l;
 }
