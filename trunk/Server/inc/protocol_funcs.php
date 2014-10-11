@@ -151,9 +151,10 @@ function unpack_notifychange($fdesc){
 	while(!feof($fdesc)){
 		#since PHP 5.6 the feof fails here
 		$offset = ftell($fdesc);
-		$id = unpack("l1id",fread($fdesc,4))['id'];
+		$data = fread($fdesc,4);
 		if (ftell($fdesc) == $offset)
 			break;
+		$id = unpack("l1id",$data)['id'];
 		$l[$id] = fread($fdesc,16);
 	}
 	return $l;
