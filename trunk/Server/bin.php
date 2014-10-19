@@ -5,6 +5,8 @@ require_once 'inc/protocol.php';
 require_once 'inc/protocol_funcs.php';
 require_once 'inc/protocol_handlers.php';
 
+ignore_user_abort(true);
+
 header("Content-Type: application/octet-stream");
 $ibuf = fopen("php://input",'rb');
 $qrycode = unpack_code($ibuf);
