@@ -379,6 +379,10 @@ function handle_putfile($ibuf,$uid){
 			return pack_interror("This is a move. You don't want that.");
 	
 		} else if ($qry['name'] != $res[0]){ // local rename / case change
+			//TODO remove
+			return pack_interror("Moving things is dangerous and deprecated as of 21.10.14");
+
+
 			$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
 			//make sure target does not exist yet
 			$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry['parent']." AND name = '".esc($qry['name'])."'".
@@ -517,6 +521,9 @@ function handle_patchfile($ibuf,$uid){
 	if($qry['parent'] != $res[1]){ //If it's a move (=parent change)
 		return pack_interror("This is a move. You don't want that.");
 	} else if($qry['name'] != $res[0]){ // local rename / case change
+		//TODO remove
+		return pack_interror("Moving things is dangerous and deprecated as of 21.10.14");
+
 		$filedata = filedata($qry['id'],$qry['name'],$qry['parent']);
 		$status = $res[3];
 		//make sure target does not exists yet
@@ -555,7 +562,7 @@ function handle_delfile($ibuf,$uid){
 	$q = $mysqli->query("SELECT id FROM mc_files WHERE parent = ".$qry[0]." AND status != ".MC_FILESTAT_DELETED.
 		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 	if(!$q) return pack_interror($mysqli->error);
-	if($q->num_rows != 0) return pack_interror("SELECT id FROM mc_files WHERE parent = ".$qry[0]." AND status != ".MC_FILESTAT_DELETED.
+	if($q->num_rows != 0) return pack_interror("NOTEMPTY: SELECT id FROM mc_files WHERE parent = ".$qry[0]." AND status != ".MC_FILESTAT_DELETED.
 		" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 #pack_code(MC_SRVSTAT_NOTEMPTY);
 
