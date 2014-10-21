@@ -390,7 +390,7 @@ int fs_rmdir(const string& path){
 }
 #endif
 
-/* Test wether a file exits (is readable) */
+/* Test wether a file exists (is readable) - CARE: may be case insensitive */
 #ifdef MC_OS_WIN
 int fs_exists(const string& path){
 	/*FILE *f;

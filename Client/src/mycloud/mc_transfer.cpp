@@ -52,6 +52,9 @@ int dirempty(int id, bool *empty){
 			*empty = false;
 			break;
 		}
+		// check the whole tree, directories marked as deleted may still be pending
+		MC_CHKERR(dirempty(f.id, empty));
+		if (!*empty) break;
 	}
 	return 0;
 }
@@ -318,6 +321,13 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 		crypt_filestring(ctx,srv,hashstr);
 
 	} else { // srv->status == MC_FILESTAT_COMPLETE
+		if(!fs){
+			if(fs_exists(fpath)){
+				MC_NOTIFY(MC_NT_INCOMPATIBLE_FS, fpath);
+				MC_ERR_MSG(MC_ERR_INCOMPATIBLE_FS, "The file " << fpath << " should not exist, but is returned by the filesystem - assuming case sensitive FS");
+			}
+		}
+
 		MC_INF("Downloading file " << srv->id << ": " << printname(srv));
 
 		if(srv->is_dir) rc = download_dir(ctx,fpath,rpath,fs,db,srv,recursive,serverhash,&rrc);

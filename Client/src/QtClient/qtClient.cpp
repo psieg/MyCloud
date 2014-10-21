@@ -281,6 +281,18 @@ void QtClient::__notify(int evt, QString object){
 			disconnect(trayIcon,SIGNAL(messageClicked()));
 			connect(trayIcon,SIGNAL(messageClicked()),this,SLOT(show()));
 			break;
+		case MC_NT_INCOMPATIBLE_FS:
+			QMessageBox::warning(this, tr("Incompatible filesystem"), tr("MyCloud tried to create the file/directory \"") + object + tr("\",\n"
+				"but the filesystem claims the file already exists. Unless you just created this file, "
+				"this means your filesystem cannot handle two files that differ only in capitalization.\n"
+#ifdef MC_OS_WIN
+				"Windows by default is case insensitive.\n"
+#endif
+#ifdef MC_OS_UNIX
+				"FAT12, FAT16, FAT32, VFAT as well as SMB are known to be case insensitive.\n"
+#endif
+				"The file was skipped. If you want to use the file on this system, one of the conflicting files must be renamed."));
+			break;
 		case MC_NT_CRYPTOFAIL:
 			QMessageBox::critical(this, tr("Server untrusted"), tr("The decryption of data from the server failed.\n"
 																	"This can only occur if:\n"

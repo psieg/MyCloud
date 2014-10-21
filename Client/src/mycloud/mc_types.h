@@ -25,12 +25,12 @@ using namespace std;
 /* Events sent to QtClient with the MC_NOTIFY macros */
 // for MC_NOTIFY
 enum MC_NOTIFYSINGLETYPE : int {
-	MC_NT_FULLSYNC		= 0,
-	MC_NT_ERROR			= 1,
-	MC_NT_NOSYNCWARN	= 2,
-	//MC_NT_CASECONFLICT	= 3, // deprecated
-	MC_NT_CRYPTOFAIL	= 4,
-	MC_NT_SERVERRESET	= 5
+	MC_NT_FULLSYNC			= 0,
+	MC_NT_ERROR				= 1,
+	MC_NT_NOSYNCWARN		= 2,
+	MC_NT_INCOMPATIBLE_FS	= 3,
+	MC_NT_CRYPTOFAIL		= 4,
+	MC_NT_SERVERRESET		= 5
 };
 // for MC_NOTIFYSTART / MC_NOTIFYEND
 enum MC_NOTIFYSTATETYPE : int {
@@ -71,6 +71,7 @@ enum MC_NOTIFYIOTYPE : int {
 #define MC_ERR_NOT_CONFIGURED	11
 #define MC_ERR_CRYPTO			12
 #define MC_ERR_CRYPTOALERT		13 //crypt_finish_download: TAG mismatch after download = the server can't be trusted
+#define MC_ERR_INCOMPATIBLE_FS	14 //the FS is case sensitive or worse - it claims files exist (fs_exist) altough they are not (in this casing) in directory listing
 //These aren't really errors
 #define MC_ERR_ALTCODE			20 //srv_perform: Server replied with altcode rather than requiredcode
 #define MC_ERR_AUTODECIDE_UP	21 //autodecide: automatic decision upload
