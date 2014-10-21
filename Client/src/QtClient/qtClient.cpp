@@ -281,10 +281,6 @@ void QtClient::__notify(int evt, QString object){
 			disconnect(trayIcon,SIGNAL(messageClicked()));
 			connect(trayIcon,SIGNAL(messageClicked()),this,SLOT(show()));
 			break;
-		case MC_NT_CASECONFLICT:
-			QMessageBox::warning(this, tr("Case Conflict Detected"), tr("MyCoud is case-insensitive, but your filesystem contains multiple files named ") + object + tr(".\n"
-				"Please rename the conflicting files or add them to the ignore filters. The files are ignored for now but this might lead to errors."));
-			break;
 		case MC_NT_CRYPTOFAIL:
 			QMessageBox::critical(this, tr("Server untrusted"), tr("The decryption of data from the server failed.\n"
 																	"This can only occur if:\n"

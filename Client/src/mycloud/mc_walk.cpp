@@ -23,37 +23,6 @@ int checkmissedpurge(mc_file *db, mc_file *srv){
 	return 0;
 }
 
-/* Check for case conflicts in onfs, if found remove all matching entries in the other lists */
-void detectcaseconflict(list<mc_file_fs> *onfs, list<mc_file> *indb, list<mc_file> *onsrv){
-	if(onfs->size() > 1){
-		list<mc_file_fs>::iterator onfsit = onfs->begin();
-		list<mc_file_fs>::iterator next = ++onfs->begin();
-		list<mc_file_fs>::iterator onfsend = onfs->end();
-		string bad = "";
-		while(onfsit != onfsend && next != onfsend){
-			if(nocase_equals(onfsit->name, next->name)){ //found a conflict
-				bad = onfsit->name;
-				// forward next to the next different entry and onfsit to the last "bad" entry
-				while(next != onfsend && nocase_equals(bad, next->name)){
-					++onfsit;
-					++next;
-				}
-				// remove the bad entries from all lists
-				onfs->remove_if([&](mc_file_fs& f){ return nocase_equals(bad, f.name); });
-				indb->remove_if([&](mc_file& f){ return nocase_equals(bad, f.name); });
-				onsrv->remove_if([&](mc_file& f){ return nocase_equals(bad, f.name); });
-
-				// inform the user
-				MC_INF("Found case-conflict: " << bad);
-				MC_NOTIFY(MC_NT_CASECONFLICT, bad);
-			}
-			++onfsit;
-			++next;
-		}
-	}
-}
-
-
 /* Verify the files match (react if not) and make sure the same data is on all stores
 *	Assumes the mtime is equal on all files.
 *	db may be NULL
@@ -122,13 +91,8 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 			if(db->status == MC_FILESTAT_COMPLETE){
 				if(srv->status == MC_FILESTAT_COMPLETE){
 					if(db->size == srv->size && srv->size == fs->size && memcmp(db->hash,srv->hash,16) == 0){
-						if(fs->mtime == db->mtime && db->mtime ==  srv->mtime)
-							if(db->name.compare(srv->name)) //case changed remotely
-								return download(ctx,path,fs,db,srv,hashstr);
-							else if(fs->name.compare(db->name)) //case changed locally
-								return upload(ctx,path,fs,db,srv,hashstr);
-							else
-								{} //Nothing to do
+						if(fs->mtime == db->mtime && db->mtime == srv->mtime)
+							{} //Nothing to do
 						else if(fs->mtime > db->mtime || db->mtime > srv->mtime)
 							return upload(ctx,path,fs,db,srv,hashstr);
 						else //fs->mtime < db->mtime || db->mtime < srv->mtime
@@ -250,8 +214,6 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]){
 
 	rc = filter_lists(path, &onfs, &indb, &onsrv, ctx->filter);
 	MC_CHKERR(rc);
-
-	detectcaseconflict(&onfs, &indb, &onsrv);
 
 	onfsit = onfs.begin();
 	onfsend = onfs.end();
@@ -497,8 +459,6 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	rc = filter_lists(path,&onfs,&indb,&srvdummy,ctx->filter);
 	MC_CHKERR(rc);
 
-	detectcaseconflict(&onfs, &indb, &srvdummy);
-
 	onfsit = onfs.begin();
 	onfsend = onfs.end();
 	indbit = indb.begin();
@@ -711,8 +671,6 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	
 	rc = filter_lists(path,&onfs,&indb,NULL,ctx->filter);
 	MC_CHKERR(rc);
-
-	detectcaseconflict(&onfs, &indb, &onsrv);
 
 	onfsit = onfs.begin();
 	onfsend = onfs.end();

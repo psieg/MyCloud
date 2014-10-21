@@ -28,7 +28,7 @@ enum MC_NOTIFYSINGLETYPE : int {
 	MC_NT_FULLSYNC		= 0,
 	MC_NT_ERROR			= 1,
 	MC_NT_NOSYNCWARN	= 2,
-	MC_NT_CASECONFLICT	= 3,
+	//MC_NT_CASECONFLICT	= 3, // deprecated
 	MC_NT_CRYPTOFAIL	= 4,
 	MC_NT_SERVERRESET	= 5
 };
@@ -275,7 +275,7 @@ typedef struct _mc_file {
 	MC_FILESTATUS status;
 	unsigned char hash[16];
 } mc_file;
-inline bool compare_mc_file(mc_file a, mc_file b){ return nocase_smaller(a.name,b.name); }
+inline bool compare_mc_file(mc_file a, mc_file b){ return a.name < b.name; }
 inline bool compare_mc_file_id(mc_file a, mc_file b){ return a.id < b.id; }
 
 /* used by fs */
@@ -287,11 +287,7 @@ typedef struct _mc_file_fs {
 	int64 size;
 	bool is_dir;
 } mc_file_fs;
-inline bool compare_mc_file_fs(mc_file_fs a, mc_file_fs b){ return nocase_smaller(a.name,b.name); }
-
-inline bool operator< (const string &a, const string &b){ return nocase_smaller(a,b); }
-inline bool operator> (const string &a, const string &b){ return nocase_greater(a,b); }
-inline bool operator== (const string &a, const string &b){ return nocase_equals(a,b); }
+inline bool compare_mc_file_fs(mc_file_fs a, mc_file_fs b){ return a.name < b.name; }
 
 /* used by srv */
 typedef struct _mc_buf {
