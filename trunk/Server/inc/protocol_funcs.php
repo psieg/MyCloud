@@ -71,7 +71,12 @@ function unpack_delshare($fdesc){
 function unpack_idusers($fdesc){
 	$result = array();
 	while(!feof($fdesc)){
-		$result[] = unpack("l1uid",fread($fdesc,4))['uid'];
+		#since PHP 5.6 the feof fails here
+		$offset = ftell($fdesc);
+		$data = fread($fdesc,4);
+		if (ftell($fdesc) == $offset)
+			break;
+		$result[] = unpack("l1uid",$data)['uid'];
 	}
 	return $result;
 }
