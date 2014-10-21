@@ -130,6 +130,22 @@ void QtShareDialog::replyReceived(int rc){
 		return;
 	}
 
+	//add the user to the cache if not there yet
+	mc_user u;
+	u.id = share.uid;
+	rc = db_select_user(&u);
+	if(rc == SQLITE_DONE){
+		for (mc_user& u : userlist){
+			if (u.id == share.uid){
+				rc = db_insert_user(&u);
+			}
+		}
+	}
+	if(rc){
+		reject();
+		return;
+	}
+
 	//if successful, the server will have increased the Shareversion by one
 	sync.id = share.sid;
 	rc = db_select_sync(&sync);
