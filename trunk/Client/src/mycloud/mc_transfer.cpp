@@ -297,15 +297,7 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 	fpath.assign(ctx->sync->path).append(rpath);
 
 	if(srv->is_dir) { memcpy(serverhash,srv->hash,16); memset(srv->hash,0,16); } //Server (directory)hashes are never saved
-
-	if(fs && fs->name.compare(srv->name) && srv->status != MC_FILESTAT_INCOMPLETE_UP){//case change
-		string fpathold;
-		fpathold.assign(ctx->sync->path).append(path).append(fs->name);
-		rc = fs_rename(fpathold,fpath);
-		MC_CHKERR(rc);
-		fs->name = srv->name;
-	}
-
+	
 	if(srv->status == MC_FILESTAT_INCOMPLETE_UP){
 		MC_INF("Not downloading file " << srv->id << ": " << printname(srv) << ", file is not complete");
 		if(db) rc = db_update_file(srv);
@@ -580,14 +572,7 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 	db->mtime = fs->mtime;
 	db->ctime = fs->ctime;
 	db->size = fs->size;
-
-	if(db->name.compare(fs->name) != 0){
-		db->name = fs->name; // case change	
-		db->cryptname = ""; //regenerate cryptname	
-		rc = crypt_file_tosrv(ctx,path,db);
-		MC_CHKERR(rc);
-	}
-
+	
 	if(!modified){
 		
 		rc = crypt_patchfile(&cctx,path,db);
