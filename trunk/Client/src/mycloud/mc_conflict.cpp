@@ -15,7 +15,7 @@
 *	db may be NULL	*/
 int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr, MC_CONFLICTRECOMMENDATION doubtaction){
 	Q_ASSERT(fs != NULL);
-	Q_ASSERT(db != NULL);
+	Q_ASSERT(srv != NULL);
 	string p, fpath;
 	mc_crypt_ctx cctx;
 	unsigned char chkhash[16];
@@ -293,7 +293,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 			while (parent.id > 0){
 				rc = db_select_file_id(&parent);
 				MC_CHKERR(rc);
-				if (fs_exists(fp)) break;
+				if (parent.status != MC_FILESTAT_DELETED) break;
 				p = p.substr(0, p.length() - 1);
 				p.assign(p.substr(0, p.find_last_of("/") + 1));
 				fp = fp.substr(0, fp.length() - 1);
