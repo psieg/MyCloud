@@ -210,10 +210,10 @@ int QtNetworkPerformer::processReply(){
 	if(rep->error()){
 		if(rep->error() == QNetworkReply::OperationCanceledError){
 			if(timedout){
-				MC_WRN("Network failure: Timeout (Code " << QNetworkReply::TimeoutError << ")");
+				MC_WRN("Network failure: Timeout (Code " << NetworkReplyHardTimeoutError << ")");
 				if(rep){ if(async) rep->deleteLater(); else delete rep; }
 				rep = NULL;
-				return QNetworkReply::TimeoutError;
+				return NetworkReplyHardTimeoutError;
 			} else {
 				if(rep){ if(async) rep->deleteLater(); else delete rep; }
 				rep = NULL;
