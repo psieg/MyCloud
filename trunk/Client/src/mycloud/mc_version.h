@@ -11,10 +11,10 @@
 #define MC_VERSION_PLAIN	STRX(MC_VERSION_MAJOR) "." STRX(MC_VERSION_MINOR) "." STRX(MC_VERSION_REVISION)
 
 #ifdef _DEBUG
-#	define MC_VERSION			MC_VERSION_PLAIN " (debug)"
+#	define MC_VERSION			MC_VERSION_PLAIN " dbg (" __DATE__ ")"
 #else
 #	ifdef MC_VERSION_DEVBUILD
-#		define MC_VERSION			MC_VERSION_PLAIN "+"
+#		define MC_VERSION			MC_VERSION_PLAIN "+ (" __DATE__ ")"
 #	else
 #		define MC_VERSION			MC_VERSION_PLAIN
 #	endif
