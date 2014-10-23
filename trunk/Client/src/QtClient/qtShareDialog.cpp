@@ -20,35 +20,35 @@ QtShareDialog::~QtShareDialog()
 {
 }
 
-void QtShareDialog::showEvent(QShowEvent *event){	
-	connect(performer,SIGNAL(finished(int)),this,SLOT(userListReceived(int)));
-	srv_listusers_async(netibuf,netobuf,performer);
+void QtShareDialog::showEvent(QShowEvent *event) {	
+	connect(performer, SIGNAL(finished(int)), this, SLOT(userListReceived(int)));
+	srv_listusers_async(netibuf, netobuf, performer);
 	QDialog::showEvent(event);
 }
 
-void QtShareDialog::userListReceived(int rc){
+void QtShareDialog::userListReceived(int rc) {
 	list<mc_user> l;
 	list<mc_share> sharelist;
 
-	disconnect(performer,SIGNAL(finished(int)),this,SLOT(userListReceived(int)));
-	if(rc){
+	disconnect(performer, SIGNAL(finished(int)), this, SLOT(userListReceived(int)));
+	if (rc) {
 		reject();
 		return;
 	}
 
-	rc = srv_listusers_process(netobuf,&l);
-	if(rc){
+	rc = srv_listusers_process(netobuf, &l);
+	if (rc) {
 		reject();
 		return;
 	}
 
-	rc = db_list_share_sid(&sharelist,share.sid);
-	if(rc){
+	rc = db_list_share_sid(&sharelist, share.sid);
+	if (rc) {
 		reject();
 		return;
 	}
 
-	if(l.size() == 1){ //only one user on the server
+	if (l.size() == 1) { //only one user on the server
 		QMessageBox b(this);
 		b.setText(tr("No users"));
 		b.setInformativeText(tr("There are no other users on the server to whom you could share.\nCreate more users first."));
@@ -61,23 +61,23 @@ void QtShareDialog::userListReceived(int rc){
 		return;
 	}
 	
-	for(mc_user& u : l){
-		if(u.id != myUID){
+	for (mc_user& u : l) {
+		if (u.id != myUID) {
 			bool sharedalready = false;
-			for(mc_share& s : sharelist){
-				if(s.uid == u.id){
+			for (mc_share& s : sharelist) {
+				if (s.uid == u.id) {
 					sharedalready = true;
 					break;
 				}
 			}
-			if(!sharedalready){
-				ui.userBox->addItem(user,u.name.c_str());
+			if (!sharedalready) {
+				ui.userBox->addItem(user, u.name.c_str());
 				userlist.push_back(u);
 			}
 		}
 	}
 
-	if(userlist.size() == 0){
+	if (userlist.size() == 0) {
 		QMessageBox b(this);
 		b.setText(tr("No other users"));
 		b.setInformativeText(tr("There seems to be no user left you could share to."));
@@ -94,13 +94,13 @@ void QtShareDialog::userListReceived(int rc){
 	ui.okButton->setEnabled(true);
 }
 
-void QtShareDialog::accept(){
+void QtShareDialog::accept() {
 	int rc;
 	share.uid = userlist[ui.userBox->currentIndex()].id;
 	
-	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
-	rc = srv_putshare_async(netibuf,netobuf,performer,&share);
-	if(rc){
+	connect(performer, SIGNAL(finished(int)), this, SLOT(replyReceived(int)));
+	rc = srv_putshare_async(netibuf, netobuf, performer, &share);
+	if (rc) {
 		reject();
 		return;
 	}
@@ -111,21 +111,21 @@ void QtShareDialog::accept(){
 	//replyReceived does the accept
 }
 
-void QtShareDialog::replyReceived(int rc){
-	disconnect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
-	if(rc){
+void QtShareDialog::replyReceived(int rc) {
+	disconnect(performer, SIGNAL(finished(int)), this, SLOT(replyReceived(int)));
+	if (rc) {
 		reject();
 		return;
 	}
 
 	rc = srv_putshare_process(netobuf);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
 
 	rc = db_insert_share(&share);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
@@ -134,14 +134,14 @@ void QtShareDialog::replyReceived(int rc){
 	mc_user u;
 	u.id = share.uid;
 	rc = db_select_user(&u);
-	if(rc == SQLITE_DONE){
-		for (mc_user& u : userlist){
-			if (u.id == share.uid){
+	if (rc == SQLITE_DONE) {
+		for (mc_user& u : userlist) {
+			if (u.id == share.uid) {
 				rc = db_insert_user(&u);
 			}
 		}
 	}
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
@@ -149,13 +149,13 @@ void QtShareDialog::replyReceived(int rc){
 	//if successful, the server will have increased the Shareversion by one
 	sync.id = share.sid;
 	rc = db_select_sync(&sync);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
 	sync.shareversion += 1;
 	rc = db_update_sync(&sync);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}

@@ -33,7 +33,7 @@ private:
 	Ui::QtShareDialog ui;
 	QWidget *myparent;
 	QtNetworkPerformer *performer;
-	mc_buf *netibuf,*netobuf;
+	mc_buf *netibuf, *netobuf;
 	mc_share share;
 	mc_sync_db sync;
 	QIcon user;

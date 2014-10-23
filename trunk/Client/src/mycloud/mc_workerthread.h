@@ -13,31 +13,31 @@ class QtWorkerThread : public QThread
 	Q_OBJECT
 
 public:
-	QtWorkerThread(){
+	QtWorkerThread() {
 		Q_ASSERT_X((QtWorkerThread::_instance == NULL), "QtWorkerThread", "There should only be one QtWorkerThread Instance");
 		QtWorkerThread::_instance = this;
 		terminating = false;
 		//moveToThread(this); //?
 	};
-	~QtWorkerThread(){
+	~QtWorkerThread() {
 		QtWorkerThread::_instance = NULL;
 	};
 
-	void run(){
+	void run() {
 		runmc();
 	};
-	void quit(){
-		if(this->isRunning()){
+	void quit() {
+		if (this->isRunning()) {
 			QEventLoop loop;
 			QTimer timer;
 			terminating = true;
 			cout << "Waiting 10 sec for Worker Thread termination" << endl;
 			timer.setSingleShot(true);
-			connect(&timer,SIGNAL(timeout()),&loop,SLOT(quit()));
-			connect(this,SIGNAL(finished()),&loop,SLOT(quit()));
+			connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
+			connect(this, SIGNAL(finished()), &loop, SLOT(quit()));
 			timer.start(10000);
 			loop.exec();
-			if(this->isRunning()){
+			if (this->isRunning()) {
 				cout << "Killing Worker Thread" << endl;
 				this->terminate();
 				db_execstr(string("UPDATE syncs SET status = ") + to_string(MC_SYNCSTAT_ABORTED) + " WHERE status = " + to_string(MC_SYNCSTAT_RUNNING));
@@ -51,7 +51,7 @@ public:
 		}
 	};
 
-	static QtWorkerThread* instance(){ return _instance; }
+	static QtWorkerThread* instance() { return _instance; }
 	static QtWorkerThread *_instance;
 	bool terminating;
 

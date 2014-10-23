@@ -61,7 +61,7 @@ private:
 	QNetworkReply *rep;
 	QSslConfiguration config;
 	QEventLoop loop;
-	QTimer timeouttimer,quittimer;
+	QTimer timeouttimer, quittimer;
 	mc_buf *outbuf;
 	bool timedout;
 	bool async;
@@ -70,7 +70,7 @@ private:
 
 
 //for async use with an external async performer + event loop
-int srv_auth_async(mc_buf *ibuf, mc_buf* obuf, QtNetworkPerformer *perf,
+int srv_auth_async(mc_buf *ibuf, mc_buf* obuf, QtNetworkPerformer *perf, 
 				   const string& user, const string& passwd, int64 *ltimea);
 int srv_auth_process(mc_buf *obuf, int64 *ltimea, int64 *basedate = NULL, int *uid = NULL);
 int srv_listsyncs_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf);

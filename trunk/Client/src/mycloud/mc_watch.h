@@ -42,10 +42,10 @@ private:
 	QFileSystemWatcher *watcher;
 	QtNetworkPerformer *performer;
 	QEventLoop loop;
-	QTimer timer,evttimer,quittimer,restarttimer,watchlocaltimer;
+	QTimer timer, evttimer, quittimer, restarttimer, watchlocaltimer;
 	QStringList changepaths;
 	int repeatcounter;
-	mc_buf netibuf,netobuf;
+	mc_buf netibuf, netobuf;
 	list<mc_sync_db> *watchsyncs;
 	bool watchfs;
 

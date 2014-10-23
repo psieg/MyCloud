@@ -32,8 +32,8 @@ private:
 	Ui::QtGeneralFilterDialog ui;
 	QWidget *myparent;
 	QtNetworkPerformer *performer;
-	mc_buf *netibuf,*netobuf;
-	QIcon file,directory;
+	mc_buf *netibuf, *netobuf;
+	QIcon file, directory;
 	std::vector<mc_filter> filterlist;
 	bool refresh;
 

@@ -13,7 +13,7 @@
 
 /* Ask the user which of the conflicting versions he wants to keep, recommend doubtaction
 *	db may be NULL	*/
-int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr, MC_CONFLICTRECOMMENDATION doubtaction){
+int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr, MC_CONFLICTRECOMMENDATION doubtaction) {
 	Q_ASSERT(fs != NULL);
 	Q_ASSERT(srv != NULL);
 	string p, fpath;
@@ -29,12 +29,12 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 	if (ctx->dirconflictact != MC_CONFLICTACT_UNKNOWN) act = ctx->dirconflictact;
 
 	// check for "easy" cases
-	if (act == MC_CONFLICTACT_UNKNOWN){
-		if (!fs->is_dir && !srv->is_dir && fs->size == srv->size && srv->status == MC_FILESTAT_COMPLETE){
+	if (act == MC_CONFLICTACT_UNKNOWN) {
+		if (!fs->is_dir && !srv->is_dir && fs->size == srv->size && srv->status == MC_FILESTAT_COMPLETE) {
 			init_crypt_ctx(&cctx, ctx);
-			rc = crypt_filemd5_known(&cctx, srv, chkhash, fpath); //fs_filemd5(chkhash,fpath,fs->size);
+			rc = crypt_filemd5_known(&cctx, srv, chkhash, fpath); //fs_filemd5(chkhash, fpath, fs->size);
 			MC_CHKERR(rc);
-			if (memcmp(chkhash, srv->hash, 16) == 0){
+			if (memcmp(chkhash, srv->hash, 16) == 0) {
 				MC_DBG("File contents not modified");
 				if (fs->mtime <= srv->mtime)
 					return download(ctx, path, fs, db, srv, hashstr, true, &cctx);
@@ -42,19 +42,19 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 					return upload(ctx, path, fs, db, srv, hashstr, srv->parent, true, &cctx);
 			}
 		}
-		else if (fs->is_dir && srv->is_dir && ((db && db->status == srv->status) || srv->status == MC_FILESTAT_COMPLETE)){ //can only be mtime diff
+		else if (fs->is_dir && srv->is_dir && ((db && db->status == srv->status) || srv->status == MC_FILESTAT_COMPLETE)) { //can only be mtime diff
 			MC_DBG("Directory mtime/hash mismatch");
 			if (fs->mtime <= srv->mtime)
 				act = MC_CONFLICTACT_DOWN;
-			//return download(ctx,path,fs,db,srv,hashstr);
+			//return download(ctx, path, fs, db, srv, hashstr);
 			else
 				act = MC_CONFLICTACT_UP;
-			//return upload(ctx,path,fs,db,srv,hashstr,srv->parent);
+			//return upload(ctx, path, fs, db, srv, hashstr, srv->parent);
 		}
 	}
 
 	// ask user
-	if (act == MC_CONFLICTACT_UNKNOWN){
+	if (act == MC_CONFLICTACT_UNKNOWN) {
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(fs->name);
 		ostringstream local, server;
@@ -74,7 +74,7 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 		localstr = local.str();
 		serverstr = server.str();
 		rc = QtClient::execConflictDialog(&p, &localstr, &serverstr, doubtaction, true);
-		switch (rc){
+		switch (rc) {
 		case QtConflictDialog::Download:
 		case QtConflictDialog::DownloadD:
 		case QtConflictDialog::DownloadDR:
@@ -119,20 +119,20 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 		else if (doubtaction == MC_CONFLICTREC_DOWN) cout << "If you don't know choose 2 to download the server version" << endl;
 
 
-		while (true){
+		while (true) {
 			cin >> choice;
-			if (atoi(&choice) == 1){
+			if (atoi(&choice) == 1) {
 				cout << "Uploading the local version" << endl;
 				act = MC_CONFLICTACT_UP;
 			}
-			else if (atoi(&choice) == 2){
+			else if (atoi(&choice) == 2) {
 				cout << "Downloading the server version" << endl;
 				act = MC_CONFLICTACT_DOWN;
 			}
-			else if (atoi(&choice) == 3){
+			else if (atoi(&choice) == 3) {
 				act = MC_CONFLICTACT_KEEP;
 			}
-			else if (atoi(&choice) == 4){
+			else if (atoi(&choice) == 4) {
 				cout << "Skipping" << endl;
 				act = MC_CONFLICTACT_SKIP;
 			}
@@ -142,7 +142,7 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 
 	if (actR) ctx->rconflictact = true;
 	if (actD) ctx->dirconflictact = act; //Will be undone in walk
-	switch (act){
+	switch (act) {
 	case MC_CONFLICTACT_DOWN:
 		rc = download(ctx, path, fs, db, srv, hashstr);
 		break;
@@ -164,7 +164,7 @@ int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db
 }
 /* Ask ...
 *	db may be null	*/
-int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_file *srv, string *hashstr){
+int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_file *srv, string *hashstr) {
 	Q_ASSERT(srv != NULL);
 	list<mc_file> tree;
 	list<string> ptree;
@@ -182,24 +182,24 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 	if (act == MC_CONFLICTACT_KEEP) act = MC_CONFLICTACT_UNKNOWN; // can't keep, this is nolocal
 
 	// check for "easy" cases
-	if (act == MC_CONFLICTACT_UNKNOWN){
-		if (db && srv->status == MC_FILESTAT_DELETED){
+	if (act == MC_CONFLICTACT_UNKNOWN) {
+		if (db && srv->status == MC_FILESTAT_DELETED) {
 			MC_DBG("Mtime/hash mismatch on deleted file");
 			if (db->mtime <= srv->mtime)
 				act = MC_CONFLICTACT_DOWN;
-			//return download(ctx,path,NULL,db,srv,hashstr);
+			//return download(ctx, path, NULL, db, srv, hashstr);
 			else
 				act = MC_CONFLICTACT_UP;
-			//return upload(ctx,path,NULL,db,srv,hashstr,srv->parent);
+			//return upload(ctx, path, NULL, db, srv, hashstr, srv->parent);
 		}
 	}
 
-	if (act == MC_CONFLICTACT_UNKNOWN){
+	if (act == MC_CONFLICTACT_UNKNOWN) {
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(srv->name);
 		ostringstream local, server;
 		string localstr, serverstr;
-		if (db){
+		if (db) {
 			local << "Name: " << shortname(db->name, MC_QTCONFLICTMAXLEN) << "\n";
 			local << "deleted\n";
 			if (db->is_dir) local << "Directory\n";
@@ -219,7 +219,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 		localstr = local.str();
 		serverstr = server.str();
 		rc = QtClient::execConflictDialog(&p, &localstr, &serverstr, 0, false);
-		switch (rc){
+		switch (rc) {
 		case QtConflictDialog::Download:
 		case QtConflictDialog::DownloadD:
 		case QtConflictDialog::DownloadDR:
@@ -261,19 +261,19 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 		cout << "As the local directory is deleted, you probably want to choose 1 to delete the file" << endl;
 
 
-		while (true){
+		while (true) {
 			cin >> choice;
-			if (atoi(&choice) == 1){
+			if (atoi(&choice) == 1) {
 				cout << "Uploading the local version" << endl;
 				act = MC_CONFLICTACT_UP;
 				break;
 			}
-			else if (atoi(&choice) == 2){
+			else if (atoi(&choice) == 2) {
 				cout << "Downloading the server version" << endl;
 				act = MC_CONFLICTACT_DOWN;
 				break;
 			}
-			else if (atoi(&choice) == 4){
+			else if (atoi(&choice) == 4) {
 				cout << "Skipping" << endl;
 				act = MC_CONFLICTACT_SKIP;
 				break;
@@ -284,13 +284,13 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 
 	if (actR) ctx->rconflictact = true;
 	if (actD) ctx->dirconflictact = act; //Will be undone in walk
-	switch (act){
+	switch (act) {
 	case MC_CONFLICTACT_DOWN:
-		if (srv->status != MC_FILESTAT_DELETED){ //restore previous path
+		if (srv->status != MC_FILESTAT_DELETED) { //restore previous path
 			fp.assign(ctx->sync->path).append(path);
 			p.assign(path);
 			parent.id = srv->parent;
-			while (parent.id > 0){
+			while (parent.id > 0) {
 				rc = db_select_file_id(&parent);
 				MC_CHKERR(rc);
 				if (parent.status != MC_FILESTAT_DELETED) break;
@@ -309,7 +309,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 			tend = tree.end();
 			tit = tbegin;
 			pit = ptree.begin();
-			while (tit != tend){
+			while (tit != tend) {
 				rc = srv_getmeta(tit->id, &srvdummy);
 				MC_CHKERR(rc);
 				rc = crypt_file_fromsrv(ctx, p, &srvdummy);
@@ -337,7 +337,7 @@ int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_fil
 
 /* Ask ...
 *	srv must be NULL or srv->status must be deleted	*/
-int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr){
+int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr) {
 	Q_ASSERT(fs != NULL);
 	Q_ASSERT(db != NULL);
 	list<mc_file> tree;
@@ -357,7 +357,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 	if (ctx->dirconflictact != MC_CONFLICTACT_UNKNOWN) act = ctx->dirconflictact;
 	if (act == MC_CONFLICTACT_KEEP) act = MC_CONFLICTACT_UNKNOWN; // can't keep, this is noremote
 
-	if (act == MC_CONFLICTACT_UNKNOWN){
+	if (act == MC_CONFLICTACT_UNKNOWN) {
 #ifdef MC_QTCLIENT
 		p.assign(ctx->sync->path).append(path).append(fs->name);
 		ostringstream local, server;
@@ -366,7 +366,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 		if (fs->is_dir) local << "Directory\n";
 		else local << "Size: " << BytesToSize(fs->size) << "\n";
 		local << "Last Modification: " << TimeToString(fs->mtime);
-		if (srv){
+		if (srv) {
 			server << "Name: " << shortname(srv->name, MC_QTCONFLICTMAXLEN) << "\n";
 			if (srv->status == MC_FILESTAT_DELETED) server << "deleted\n";
 			if (srv->is_dir) server << "Directory\n";
@@ -381,7 +381,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 		localstr = local.str();
 		serverstr = server.str();
 		rc = QtClient::execConflictDialog(&p, &localstr, &serverstr, 0, false);
-		switch (rc){
+		switch (rc) {
 		case QtConflictDialog::Download:
 		case QtConflictDialog::DownloadD:
 		case QtConflictDialog::DownloadDR:
@@ -420,19 +420,19 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 		cout << "As the local directory is deleted, you probably want to choose 1 to delete the file" << endl;
 
 
-		while (true){
+		while (true) {
 			cin >> choice;
-			if (atoi(&choice) == 1){
+			if (atoi(&choice) == 1) {
 				cout << "Uploading the local version" << endl;
 				act = MC_CONFLICTACT_UP;
 				break;
 			}
-			else if (atoi(&choice) == 2){
+			else if (atoi(&choice) == 2) {
 				cout << "Downloading the server version" << endl;
 				act = MC_CONFLICTACT_DOWN;
 				break;
 			}
-			else if (atoi(&choice) == 4){
+			else if (atoi(&choice) == 4) {
 				cout << "Skipping" << endl;
 				act = MC_CONFLICTACT_SKIP;
 				break;
@@ -443,14 +443,14 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 
 	if (actR) ctx->rconflictact = true;
 	if (actD) ctx->dirconflictact = act; //Will be undone in walk
-	switch (act){
+	switch (act) {
 	case MC_CONFLICTACT_DOWN:
 		rc = download(ctx, path, fs, db, srv, hashstr);
 		break;
 	case MC_CONFLICTACT_UP:
 		p.assign(path);
 		parent.id = db->parent;
-		while (parent.id > 0){
+		while (parent.id > 0) {
 			//rc = db_select_file_id(&parent);
 			rc = srv_getmeta(parent.id, &parent);
 			MC_CHKERR(rc);
@@ -470,7 +470,7 @@ int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc
 		tend = tree.end();
 		tit = tbegin;
 		pit = ptree.begin();
-		while (tit != tend){
+		while (tit != tend) {
 			dbdummy.id = tit->id;
 			rc = db_select_file_id(&dbdummy);
 			MC_CHKERR(rc);
