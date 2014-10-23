@@ -20,6 +20,8 @@ public:
 	QtNewSyncDialog(QWidget *parent, QtNetworkPerformer *parentperf, mc_buf *parentibuf, mc_buf *parentobuf);
 	~QtNewSyncDialog();
 
+	int newSyncID();
+
 public slots:
 	void accept();
 	
