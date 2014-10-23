@@ -17,6 +17,14 @@ QtNewSyncDialog::~QtNewSyncDialog()
 {
 }
 
+int QtNewSyncDialog::newSyncID()
+{
+	if (result() == DialogCode::Accepted)
+		return sync.id;
+	else
+		return -1;
+}
+
 void QtNewSyncDialog::showEvent(QShowEvent *event) {
 	QDialog::showEvent(event);
 }

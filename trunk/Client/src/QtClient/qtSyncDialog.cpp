@@ -297,18 +297,17 @@ void QtSyncDialog::shareListReceived(int rc) {
 		}
 	}
 
-
-	dbsynclist[dbindex].shareversion = srvsynclist[ui.nameBox->currentIndex()].shareversion;
-	rc = db_update_sync(&dbsynclist[dbindex]);
-	if (rc) {
-		reject();
-		return;
-	}
-
 	if (idlist.size() != 0) { // some unknown users		
 		connect(performer, SIGNAL(finished(int)), this, SLOT(userListReceived(int)));
 		srv_idusers_async(&netibuf, &netobuf, performer, &idlist);
 	} else {
+		dbsynclist[dbindex].shareversion = srvsynclist[ui.nameBox->currentIndex()].shareversion;
+		rc = db_update_sync(&dbsynclist[dbindex]);
+		if (rc) {
+			reject();
+			return;
+		}
+
 		ui.fetchShareLabel->setVisible(false);
 		listShares();
 	}
@@ -334,6 +333,14 @@ void QtSyncDialog::userListReceived(int rc) {
 			reject();
 			return;
 		}
+	}
+
+	// update the shareversion only once the users are known
+	dbsynclist[dbindex].shareversion = srvsynclist[ui.nameBox->currentIndex()].shareversion;
+	rc = db_update_sync(&dbsynclist[dbindex]);
+	if (rc) {
+		reject();
+		return;
 	}
 	
 	ui.fetchShareLabel->setVisible(false);
@@ -874,11 +881,17 @@ void QtSyncDialog::on_browseButton_clicked() {
 
 void QtSyncDialog::on_nameBox_currentIndexChanged(int index) {
 	if (loadcompleted) {
+		// Cancel any running requests as the scope now changed
+		performer->abort();
+		disconnect(performer, SIGNAL(finished(int)));
+
 		if (index == ui.nameBox->count()-1) {
 			QtNewSyncDialog d(this, performer, &netibuf, &netobuf);
-			d.exec();
-			//Refresh listing
-			startOver();
+			int code = d.exec();
+			if (code == DialogCode::Accepted) {
+				syncID = d.newSyncID();
+				startOver();
+			}
 		} else {
 			ui.deleteSyncButton->setEnabled(srvsynclist[index].uid == myUID);
 			ui.keyEdit->setEnabled(srvsynclist[index].crypted);
