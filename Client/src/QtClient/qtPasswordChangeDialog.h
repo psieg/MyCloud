@@ -32,7 +32,7 @@ private:
 
 	Ui::QtPasswordChangeDialog ui;
 	QtNetworkPerformer *performer;
-	mc_buf netibuf,netobuf;
+	mc_buf netibuf, netobuf;
 	mc_status s;
 	int64 authtime;
 

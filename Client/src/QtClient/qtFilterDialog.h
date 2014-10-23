@@ -39,7 +39,7 @@ private:
 	Ui::QtFilterDialog ui;
 	QWidget *myparent;
 	QtNetworkPerformer *performer;
-	mc_buf *netibuf,*netobuf;
+	mc_buf *netibuf, *netobuf;
 	mc_filter filter;
 	mc_sync_db sync;
 

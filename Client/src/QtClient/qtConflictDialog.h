@@ -23,18 +23,18 @@ public:
 		// 0 0 Recursive Direcory Keep Upload Download Skip
 		// Recursive is an extension to Directory!
 		// Used in conflicted()
-		Skip = 0,
-		Download = 2,
-		Upload = 4,
-		Keep = 8,
+		Skip = 0, 
+		Download = 2, 
+		Upload = 4, 
+		Keep = 8, 
 		
-		SkipD = 16,
-		DownloadD = 18,
-		UploadD = 20,
-		KeepD = 24,
+		SkipD = 16, 
+		DownloadD = 18, 
+		UploadD = 20, 
+		KeepD = 24, 
 		
-		DownloadDR = 50,
-		UploadDR = 52,
+		DownloadDR = 50, 
+		UploadDR = 52, 
 
 		Terminating = 64
 	};

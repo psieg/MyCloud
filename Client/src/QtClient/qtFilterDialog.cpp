@@ -19,12 +19,12 @@ QtFilterDialog::~QtFilterDialog()
 {
 }
 
-void QtFilterDialog::showEvent(QShowEvent *event){
+void QtFilterDialog::showEvent(QShowEvent *event) {
 	int rc;
 
-	if(filter.id != -1){
+	if (filter.id != -1) {
 		rc = db_select_filter(&filter);
-		if(rc) return;
+		if (rc) return;
 		ui.filesBox->setChecked(filter.files);
 		ui.directoriesBox->setChecked(filter.directories);
 		ui.typeBox->setCurrentIndex(typeToIndex(filter.type));
@@ -34,11 +34,11 @@ void QtFilterDialog::showEvent(QShowEvent *event){
 	QDialog::showEvent(event);
 }
 
-void QtFilterDialog::accept(){
+void QtFilterDialog::accept() {
 	mc_sync_ctx ctx;
 	string cleanrule;
 	int rc;
-	if(!ui.filesBox->isChecked() && !ui.directoriesBox->isChecked()){
+	if (!ui.filesBox->isChecked() && !ui.directoriesBox->isChecked()) {
 		QMessageBox b(this);
 		b.setText(tr("No match type set"));
 		b.setInformativeText(tr("Please choose wether the filter should match files, directories or both."));
@@ -48,7 +48,7 @@ void QtFilterDialog::accept(){
 		b.exec();
 		return;
 	}
-	if(ui.valueEdit->text().length() == 0){
+	if (ui.valueEdit->text().length() == 0) {
 		QMessageBox b(this);
 		b.setText(tr("No value set"));
 		b.setInformativeText(tr("Please set a value to match against."));
@@ -66,20 +66,20 @@ void QtFilterDialog::accept(){
 
 	sync.id = filter.sid;
 	rc = db_select_sync(&sync);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
-	init_sync_ctx(&ctx,&sync,NULL);
+	init_sync_ctx(&ctx, &sync, NULL);
 	cleanrule = filter.rule;
-	rc = crypt_filter_tosrv(&ctx,sync.name,&filter);
-	if(rc){
+	rc = crypt_filter_tosrv(&ctx, sync.name, &filter);
+	if (rc) {
 		reject();
 		return;
 	}
 
-	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
-	srv_putfilter_async(netibuf,netobuf,performer,&filter);
+	connect(performer, SIGNAL(finished(int)), this, SLOT(replyReceived(int)));
+	srv_putfilter_async(netibuf, netobuf, performer, &filter);
 
 	filter.rule = cleanrule;
 
@@ -94,23 +94,23 @@ void QtFilterDialog::accept(){
 	//replyReceived does the accept
 }
 
-void QtFilterDialog::replyReceived(int rc){
+void QtFilterDialog::replyReceived(int rc) {
 	int id = filter.id;
-	disconnect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
-	if(rc){
+	disconnect(performer, SIGNAL(finished(int)), this, SLOT(replyReceived(int)));
+	if (rc) {
 		reject();
 		return;
 	}
 
-	rc = srv_putfilter_process(netobuf,&filter.id);
-	if(rc){
+	rc = srv_putfilter_process(netobuf, &filter.id);
+	if (rc) {
 		reject();
 		return;
 	}
 
-	if(id == -1) rc = db_insert_filter(&filter);
+	if (id == -1) rc = db_insert_filter(&filter);
 	else rc = db_update_filter(&filter);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
@@ -118,13 +118,13 @@ void QtFilterDialog::replyReceived(int rc){
 	//if successful, the server will have increased the filterversion by one
 	sync.id = filter.sid;
 	rc = db_select_sync(&sync);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
 	sync.filterversion += 1;
 	rc = db_update_sync(&sync);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
@@ -133,32 +133,32 @@ void QtFilterDialog::replyReceived(int rc){
 }
 
 
-void QtFilterDialog::on_typeBox_currentIndexChanged(int index){
+void QtFilterDialog::on_typeBox_currentIndexChanged(int index) {
 	ui.browseButton->setEnabled(indexToType(index) == MC_FILTERT_MATCH_PATH);
 }
 
-void QtFilterDialog::on_browseButton_clicked(){
+void QtFilterDialog::on_browseButton_clicked() {
 	mc_sync_db s;
 	QFileDialog d(this);
 	int rc;
 
 	s.id = filter.sid;
 	rc = db_select_sync(&s);
-	if(rc) {
+	if (rc) {
 		reject();
 		return;
 	}
-	if(!ui.filesBox->isChecked() && ui.directoriesBox->isChecked()) d.setFileMode(QFileDialog::Directory);
+	if (!ui.filesBox->isChecked() && ui.directoriesBox->isChecked()) d.setFileMode(QFileDialog::Directory);
 	d.setDirectory(s.path.c_str());
-	if(d.exec()){
+	if (d.exec()) {
 		QString tmp = d.selectedFiles()[0];
-		if(tmp.mid(0,s.path.length()) == s.path.c_str()) tmp = tmp.mid(s.path.length());
+		if (tmp.mid(0, s.path.length()) == s.path.c_str()) tmp = tmp.mid(s.path.length());
 		ui.valueEdit->setText(tmp);
 	};
 }
 
-int QtFilterDialog::typeToIndex(MC_FILTERTYPE type){
-	switch(type){
+int QtFilterDialog::typeToIndex(MC_FILTERTYPE type) {
+	switch(type) {
 		case MC_FILTERT_MATCH_NAME:
 			return 0;
 		case MC_FILTERT_MATCH_EXTENSION:
@@ -180,8 +180,8 @@ int QtFilterDialog::typeToIndex(MC_FILTERTYPE type){
 	}
 }
 
-MC_FILTERTYPE QtFilterDialog::indexToType(int index){
-	switch(index){
+MC_FILTERTYPE QtFilterDialog::indexToType(int index) {
+	switch(index) {
 		case 0:
 			return MC_FILTERT_MATCH_NAME;
 		case 1:

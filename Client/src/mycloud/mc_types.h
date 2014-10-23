@@ -25,25 +25,25 @@ using namespace std;
 /* Events sent to QtClient with the MC_NOTIFY macros */
 // for MC_NOTIFY
 enum MC_NOTIFYSINGLETYPE : int {
-	MC_NT_FULLSYNC			= 0,
-	MC_NT_ERROR				= 1,
-	MC_NT_NOSYNCWARN		= 2,
-	MC_NT_INCOMPATIBLE_FS	= 3,
-	MC_NT_CRYPTOFAIL		= 4,
+	MC_NT_FULLSYNC			= 0, 
+	MC_NT_ERROR				= 1, 
+	MC_NT_NOSYNCWARN		= 2, 
+	MC_NT_INCOMPATIBLE_FS	= 3, 
+	MC_NT_CRYPTOFAIL		= 4, 
 	MC_NT_SERVERRESET		= 5
 };
 // for MC_NOTIFYSTART / MC_NOTIFYEND
 enum MC_NOTIFYSTATETYPE : int {
-	MC_NT_CONN			= 0,
-	MC_NT_SYNC			= 1,
-	MC_NT_UL			= 2,
-	MC_NT_DL			= 3,
+	MC_NT_CONN			= 0, 
+	MC_NT_SYNC			= 1, 
+	MC_NT_UL			= 2, 
+	MC_NT_DL			= 3, 
 };
 // form MC_NOTIFYIOSTART / MC_NOTIFYIOEND
 #ifdef MC_IONOTIFY
 enum MC_NOTIFYIOTYPE : int {
-	MC_NT_DB	= 0,
-	MC_NT_FS	= 1,
+	MC_NT_DB	= 0, 
+	MC_NT_FS	= 1, 
 	MC_NT_SRV	= 2
 };
 #endif
@@ -114,51 +114,51 @@ typedef struct _mc_status {
 } mc_status;
 
 enum MC_SYNCSTATUS : int {
-	MC_SYNCSTAT_UNKOWN		= 0,
-	MC_SYNCSTAT_RUNNING		= 1,
-	MC_SYNCSTAT_COMPLETED	= 2,
-	MC_SYNCSTAT_SYNCED		= 3,
-	MC_SYNCSTAT_UNAVAILABLE	= 4,
-	MC_SYNCSTAT_FAILED		= 5,
-	MC_SYNCSTAT_ABORTED		= 6,
-	MC_SYNCSTAT_DISABLED	= 7,
+	MC_SYNCSTAT_UNKOWN		= 0, 
+	MC_SYNCSTAT_RUNNING		= 1, 
+	MC_SYNCSTAT_COMPLETED	= 2, 
+	MC_SYNCSTAT_SYNCED		= 3, 
+	MC_SYNCSTAT_UNAVAILABLE	= 4, 
+	MC_SYNCSTAT_FAILED		= 5, 
+	MC_SYNCSTAT_ABORTED		= 6, 
+	MC_SYNCSTAT_DISABLED	= 7, 
 	MC_SYNCSTAT_CRYPTOFAIL	= 8
 };
 
 enum MC_FILESTATUS : int {
-	MC_FILESTAT_COMPLETE			= 0,
-	MC_FILESTAT_DELETED				= 1,
-	MC_FILESTAT_INCOMPLETE_UP		= 2,	// for files only: in progress of being uploaded
-	MC_FILESTAT_INCOMPLETE_UP_ME	= 3,	// for files only: in progress of being uploaded by me
-	MC_FILESTAT_INCOMPLETE_DOWN		= 4,
+	MC_FILESTAT_COMPLETE			= 0, 
+	MC_FILESTAT_DELETED				= 1, 
+	MC_FILESTAT_INCOMPLETE_UP		= 2, 	// for files only: in progress of being uploaded
+	MC_FILESTAT_INCOMPLETE_UP_ME	= 3, 	// for files only: in progress of being uploaded by me
+	MC_FILESTAT_INCOMPLETE_DOWN		= 4, 
 };
 
 enum MC_FILTERTYPE : int {
-	MC_FILTERT_MATCH_NAME			= 0,
-	MC_FILTERT_MATCH_EXTENSION		= 1,
-	MC_FILTERT_MATCH_FULLNAME		= 2,
-	MC_FILTERT_MATCH_PATH			= 3,
-	MC_FILTERT_REGEX_NAME			= 10,
-	MC_FILTERT_REGEX_EXTENSION		= 11,
-	MC_FILTERT_REGEX_FULLNAME		= 12,
+	MC_FILTERT_MATCH_NAME			= 0, 
+	MC_FILTERT_MATCH_EXTENSION		= 1, 
+	MC_FILTERT_MATCH_FULLNAME		= 2, 
+	MC_FILTERT_MATCH_PATH			= 3, 
+	MC_FILTERT_REGEX_NAME			= 10, 
+	MC_FILTERT_REGEX_EXTENSION		= 11, 
+	MC_FILTERT_REGEX_FULLNAME		= 12, 
 	MC_FILTERT_REGEX_PATH			= 13
 };
 
 enum MC_CONFLICTACTION : int {
-	MC_CONFLICTACT_UNKNOWN	= 0,	//not decided yet
-	MC_CONFLICTACT_SKIP		= 1,
-	MC_CONFLICTACT_KEEP		= 2,
-	MC_CONFLICTACT_UP		= 3,
+	MC_CONFLICTACT_UNKNOWN	= 0, 	//not decided yet
+	MC_CONFLICTACT_SKIP		= 1, 
+	MC_CONFLICTACT_KEEP		= 2, 
+	MC_CONFLICTACT_UP		= 3, 
 	MC_CONFLICTACT_DOWN		= 4
 };
 
 enum MC_CONFLICTRECOMMENDATION : int {
-	MC_CONFLICTREC_DONTKNOW	= 0,
-	MC_CONFLICTREC_UP		= 1,
+	MC_CONFLICTREC_DONTKNOW	= 0, 
+	MC_CONFLICTREC_UP		= 1, 
 	MC_CONFLICTREC_DOWN		= 2
 };
 
-inline bool compare_hashstr(const string& a, const string& b){ return *((int*)a.c_str()) < *((int*)b.c_str()); }
+inline bool compare_hashstr(const string& a, const string& b) { return *((int*)a.c_str()) < *((int*)b.c_str()); }
 
 typedef struct _mc_sync {
 	int id;
@@ -169,7 +169,7 @@ typedef struct _mc_sync {
 	bool crypted;
 	unsigned char hash[16];
 } mc_sync;
-inline bool compare_mc_sync(mc_sync a, mc_sync b){ return a.id < b.id; }
+inline bool compare_mc_sync(mc_sync a, mc_sync b) { return a.id < b.id; }
 
 /* mc_sync */
 /* data of sync in db. includes local directory */
@@ -187,8 +187,8 @@ typedef struct _mc_sync_db {
 	unsigned char hash[16];
 	unsigned char cryptkey[32];
 } mc_sync_db;
-inline bool compare_mc_sync_db(mc_sync_db a, mc_sync_db b){ return a.id < b.id; }
-inline bool compare_mc_sync_db_prio(mc_sync_db a, mc_sync_db b){ return a.priority < b.priority; }
+inline bool compare_mc_sync_db(mc_sync_db a, mc_sync_db b) { return a.id < b.id; }
+inline bool compare_mc_sync_db_prio(mc_sync_db a, mc_sync_db b) { return a.priority < b.priority; }
 
 typedef struct _mc_filter {
 	int id;
@@ -221,7 +221,7 @@ typedef struct _mc_sync_ctx {
 	MC_CONFLICTACTION dirconflictact;	// confict action for current directory
 	bool rconflictact;					// wether dirconflictact is recursive
 } mc_sync_ctx;
-inline void init_sync_ctx(mc_sync_ctx *ctx, mc_sync_db *sync, list<mc_filter> *filter){ 
+inline void init_sync_ctx(mc_sync_ctx *ctx, mc_sync_db *sync, list<mc_filter> *filter) { 
 	ctx->dirconflictact = MC_CONFLICTACT_UNKNOWN; ctx->rconflictact = false; 
 	ctx->sync = sync; ctx->filter = filter; };
 
@@ -276,8 +276,8 @@ typedef struct _mc_file {
 	MC_FILESTATUS status;
 	unsigned char hash[16];
 } mc_file;
-inline bool compare_mc_file(mc_file a, mc_file b){ return a.name < b.name; }
-inline bool compare_mc_file_id(mc_file a, mc_file b){ return a.id < b.id; }
+inline bool compare_mc_file(mc_file a, mc_file b) { return a.name < b.name; }
+inline bool compare_mc_file_id(mc_file a, mc_file b) { return a.id < b.id; }
 
 /* used by fs */
 /* smaller mc_file with information available directly from the os (= without md5 hashes) */
@@ -288,7 +288,7 @@ typedef struct _mc_file_fs {
 	int64 size;
 	bool is_dir;
 } mc_file_fs;
-inline bool compare_mc_file_fs(mc_file_fs a, mc_file_fs b){ return a.name < b.name; }
+inline bool compare_mc_file_fs(mc_file_fs a, mc_file_fs b) { return a.name < b.name; }
 
 /* used by srv */
 typedef struct _mc_buf {
@@ -297,47 +297,47 @@ typedef struct _mc_buf {
   size_t used;
 } mc_buf;
 
-inline void SetBuf(mc_buf *buf){
+inline void SetBuf(mc_buf *buf) {
 	buf->mem = (char*) malloc(4);
-	MC_MEM(buf->mem,4);
+	MC_MEM(buf->mem, 4);
 	buf->used = 0;
 	buf->size = 4;
 }
-inline void SetBuf(mc_buf *buf, size_t size){
+inline void SetBuf(mc_buf *buf, size_t size) {
 	buf->mem = (char*) malloc(size);
-	MC_MEM(buf->mem,size);
+	MC_MEM(buf->mem, size);
 	buf->used = 0;
 	buf->size = size;
 }
  
-inline void ClearBuf(mc_buf *buf){
+inline void ClearBuf(mc_buf *buf) {
 	buf->used = 0;
 }
 
-inline void ResetBuf(mc_buf *buf){
-	void* p = realloc(buf->mem,4);
-	MC_MEM(p,4);
+inline void ResetBuf(mc_buf *buf) {
+	void* p = realloc(buf->mem, 4);
+	MC_MEM(p, 4);
 	buf->mem = ( char*) p;
 	buf->used = 0;
 	buf->size = 4;
 }
 
-inline void MatchBuf(mc_buf *buf, size_t required){
+inline void MatchBuf(mc_buf *buf, size_t required) {
 	size_t newsize = buf->size;
-	if(required > buf->size){
-		if(newsize == 0) return; //error condition
-		//while(newsize < required) newsize *= 2;
+	if (required > buf->size) {
+		if (newsize == 0) return; //error condition
+		//while (newsize < required) newsize *= 2;
 		newsize = required;
-		void* p = realloc(buf->mem,newsize);
-		MC_MEM(p,newsize);		
+		void* p = realloc(buf->mem, newsize);
+		MC_MEM(p, newsize);		
 		buf->mem = (char*) p;
-		MC_MEM(buf->mem,newsize);
+		MC_MEM(buf->mem, newsize);
 		buf->size = newsize;
-		//memset(&buf->mem[buf->used],0,required-buf->used);
+		//memset(&buf->mem[buf->used], 0, required-buf->used);
 	}
 }
 
-inline void FreeBuf(mc_buf *buf){
+inline void FreeBuf(mc_buf *buf) {
 	free(buf->mem);
 	buf->size = 0;
 	buf->used = 0;

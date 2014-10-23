@@ -40,7 +40,7 @@ signals:
 public:	
 	QtClient(QWidget *parent = 0, int autorun = 0);
 	~QtClient();
-	static QtClient* instance(){ return _instance; }
+	static QtClient* instance() { return _instance; }
 
 	void logOutput(QString s);
 	void notify(int evt, std::string object);
@@ -102,7 +102,7 @@ private:
 	QtConflictDialog *conflictDialog;
 	QLabel *statusLabel;
 #ifdef MC_IONOTIFY
-	QLabel *fsLabel,*dbLabel,*srvLabel;
+	QLabel *fsLabel, *dbLabel, *srvLabel;
 #endif
 	QProgressBar *progressBar;
 	QLabel *progressLabel;
@@ -110,16 +110,16 @@ private:
 	QMenu *trayIconMenu;
 	QAction *quitAction, *showAction, *startAction, *stopAction;
 	QTimer *delayTimer;
-	QIcon icon,icon_conn,icon_sync,icon_ul,icon_dl,icon_cf,icon_err,icon_ok;
-	QIcon status_sync,status_err,status_done,status_ok,status_new,status_disabled,status_warn,status_unknown;
-	QIcon lock,enable,disable;
+	QIcon icon, icon_conn, icon_sync, icon_ul, icon_dl, icon_cf, icon_err, icon_ok;
+	QIcon status_sync, status_err, status_done, status_ok, status_new, status_disabled, status_warn, status_unknown;
+	QIcon lock, enable, disable;
 #ifdef MC_IONOTIFY
-	QIcon act_nofs,act_fs,act_nodb,act_db,act_nosrv,act_srv;
+	QIcon act_nofs, act_fs, act_nodb, act_db, act_nosrv, act_srv;
 #endif
-	QString currentPrefix,currentConnectString,currentSyncString,currentFileString;
+	QString currentPrefix, currentConnectString, currentSyncString, currentFileString;
 	float charWidth;
-	bool uploading,downloading;
-	int64 progressBase,progressTotal;
+	bool uploading, downloading;
+	int64 progressBase, progressTotal;
 	std::vector<mc_sync_db> synclist;
 
 

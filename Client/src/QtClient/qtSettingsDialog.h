@@ -26,8 +26,8 @@ public:
 	~QtSettingsDialog();
 
 	enum DialogCode {
-		Rejected = 0,
-		Accepted = 1,
+		Rejected = 0, 
+		Accepted = 1, 
 		NeedRestart = 2
 	};
 

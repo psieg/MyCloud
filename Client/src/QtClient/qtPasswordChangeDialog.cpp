@@ -10,7 +10,7 @@ QtPasswordChangeDialog::QtPasswordChangeDialog(QWidget *parent)
 	ui.statusLabel->setVisible(false);
 
 	rc = db_select_status(&s);
-	if(!rc){
+	if (!rc) {
 		ui.urlLabel->setText(s.url.c_str());
 		ui.nameLabel->setText(s.uname.c_str());
 	}
@@ -20,21 +20,21 @@ QtPasswordChangeDialog::~QtPasswordChangeDialog()
 {
 }
 
-void QtPasswordChangeDialog::showEvent(QShowEvent *event){
-	/*connect(performer,SIGNAL(finished(int)),this,SLOT(filterListReceived(int)));
-	srv_listfilters_async(netibuf,netobuf,performer,0);*/
+void QtPasswordChangeDialog::showEvent(QShowEvent *event) {
+	/*connect(performer, SIGNAL(finished(int)), this, SLOT(filterListReceived(int)));
+	srv_listfilters_async(netibuf, netobuf, performer, 0);*/
 }
 
-void QtPasswordChangeDialog::authed(int rc){
-	disconnect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
-	if(rc){
+void QtPasswordChangeDialog::authed(int rc) {
+	disconnect(performer, SIGNAL(finished(int)), this, SLOT(authed(int)));
+	if (rc) {
 		reject();
 		return;
 	}
 
-	rc = srv_auth_process(&netobuf,&authtime);
-	if(rc){
-		if(rc == MC_ERR_LOGIN){
+	rc = srv_auth_process(&netobuf, &authtime);
+	if (rc) {
+		if (rc == MC_ERR_LOGIN) {
 			QMessageBox b(this);
 			b.setText(tr("Old login rejected"));
 			b.setInformativeText(tr("The server did not accept your old password."));
@@ -50,7 +50,7 @@ void QtPasswordChangeDialog::authed(int rc){
 			ui.okButton->setVisible(true);
 			return;
 		}
-		if(rc == MC_ERR_TIMEDIFF){
+		if (rc == MC_ERR_TIMEDIFF) {
 			QMessageBox b(this);
 			b.setText(tr("Time difference too high"));
 			b.setInformativeText(tr("Syncronisation only works if the Client and Server clocks are synchronized.\nUse NTP (recommended) or set the time manually."));
@@ -64,24 +64,24 @@ void QtPasswordChangeDialog::authed(int rc){
 	}
 	
 	ui.statusLabel->setText(tr("<i>sending request...</i>"));
-	connect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
-	srv_passchange_async(&netibuf,&netobuf,performer,qPrintable(ui.new1Edit->text()));
+	connect(performer, SIGNAL(finished(int)), this, SLOT(replyReceived(int)));
+	srv_passchange_async(&netibuf, &netobuf, performer, qPrintable(ui.new1Edit->text()));
 }
-void QtPasswordChangeDialog::replyReceived(int rc){
-	disconnect(performer,SIGNAL(finished(int)),this,SLOT(replyReceived(int)));
-	if(rc) {
+void QtPasswordChangeDialog::replyReceived(int rc) {
+	disconnect(performer, SIGNAL(finished(int)), this, SLOT(replyReceived(int)));
+	if (rc) {
 		reject();
 		return;
 	}
 
 	rc = srv_passchange_process(&netobuf);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
 
 	rc = db_select_status(&s);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
@@ -89,7 +89,7 @@ void QtPasswordChangeDialog::replyReceived(int rc){
 	s.passwd = qPrintable(ui.new1Edit->text());
 
 	rc = db_update_status(&s);
-	if(rc){
+	if (rc) {
 		reject();
 		return;
 	}
@@ -104,8 +104,8 @@ void QtPasswordChangeDialog::replyReceived(int rc){
 	QDialog::accept();
 }
 
-void QtPasswordChangeDialog::accept(){
-	if(ui.new1Edit->text() != ui.new2Edit->text()){
+void QtPasswordChangeDialog::accept() {
+	if (ui.new1Edit->text() != ui.new2Edit->text()) {
 		QMessageBox b(this);
 		b.setText(tr("Passwords don't match"));
 		b.setInformativeText(tr("Make sure the new passwords match."));
@@ -115,7 +115,7 @@ void QtPasswordChangeDialog::accept(){
 		b.exec();
 		return;
 	}
-	if(ui.new1Edit->text().length() == 0){
+	if (ui.new1Edit->text().length() == 0) {
 		QMessageBox b(this);
 		b.setText(tr("Password can't be empty"));
 		b.setInformativeText(tr("Please choss a secure password."));
@@ -125,14 +125,14 @@ void QtPasswordChangeDialog::accept(){
 		b.exec();
 		return;
 	}
-	if(ui.new1Edit->text().length() < 7){
+	if (ui.new1Edit->text().length() < 7) {
 		QMessageBox b(this);
 		b.setText(tr("Insecure Password"));
 		b.setInformativeText(tr("Short passwords are insecure! Hit cancel to abort."));
 		b.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
 		b.setDefaultButton(QMessageBox::Ok);
 		b.setIcon(QMessageBox::Warning);
-		if(b.exec() != QMessageBox::Ok)
+		if (b.exec() != QMessageBox::Ok)
 			return;
 	}
 
@@ -140,12 +140,12 @@ void QtPasswordChangeDialog::accept(){
 	QString _url = "https://";
 	_url.append(s.url.c_str());
 	_url.append("/bin.php");
-	performer = new QtNetworkPerformer(_url,"trustCA.crt",s.acceptallcerts,true);
+	performer = new QtNetworkPerformer(_url, "trustCA.crt", s.acceptallcerts, true);
 	SetBuf(&netibuf);
 	SetBuf(&netobuf);
 		
-	connect(performer,SIGNAL(finished(int)),this,SLOT(authed(int)));
-	srv_auth_async(&netibuf,&netobuf,performer,s.uname,qPrintable(ui.oldEdit->text()),&authtime);
+	connect(performer, SIGNAL(finished(int)), this, SLOT(authed(int)));
+	srv_auth_async(&netibuf, &netobuf, performer, s.uname, qPrintable(ui.oldEdit->text()), &authtime);
 	ui.oldEdit->setEnabled(false);
 	ui.new1Edit->setEnabled(false);
 	ui.new2Edit->setEnabled(false);
