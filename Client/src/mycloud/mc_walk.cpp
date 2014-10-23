@@ -464,7 +464,6 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	indbit = indb.begin();
 	indbend = indb.end();
 
-
 	if (!ctx->rconflictact) ctx->dirconflictact = MC_CONFLICTACT_UNKNOWN;
 	while ((onfsit != onfsend) || (indbit != indbend)) {
 		if (indbit == indbend) {
@@ -562,8 +561,6 @@ int walk_nolocal(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]) 
 
 	rc = filter_lists(path, NULL, &indb, &onsrv, ctx->filter);
 	MC_CHKERR(rc);
-
-	//can't have any case conflicts in fs
 
 	indbit = indb.begin();
 	indbend = indb.end();

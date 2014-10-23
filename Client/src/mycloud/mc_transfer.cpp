@@ -250,7 +250,6 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 			// Underlying handlers will have taken care of that
 			doit = false;
 
-
 			//TODO: They won't take care of filestring!
 		}
 	} else { // fs || !fs->is_dir
@@ -612,7 +611,6 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 					
 			if (recursive) {
 				*rrc = walk(ctx, rpath, db->id, db->hash);
-
 			}
 			// Hashupdate
 			rc = db_update_file(db);
@@ -670,7 +668,6 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 					db->status = MC_FILESTAT_COMPLETE;
 					rc = db_update_file(db);
 					MC_CHKERR(rc);
-
 
 				} else { // files remain
 					//Underlying handlers?
@@ -827,7 +824,6 @@ int purge(mc_file *db, mc_file *srv) {
 				MC_CHKERR(rc);
 				++lit;
 			}
-
 		}
 		rc = db_delete_file(db->id);
 		MC_CHKERR(rc);
@@ -845,7 +841,6 @@ int purge(mc_file *db, mc_file *srv) {
 				MC_CHKERR(rc);
 				++lit;
 			}
-
 		}
 		rc = srv_purgefile(srv->id);
 		MC_CHKERR(rc);
