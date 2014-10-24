@@ -74,3 +74,11 @@
 * Fix reset message on first run
 * Fix trayicon menu placement
 * Buffer size increased to 10M
+
+0.3.4
++ Experimental detection of standby-timeouting connections
+* Support case-sensitive filesystems, incompatible fliesystems can't download those files (#11)
+* Fix upload of outdated files under certain circumstances (#54)
+* QT components use UTF-8
+* Fix users shared to are unknown
+* Automatically focus newly created sync (#62)
