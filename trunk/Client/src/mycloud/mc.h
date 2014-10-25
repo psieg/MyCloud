@@ -58,10 +58,10 @@ using namespace std;
 #endif
 #ifdef MC_DEBUG
 #	ifdef MC_LOGFILE
-#		define MC_DBG(msg)				{ /*std::cout << " D " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;*/	\
+#		define MC_DBG(msg)				{ std::cout << " D " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;	\
 											mc_logfile << " D " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;}
 #	else
-#		define MC_DBG(msg)				{ /*std::cout << " D " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;*/	}
+#		define MC_DBG(msg)				{ std::cout << " D " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;	}
 #	endif
 #else
 #	define MC_DBG(msg)					{}

@@ -29,6 +29,12 @@
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Header Files\ReadDirectoryChanges">
+      <UniqueIdentifier>{52cd4824-9159-4385-8df8-9f760a65ea2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ReadDirectoryChanges">
+      <UniqueIdentifier>{3fdfa4fb-2241-46c2-932e-c82f33da44c7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GeneratedFiles\Debug\moc_mc_watch.cpp">
@@ -97,6 +103,21 @@
     <ClCompile Include="..\..\src\mycloud\mc_conflict.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChanges.cpp">
+      <Filter>Source Files\ReadDirectoryChanges</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChangesPrivate.cpp">
+      <Filter>Source Files\ReadDirectoryChanges</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\mc_watch2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_mc_watch2.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_mc_watch2.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\mycloud\Client.h">
@@ -144,6 +165,18 @@
     <ClInclude Include="..\..\src\mycloud\mc_conflict.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\ReadDirectoryChanges\stdafx.h">
+      <Filter>Header Files\ReadDirectoryChanges</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\ReadDirectoryChanges\ThreadSafeQueue.h">
+      <Filter>Header Files\ReadDirectoryChanges</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChanges.h">
+      <Filter>Header Files\ReadDirectoryChanges</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChangesPrivate.h">
+      <Filter>Header Files\ReadDirectoryChanges</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\src\mycloud\mc_workerthread.h">
@@ -153,6 +186,9 @@
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="..\..\src\mycloud\mc_watch.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\..\src\mycloud\mc_watch2.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
