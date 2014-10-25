@@ -56,4 +56,13 @@ void mc_sleep_checkterminate(int sec);
 void mc_sleepms(int ms);
 
 
+#ifdef MC_OS_WIN
+// Convert a wide Unicode string to an UTF8 string
+std::string unicode_to_utf8(const std::wstring &wstr);
+
+// Convert an UTF8 string to a wide Unicode String
+std::wstring utf8_to_unicode(const std::string &str);
+#endif
+
+
 #endif /* MC_UTIL_H */

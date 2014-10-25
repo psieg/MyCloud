@@ -13,6 +13,10 @@
 #include <QtCore/QEventLoop>
 #include <QtCore/QRegExp>
 
+#ifdef MC_OS_WIN
+#include "mc_watch2.h"
+#endif
+
 #ifdef MC_WATCHMODE
 #define MC_MAXRDEPTH	3
 
@@ -39,7 +43,11 @@ public:
 	~QtWatcher();
 	void run(int timeout);
 private:
+#ifdef MC_OS_WIN
+	QtFileSystemWatcher *watcher;
+#else
 	QFileSystemWatcher *watcher;
+#endif
 	QtNetworkPerformer *performer;
 	QEventLoop loop;
 	QTimer timer, evttimer, quittimer, restarttimer, watchlocaltimer;

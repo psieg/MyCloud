@@ -33,6 +33,12 @@
       <Extensions>cpp;moc</Extensions>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Header Files\ReadDirectoryChanges">
+      <UniqueIdentifier>{680ada79-795a-4180-bd65-6503b976f9d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ReadDirectoryChanges">
+      <UniqueIdentifier>{c685a120-1d57-42a0-a8ca-e82fe616c235}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\src\QtClient\qtConflictDialog.ui">
@@ -104,6 +110,9 @@
     <CustomBuild Include="..\..\src\QtClient\qtShareDialog.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="..\..\src\mycloud\mc_watch2.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\sqlite-amalgamation\sqlite3.h">
@@ -153,6 +162,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\mycloud\mc_conflict.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChangesPrivate.h">
+      <Filter>Header Files\ReadDirectoryChanges</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\ReadDirectoryChanges\ThreadSafeQueue.h">
+      <Filter>Header Files\ReadDirectoryChanges</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChanges.h">
+      <Filter>Header Files\ReadDirectoryChanges</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\mycloud\ReadDirectoryChanges\stdafx.h">
+      <Filter>Header Files\ReadDirectoryChanges</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -314,6 +335,21 @@
     </ClCompile>
     <ClCompile Include="..\..\src\mycloud\mc_conflict.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\mc_watch2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_mc_watch2.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_mc_watch2.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChanges.cpp">
+      <Filter>Source Files\ReadDirectoryChanges</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChangesPrivate.cpp">
+      <Filter>Source Files\ReadDirectoryChanges</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

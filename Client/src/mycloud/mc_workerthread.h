@@ -23,9 +23,6 @@ public:
 		QtWorkerThread::_instance = NULL;
 	};
 
-	void run() {
-		runmc();
-	};
 	void quit() {
 		if (this->isRunning()) {
 			QEventLoop loop;
@@ -52,9 +49,15 @@ public:
 	};
 
 	static QtWorkerThread* instance() { return _instance; }
-	static QtWorkerThread *_instance;
 	bool terminating;
 
+
+protected:
+	static QtWorkerThread *_instance;
+
+	virtual void run() {
+		runmc();
+	};
 };
 
 #endif /* QTWORKERTHREAD_H */

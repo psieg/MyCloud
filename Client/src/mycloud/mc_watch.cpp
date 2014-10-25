@@ -10,9 +10,15 @@
 
 QtWatcher::QtWatcher(const QStringList &paths, list<mc_sync_db> *syncs, const QString& url, const QString& certfile, bool acceptall) {
 	connect(this, SIGNAL(_startLocalWatch()), this, SLOT(__startLocalWatch()));
+#ifdef MC_OS_WIN
+	watcher = new QtFileSystemWatcher();
+	watcher->setScope(*syncs);
+	connect(watcher->toQObject(), SIGNAL(pathChanged(const QString&)), this, SLOT(directoryChanged(const QString&)));
+#else
 	watcher = new QFileSystemWatcher(paths);
 	connect(watcher, SIGNAL(directoryChanged(const QString &)), this, SLOT(directoryChanged(const QString &)));
 	connect(watcher, SIGNAL(fileChanged(const QString &)), this, SLOT(fileChanged(const QString &)));
+#endif
 	watchsyncs = syncs;
 	QString _url = "https://";
 	_url.append(url);
