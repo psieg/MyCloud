@@ -33,6 +33,7 @@ HEADERS += ../../src/mycloud/Client.h \
            ../../src/mycloud/mc_version.h \
            ../../src/mycloud/mc_walk.h \
            ../../src/mycloud/mc_watch.h \
+           ../../src/mycloud/mc_watch2.h \
            ../../src/mycloud/mc_workerthread.h \
            ../../src/sqlite-amalgamation/sqlite3.h
 SOURCES += ../../src/mycloud/Client.cpp \
@@ -48,6 +49,7 @@ SOURCES += ../../src/mycloud/Client.cpp \
            ../../src/mycloud/mc_util.cpp \
            ../../src/mycloud/mc_walk.cpp \
            ../../src/mycloud/mc_watch.cpp \
+           ../../src/mycloud/mc_watch2.cpp \
            ../../src/mycloud/mc_workerthread.cpp \
            ../../src/Client/main.cpp \
            ../../src/sqlite-amalgamation/sqlite3.c

@@ -8,17 +8,11 @@
 #define CAFILE "trustCA.crt"
 
 
-QtWatcher::QtWatcher(const QStringList &paths, list<mc_sync_db> *syncs, const QString& url, const QString& certfile, bool acceptall) {
+QtWatcher::QtWatcher(list<mc_sync_db> *syncs, const QString& url, const QString& certfile, bool acceptall) {
 	connect(this, SIGNAL(_startLocalWatch()), this, SLOT(__startLocalWatch()));
-#ifdef MC_OS_WIN
-	watcher = new QtFileSystemWatcher();
+	watcher = new QtLocalWatcher();
 	watcher->setScope(*syncs);
-	connect(watcher->toQObject(), SIGNAL(pathChanged(const QString&)), this, SLOT(directoryChanged(const QString&)));
-#else
-	watcher = new QFileSystemWatcher(paths);
-	connect(watcher, SIGNAL(directoryChanged(const QString &)), this, SLOT(directoryChanged(const QString &)));
-	connect(watcher, SIGNAL(fileChanged(const QString &)), this, SLOT(fileChanged(const QString &)));
-#endif
+	connect(watcher, SIGNAL(pathChanged(const mc_sync_db&, const QString&)), this, SLOT(directoryChanged(const mc_sync_db&, const QString&)));
 	watchsyncs = syncs;
 	QString _url = "https://";
 	_url.append(url);
@@ -87,35 +81,14 @@ void QtWatcher::stopRemoteWatch() {
 	performer->abort();
 }
 
-void QtWatcher::directoryChanged(const QString &path) {
+void QtWatcher::directoryChanged(const mc_sync_db& sync, const QString &path) {
+	QString fpath = sync.path.c_str();
+	fpath.append(path);
 	if (watchfs) {
-		MC_DBG(qPrintable(path) << " has changed");
-		crypt_seed(time(NULL) % path.length()*137351);
-		if (!changepaths.contains(path)) {
-			changepaths.append(path);
-			repeatcounter = 0;
-		} else {
-			repeatcounter++;
-			if (repeatcounter > 50) {
-				MC_INF("FileSystemWatcher deletion bug?, canceling");
-				delete watcher;
-				watcher = NULL;
-				loop.quit();
-			}
-		}
-		evttimer.start();
-	} else {
-		MC_DBG("Ignoring FS change");
-	}
-}
-void QtWatcher::fileChanged(const QString &path) {
-	QString dirpath;
-	if (watchfs) {
-		MC_DBG(qPrintable(path) << " has changed");
-		dirpath = path.mid(0, path.lastIndexOf("/")+1); //Just add the dir, we don't want to walk files
-		crypt_seed(time(NULL) % path.length()*137347);
-		if (!changepaths.contains(dirpath)) {
-			changepaths.append(dirpath);
+		MC_DBG(qPrintable(fpath) << " has changed");
+		crypt_seed(time(NULL) % fpath.length() * 137351);
+		if (!changepaths.contains(fpath)) {
+			changepaths.append(fpath);
 			repeatcounter = 0;
 		} else {
 			repeatcounter++;
@@ -325,33 +298,7 @@ int QtWatcher::remoteChange(int status) {
 }
 
 
-
-int add_dir(string path, int id, QStringList *l, int rdepth) {
-	string fpath;
-	int rc;
-	MC_DBG("Adding " << path << " to watchlist");
-	l->append(path.c_str());
-	if (rdepth <= MC_MAXRDEPTH) {
-		list<mc_file> files;
-		rc = db_list_file_parent(&files, id);
-		MC_CHKERR(rc);
-		for (mc_file& f : files) {
-			if (f.is_dir && f.status != MC_FILESTAT_DELETED) {
-				fpath.assign(path).append(f.name).append("/");
-				rc = add_dir(fpath, f.id, l, rdepth+1);
-				MC_CHKERR(rc);
-			} else if (f.status != MC_FILESTAT_DELETED) {
-				//fpath.assign(path).append(f.name);
-				//MC_DBGL("Adding " << fpath << " to watchlist");
-				//l->append(fpath.c_str());
-			}
-		}
-	}
-	return 0;
-}
-
 int enter_watchmode(int timeout) {
-	QStringList l;
 	list<mc_sync_db> dbsyncs, watchlist;// = list<mc_sync_db>();
 	list<mc_sync_db>::iterator dbsyncsit, dbsyncsend;
 	mc_status status;
@@ -370,17 +317,15 @@ int enter_watchmode(int timeout) {
 	dbsyncsend = dbsyncs.end();
 	for (;dbsyncsit != dbsyncsend; ++dbsyncsit) { //Foreach db sync
 		if (dbsyncsit->status != MC_SYNCSTAT_DISABLED && dbsyncsit->status != MC_SYNCSTAT_CRYPTOFAIL) {
-			rdepth = 0;
-			rc = add_dir(dbsyncsit->path, -dbsyncsit->id, &l, rdepth);
 			MC_CHKERR(rc);
 			watchlist.push_back(*dbsyncsit);
 		}
 	}
-	if (l.size() == 0) {
+	if (watchlist.size() == 0) {
 		MC_WRN("Nothing to watch, sleeping");
 		mc_sleep_checkterminate(timeout);
 	} else {
-		QtWatcher w(l, &watchlist, status.url.c_str(), CAFILE, status.acceptallcerts);
+		QtWatcher w(&watchlist, status.url.c_str(), CAFILE, status.acceptallcerts);
 		w.run(timeout);
 	}
 

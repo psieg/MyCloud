@@ -49,6 +49,9 @@ int fs_delfile(const string& path);
 int fs_rmdir(const string& path);
 
 /* Test wether a file exits (is readable) */
-int fs_exists(const string& path);
+bool fs_exists(const string& path);
+
+/* Test wether a file is an existing directory */
+bool fs_isdir(const string& path);
 
 #endif /* MC_FS_H */

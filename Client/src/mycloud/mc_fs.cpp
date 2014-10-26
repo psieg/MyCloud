@@ -372,13 +372,7 @@ int fs_rmdir(const string& path) {
 
 /* Test wether a file exists (is readable) - CARE: may be case insensitive */
 #ifdef MC_OS_WIN
-int fs_exists(const string& path) {
-	/*FILE *f;
-
-	f = fs_fopen(path, "rb");
-	if (!f) return false;
-	fs_fclose(f);
-	return true;*/
+bool fs_exists(const string& path) {
 	DWORD ftyp = GetFileAttributes(utf8_to_unicode(path).c_str());
 	if (ftyp != INVALID_FILE_ATTRIBUTES)
 		return true;
@@ -388,14 +382,25 @@ int fs_exists(const string& path) {
 		return false;
 }
 #else
-int fs_exists(const string& path) {
-	/*FILE *f;
-
-	f = fs_fopen(path, "rb");
-	if (!f) return false;
-	fs_fclose(f);
-	return true;*/
+bool fs_exists(const string& path) {
 	struct stat st;
 	return (stat(path.c_str(), &st) == 0);
+}
+#endif
+
+/* Test wether a file is an existing directory */
+#ifdef MC_OS_WIN
+bool fs_isdir(const string& path) {
+	DWORD ftyp = GetFileAttributes(utf8_to_unicode(path).c_str());
+	if (ftyp == INVALID_FILE_ATTRIBUTES)
+		return false;
+	return ftyp & FILE_ATTRIBUTE_DIRECTORY;
+}
+#else
+bool fs_isdir(const string& path) {
+	struct stat st;
+	if (!stat(path.c_str(), &st))
+		return false;
+	return st.st_mode & S_IFDIR;
 }
 #endif

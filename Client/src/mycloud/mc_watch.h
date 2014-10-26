@@ -5,17 +5,14 @@
 #include "mc_fs.h"
 #include "mc_srv.h"
 #include "mc_walk.h"
+#include "mc_watch2.h"
 #include "mc_filter.h"
 #include "mc_helpers.h"
 #include <QtCore/QStringList>
-#include <QtCore/QFileSystemWatcher>
 #include <QtCore/QTimer>
 #include <QtCore/QEventLoop>
 #include <QtCore/QRegExp>
 
-#ifdef MC_OS_WIN
-#include "mc_watch2.h"
-#endif
 
 #ifdef MC_WATCHMODE
 #define MC_MAXRDEPTH	3
@@ -32,22 +29,17 @@ private slots:
 	void startRemoteWatch();
 	void stopLocalWatch();
 	void stopRemoteWatch();
-	void directoryChanged(const QString &path);
-	void fileChanged(const QString &path);
+	void directoryChanged(const mc_sync_db& sync, const QString &path);
 	int changeTimeout();
 	int remoteChange(int status);
 signals:
 	void _startLocalWatch();
 public:
-	QtWatcher(const QStringList &paths, list<mc_sync_db> *syncs, const QString& url, const QString& certfile, bool acceptall);
+	QtWatcher(list<mc_sync_db> *syncs, const QString& url, const QString& certfile, bool acceptall);
 	~QtWatcher();
 	void run(int timeout);
 private:
-#ifdef MC_OS_WIN
-	QtFileSystemWatcher *watcher;
-#else
-	QFileSystemWatcher *watcher;
-#endif
+	QtLocalWatcher *watcher;
 	QtNetworkPerformer *performer;
 	QEventLoop loop;
 	QTimer timer, evttimer, quittimer, restarttimer, watchlocaltimer;
