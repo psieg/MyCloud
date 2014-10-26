@@ -77,7 +77,7 @@
 
 0.3.4
 + Experimental detection of standby-timeouting connections
-+ Update to Qt5.3.0 and MSVC2013
++ Update to Qt5.3.0, MSVC2013 and openssl 1.0.1j (win)
 * Support case-sensitive filesystems, incompatible fliesystems can't download those files (#11)
 * Fix upload of outdated files under certain circumstances (#54)
 * QT components use UTF-8
