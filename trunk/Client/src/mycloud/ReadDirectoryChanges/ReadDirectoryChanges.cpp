@@ -31,6 +31,7 @@
 //	See ReadMe.txt for overview information.
 
 #include "stdafx.h"
+#include <process.h>
 #include "ReadDirectoryChanges.h"
 #include "ReadDirectoryChangesPrivate.h"
 
@@ -90,12 +91,12 @@ void CReadDirectoryChanges::AddDirectory( LPCTSTR szDirectory, BOOL bWatchSubtre
 	QueueUserAPC(CReadChangesServer::AddDirectoryProc, m_hThread, (ULONG_PTR)pRequest);
 }
 
-void CReadDirectoryChanges::Push(DWORD dwAction, CStringW& wstrFilename) 
+void CReadDirectoryChanges::Push(DWORD dwAction, wstring& wstrFilename) 
 {
 	m_Notifications.push( TDirectoryChangeNotification(dwAction, wstrFilename) );
 }
 
-bool  CReadDirectoryChanges::Pop(DWORD& dwAction, CStringW& wstrFilename) 
+bool  CReadDirectoryChanges::Pop(DWORD& dwAction, wstring& wstrFilename) 
 {
 	TDirectoryChangeNotification pair;
 	if (!m_Notifications.pop(pair))
