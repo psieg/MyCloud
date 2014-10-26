@@ -2,13 +2,53 @@
 #define MC_WATCH2_H
 #include <mc.h>
 #ifdef MC_WATCHMODE
-#include <QtCore/QObject.h>
-#include <QtCore/QThread.h>
+#include <QtCore/QObject>
 
 #ifdef MC_OS_WIN
+
+#include <QtCore/QThread>
+class QtFileSystemWatcher;
 class CReadDirectoryChanges;
+
+#else
+
+class QFileSystemWatcher;
+
 #endif
 
+class QtLocalWatcher : public QObject
+{
+	Q_OBJECT
+
+public:
+	QtLocalWatcher();
+	~QtLocalWatcher();
+
+	int setScope(list<mc_sync_db>& syncs);
+
+signals:
+	void pathChanged(const mc_sync_db& sync, const string& path);
+	// compat. do not use
+	void pathChanged(const mc_sync_db& sync, const QString& path);
+
+protected:
+	list<mc_sync_db> syncs;
+
+#ifdef MC_OS_WIN
+	QtFileSystemWatcher* watcher;
+protected slots:
+	void pathChanged(const string& path);
+#else
+	QFileSystemWatcher* watcher;
+protected slots:
+	void pathChanged(const QString& path);
+#endif
+protected:
+	int recurseDirectory(string path, QStringList *l, int rdepth);
+};
+
+#ifdef MC_OS_WIN
+// Wrapper around ReadDirectoryChanges
 class QtFileSystemWatcher : protected QThread
 {
 	Q_OBJECT
@@ -19,7 +59,7 @@ public:
 
 	inline const QObject* toQObject() const { return this; }
 
-	void setScope(list<mc_sync_db>& syncs);
+	void setScope(list<string>& paths);
 
 signals:
 	void pathChanged(const string& path);
@@ -28,15 +68,15 @@ signals:
 protected:
 	virtual void run();
 
-#ifdef MC_OS_WIN
 	CReadDirectoryChanges* changes;
 	void* changesWaitHandle;
 	void* waitForNewHandleEvent;
 	void* gotNewHandleEvent;
 	void* shouldQuitEvent;
 	void* hasQuitEvent;
-#endif
 };
+#endif
+
 /*
 class QtWatcher2 : public QObject
 {

@@ -1,14 +1,132 @@
 #include "mc_watch2.h"
 #ifdef MC_WATCHMODE
 #include "mc_util.h"
+#include "mc_fs.h"
 
 
 #ifdef MC_OS_WIN
+
 #define INTERESTING_FILE_NOTIFY_CHANGES FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE
 
 #include "ReadDirectoryChanges/ReadDirectoryChanges.h"
 
+#else
+
+#include <QtCore/QFileSystemWatcher>
+#define MC_MAXRDEPTH	3
+
+#endif
+
+QtLocalWatcher::QtLocalWatcher() {
+#ifdef MC_OS_WIN
+	watcher = new QtFileSystemWatcher();
+	connect(watcher->toQObject(), SIGNAL(pathChanged(const string&)), this, SLOT(pathChanged(const string&)));
+#else
+	watcher = new QFileSystemWatcher();
+	connect(watcher, SIGNAL(directoryChanged(const QString &)), this, SLOT(pathChanged(const QString &)));
+	connect(watcher, SIGNAL(fileChanged(const QString &)), this, SLOT(pathChanged(const QString &)));
+#endif
+}
+
+QtLocalWatcher::~QtLocalWatcher() {
+	delete watcher;
+}
+
+int QtLocalWatcher::setScope(list<mc_sync_db>& syncs) {
+	this->syncs.assign(syncs.begin(), syncs.end());
+	list<string> paths;
+
+	// de-duplicate paths to keep the number of duplicate events down
+	for (mc_sync_db& sync : this->syncs) {
+		bool found = false;
+		for (string& path : paths) {
+			if (path.substr(0, sync.path.length()) == sync.path) {
+				// path is at least as deep as syncpath
+				path.assign(sync.path);
+				found = true;
+				break;
+			}
+			if (sync.path.substr(0, path.length()) == path) {
+				// syncpath is at deeper as path
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			paths.push_back(sync.path);
+		}
+	}
+
+#ifdef MC_OS_WIN
+	watcher->setScope(paths);
+#else
+	QStringList watchpaths;
+	for (string& path : paths) {
+		int rc = recurseDirectory(path, &watchpaths, 0);
+		MC_CHKERR(rc);
+	}
+
+	watcher->removePaths(watcher->directories());
+	watcher->addPaths(watchpaths);
+#endif
+
+	return 0;
+}
+
+#ifdef MC_OS_WIN
+void QtLocalWatcher::pathChanged(const string& path) {
+	string dirpath = path;
+#else
+void QtLocalWatcher::pathChanged(const QString& path) {
+	string dirpath(qPrintable(path));
+#endif
+
+	// we are only interested in directories
+	if (!fs_isdir(dirpath)) {
+		size_t index = dirpath.find_last_of('/');
+		if (index != dirpath.length() - 1) {
+			dirpath = dirpath.substr(0, dirpath.find_last_of('/') + 1);
+		}
+	} else {
+		dirpath.append("/");
+	}
+
+	// find corresponding sync(s)
+	for (mc_sync_db& sync : this->syncs) {
+		if (dirpath.substr(0, sync.path.length()) == sync.path) {
+			MC_DBGL(sync.name << " -> " << dirpath.substr(sync.path.length()) << " changed");
+			emit pathChanged(sync, dirpath.substr(sync.path.length()));
+			emit pathChanged(sync, QString(dirpath.substr(sync.path.length()).c_str()));
+		}
+	}
+}
+
+#ifdef MC_OS_UNIX
+int QtLocalWatcher::recurseDirectory(string path, QStringList *l, int rdepth) {
+	string fpath;
+	int rc;
+	MC_DBGL("Adding " << path << " to watchlist");
+	l->push_back(path.c_str());
+	if (rdepth <= MC_MAXRDEPTH) {
+		list<mc_file_fs> files;
+		rc = fs_listdir(&files, path);
+		MC_CHKERR(rc);
+		for (mc_file_fs& f : files) {
+			if (f.is_dir) {
+				fpath.assign(path).append(f.name).append("/");
+				rc = recurseDirectory(fpath, l, rdepth + 1);
+				MC_CHKERR(rc);
+			}
+		}
+	}
+	return 0;
+}
+#endif
+
+
+#ifdef MC_OS_WIN
 QtFileSystemWatcher::QtFileSystemWatcher() {
+	qRegisterMetaType<string>("string");
 	changes = nullptr;
 	changesWaitHandle = NULL;
 	waitForNewHandleEvent = CreateEvent(NULL, false, false, NULL);
@@ -32,16 +150,16 @@ QtFileSystemWatcher::~QtFileSystemWatcher() {
 }
 
 
-void QtFileSystemWatcher::setScope(list<mc_sync_db>& syncs) {
+void QtFileSystemWatcher::setScope(list<string>& paths) {
 	SetEvent(waitForNewHandleEvent);
 	if (changes)
 		delete changes;
 	changes = new CReadDirectoryChanges();
 	SetEvent(gotNewHandleEvent);
 	
-	for (mc_sync_db& sync : syncs) {
-		string path = sync.path.substr(0, sync.path.length()-1);
-		changes->AddDirectory(utf8_to_unicode(path).c_str(), true, INTERESTING_FILE_NOTIFY_CHANGES);
+	for (string& path : paths) {
+		string _path = path.substr(0, path.length() - 1);
+		changes->AddDirectory(utf8_to_unicode(_path).c_str(), true, INTERESTING_FILE_NOTIFY_CHANGES);
 	}
 }
 
@@ -71,19 +189,15 @@ void QtFileSystemWatcher::run() {
 				string path = unicode_to_utf8(wstring(wstrFilename));
 				std::replace(path.begin(), path.end(), '\\', '/'); // winapi likes backslashes, we don't
 
-				// remove filename portion for now as we are linked to directoryChanged
-				size_t index = path.find_last_of('/');
-				if (index != path.length() - 1) {
-					path = path.substr(0, path.find_last_of('/')+1);
-				}
-
+				if (dwAction & (FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE))
+					MC_INF("non-namechange-change! " << path)
+				MC_DBGL(path << " has changed");
 				emit pathChanged(path);
-				emit pathChanged(QString(path.c_str()));
 			}
 		}
 	}
 }
-#endif
+#endif /* MC_OS_WIN */
 
 /*
 QtWatcher2::QtWatcher2() {

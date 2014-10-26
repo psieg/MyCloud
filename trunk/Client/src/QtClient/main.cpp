@@ -6,6 +6,10 @@
 #include "mc_db.h"
 #include "mc_crypt.h"
 
+void printfunc(QtMsgType t, const QMessageLogContext & c, const QString & s){
+	Q_ASSERT_X(false, "Qt", qPrintable(s));
+}
+
 int main(int argc, char *argv[])
 {
 	int rc;
@@ -16,6 +20,7 @@ int main(int argc, char *argv[])
 	mc_logfile << "####################################################################" << endl;
 	mc_logfile << "MyCloud QtClient Version " << MC_VERSION << endl;
 #endif
+
 	QApplication a(argc, argv);
 	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 	a.setQuitOnLastWindowClosed(false);
@@ -28,6 +33,8 @@ int main(int argc, char *argv[])
 	QtClient w(NULL, d);
 	QDebugStream qout(std::cout, &w);
 	QDebugStream qerr(std::cerr, &w);
+
+	qInstallMessageHandler(printfunc);
 	
 	db_open("state.db");
 	if (d == 0) {
