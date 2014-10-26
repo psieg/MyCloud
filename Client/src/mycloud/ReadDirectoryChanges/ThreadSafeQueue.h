@@ -41,19 +41,22 @@ public:
 			0,			// initial count
 			nMaxCount,	// max count
 			NULL);		// anonymous
+
+		::InitializeCriticalSection(&m_Crit);
 	}
-	
+
 	~CThreadSafeQueue()
 	{
 		::CloseHandle(m_hSemaphore);
 		m_hSemaphore = NULL;
+		::DeleteCriticalSection(&m_Crit);
 	}
 
 	void push(C& c)
 	{
-		CComCritSecLock<CComAutoCriticalSection> lock( m_Crit, true );
-		push_back( c );
-		lock.Unlock();
+		::EnterCriticalSection(&m_Crit);
+		push_back(c);
+		::LeaveCriticalSection(&m_Crit);
 
 		if (!::ReleaseSemaphore(m_hSemaphore, 1, NULL))
 		{
@@ -68,7 +71,7 @@ public:
 
 	bool pop(C& c)
 	{
-		CComCritSecLock<CComAutoCriticalSection> lock( m_Crit, true );
+		::EnterCriticalSection(&m_Crit);
 
 		// If the user calls pop() more than once after the
 		// semaphore is signaled, then the semaphore count will
@@ -77,26 +80,30 @@ public:
 		{
 			while (::WaitForSingleObject(m_hSemaphore, 0) != WAIT_TIMEOUT)
 				1;
+			::LeaveCriticalSection(&m_Crit);
 			return false;
 		}
 
 		c = front();
 		pop_front();
 
+		::LeaveCriticalSection(&m_Crit);
 		return true;
 	}
 
 	// If overflow, use this to clear the queue.
 	void clear()
 	{
-		CComCritSecLock<CComAutoCriticalSection> lock( m_Crit, true );
+		::EnterCriticalSection(&m_Crit);
 
-		for (DWORD i=0; i<size(); i++)
+		for (DWORD i = 0; i<size(); i++)
 			WaitForSingleObject(m_hSemaphore, 0);
 
 		__super::clear();
 
 		m_bOverflow = false;
+
+		::LeaveCriticalSection(&m_Crit);
 	}
 
 	bool overflow()
@@ -109,7 +116,7 @@ public:
 protected:
 	HANDLE m_hSemaphore;
 
-	CComAutoCriticalSection m_Crit;
+	CRITICAL_SECTION m_Crit;
 
 	bool m_bOverflow;
 };

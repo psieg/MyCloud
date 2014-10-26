@@ -4,7 +4,7 @@
 
 
 #ifdef MC_OS_WIN
-#define INTERESTING_FILE_NOTIFY_CHANGES FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE  | FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_LAST_ACCESS
+#define INTERESTING_FILE_NOTIFY_CHANGES FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE
 
 #include "ReadDirectoryChanges/ReadDirectoryChanges.h"
 
@@ -66,7 +66,7 @@ void QtFileSystemWatcher::run() {
 		case WAIT_OBJECT_0 + 2:
 			{
 				DWORD dwAction;
-				CStringW wstrFilename;
+				wstring wstrFilename;
 				changes->Pop(dwAction, wstrFilename);
 				string path = unicode_to_utf8(wstring(wstrFilename));
 				std::replace(path.begin(), path.end(), '\\', '/'); // winapi likes backslashes, we don't

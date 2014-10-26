@@ -77,7 +77,7 @@ bool CReadChangesRequest::OpenDirectory()
 		return true;
 
 	m_hDirectory = ::CreateFile(
-		m_wstrDirectory,					// pointer to the file name
+		m_wstrDirectory.c_str(),			// pointer to the file name
 		FILE_LIST_DIRECTORY,                // access (read/write) mode
 		FILE_SHARE_READ						// share mode
 		 | FILE_SHARE_WRITE
@@ -153,15 +153,23 @@ void CReadChangesRequest::ProcessNotification()
 	{
 		FILE_NOTIFY_INFORMATION& fni = (FILE_NOTIFY_INFORMATION&)*pBase;
 
-		CStringW wstrFilename(fni.FileName, fni.FileNameLength/sizeof(wchar_t));
+		wstring wstrFilename(fni.FileName, fni.FileNameLength/sizeof(wchar_t));
 		// Handle a trailing backslash, such as for a root directory.
-		if (wstrFilename.Right(1) != L"\\")
+		if (m_wstrDirectory.back() != L'\\')
 			wstrFilename = m_wstrDirectory + L"\\" + wstrFilename;
 		else
 			wstrFilename = m_wstrDirectory + wstrFilename;
 
 		// If it could be a short filename, expand it.
-		LPCWSTR wszFilename = PathFindFileNameW(wstrFilename);
+		WCHAR fname[_MAX_FNAME];
+		WCHAR ext[_MAX_EXT];
+
+		_wsplitpath_s(wstrFilename.c_str(), NULL, 0, NULL, 0, fname, _MAX_FNAME, ext, _MAX_EXT); // in theory this can fail...
+
+		wstring filename = fname;
+		filename.append(ext);
+		LPCWSTR wszFilename = filename.c_str();
+		//LPCWSTR wszFilename = PathFindFileNameW(wstrFilename);
 		int len = lstrlenW(wszFilename);
 		// The maximum length of an 8.3 filename is twelve, including the dot.
 		if (len <= 12 && wcschr(wszFilename, L'~'))
@@ -169,7 +177,7 @@ void CReadChangesRequest::ProcessNotification()
 			// Convert to the long filename form. Unfortunately, this
 			// does not work for deletions, so it's an imperfect fix.
 			wchar_t wbuf[MAX_PATH];
-			if (::GetLongPathName(wstrFilename, wbuf, _countof (wbuf)) > 0)
+			if (::GetLongPathName(wstrFilename.c_str(), wbuf, _countof (wbuf)) > 0)
 				wstrFilename = wbuf;
 		}
 
