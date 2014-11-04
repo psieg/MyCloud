@@ -35,7 +35,7 @@ signals:
 	void _notifyIOStart(int evt);
 //#endif
 	void _notifyProgress(qint64 value, qint64 total);
-	void _notifySubProgress(double value, double total);
+	void _notifySubProgress(qint64 download, qint64 upload);
 
 public:	
 	QtClient(QWidget *parent = 0, int autorun = 0);
@@ -51,7 +51,7 @@ public:
 	void notifyIOStart(int evt);
 #endif
 	void notifyProgress(qint64 value, qint64 total);
-	void notifySubProgress(double value, double total);
+	void notifySubProgress(qint64 download, qint64 upload);
 	static int execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible);
 
 	int listSyncs();
@@ -78,7 +78,7 @@ private slots:
 	void __notifyIOStart(int evt);
 //#endif
 	void __notifyProgress(qint64 value, qint64 total);
-	void __notifySubProgress(double value, double total);
+	void __notifySubProgress(qint64 download, qint64 upload);
 	int _execConflictDialog(std::string *fullPath, std::string *descLocal, std::string *descServer, int defaultValue, bool manualSolvePossible);
 	void on_quitButton_clicked();
 	void on_pushButton_clicked();
