@@ -32,7 +32,7 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	connect(this, SIGNAL(_notifyIOStart(int)), this, SLOT(__notifyIOStart(int)), Qt::QueuedConnection);
 #endif
 	connect(this, SIGNAL(_notifyProgress(qint64, qint64)), this, SLOT(__notifyProgress(qint64, qint64)), Qt::QueuedConnection);
-	connect(this, SIGNAL(_notifySubProgress(double, double)), this, SLOT(__notifySubProgress(double, double)), Qt::QueuedConnection);
+	connect(this, SIGNAL(_notifySubProgress(qint64, qint64)), this, SLOT(__notifySubProgress(qint64, qint64)), Qt::QueuedConnection);
 
 	connect(ui.syncTable, SIGNAL(itemActivated(QTableWidgetItem*)), ui.editButton, SLOT(click()));
 
@@ -257,10 +257,9 @@ void QtClient::notifyProgress(qint64 value, qint64 total)
 {
 	emit _notifyProgress(value, total);
 }
-void QtClient::notifySubProgress(double value, double total)
+void QtClient::notifySubProgress(qint64 download, qint64 upload)
 {
-	if (value != 0)
-		emit _notifySubProgress(value, total);
+	emit _notifySubProgress(download, upload);
 }
 
 
@@ -430,14 +429,14 @@ void QtClient::__notifyProgress(qint64 value, qint64 total)
 	progressLabel->setText(BytesToSize(value, false, -1/*, 1*/).c_str() + tr(" / ") + BytesToSize(total, false, -1).c_str());
 }
 //										dl			ul
-void QtClient::__notifySubProgress(double value, double total)
+void QtClient::__notifySubProgress(qint64 download, qint64 upload)
 {
 	if (this->isVisible()) {
 		int64 sum = 0;
 		if (uploading) {
-			sum = progressBase + total;
+			sum = progressBase + upload;
 		} else if (downloading) {
-			sum = progressBase + value;
+			sum = progressBase + download;
 		}
 		if (sum) {
 			int percent;

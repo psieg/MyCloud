@@ -165,12 +165,12 @@ void QtNetworkPerformer::requestTimedout() {
 void QtNetworkPerformer::uploadProgress(qint64 sent, qint64 total) {
 	timeouttimer.start();
 	crypt_seed(sent);
-	MC_NOTIFYSUBPROGRESS(sent, sent);
+	MC_NOTIFYSUBPROGRESS(0, sent);
 }
 void QtNetworkPerformer::downloadProgress(qint64 received, qint64 total) {
 	timeouttimer.start();
 	crypt_seed(received);
-	MC_NOTIFYSUBPROGRESS(received, received);
+	MC_NOTIFYSUBPROGRESS(received, 0);
 }
 
 void QtNetworkPerformer::abort() {

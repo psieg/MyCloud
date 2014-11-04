@@ -204,7 +204,7 @@ using namespace std;
 #	define MC_NOTIFYSTART(evt, param)		QtClient::instance()->notifyStart(evt, param);
 #	define MC_NOTIFYEND(evt)				QtClient::instance()->notifyEnd(evt);
 #	define MC_NOTIFYPROGRESS(val, tot)		QtClient::instance()->notifyProgress(val, tot);
-#	define MC_NOTIFYSUBPROGRESS(val, tot)	QtClient::instance()->notifySubProgress(val, tot);
+#	define MC_NOTIFYSUBPROGRESS(dl, ul)		QtClient::instance()->notifySubProgress(dl, ul);
 #	ifdef MC_IONOTIFY
 #		define MC_NOTIFYIOSTART(evt)		QtClient::instance()->notifyIOStart(evt);
 #		define MC_NOTIFYIOEND(evt)			QtClient::instance()->notifyIOEnd(evt);
@@ -217,7 +217,7 @@ using namespace std;
 #	define MC_NOTIFYSTART(evt, param)
 #	define MC_NOTIFYEND(evt)
 #	define MC_NOTIFYPROGRESS(val, tot)
-#	define MC_NOTIFYSUBPROGRESS(val, tot)
+#	define MC_NOTIFYSUBPROGRESS(dl, ul)
 #	define MC_NOTIFYIOSTART(evt)
 #	define MC_NOTIFYIOEND(evt)
 #endif
