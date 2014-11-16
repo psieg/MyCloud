@@ -72,7 +72,7 @@ void QtWatcher::__startLocalWatch() {
 	watchfs = true;
 }
 void QtWatcher::startRemoteWatch() {
-	srv_notifychange_async(&netibuf, &netobuf, performer, watchsyncs);
+	srv_notifychange_async(&netibuf, &netobuf, performer, *watchsyncs);
 }
 void QtWatcher::stopLocalWatch() {
 	watchfs = false;

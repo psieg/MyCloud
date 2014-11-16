@@ -299,7 +299,7 @@ void QtSyncDialog::shareListReceived(int rc) {
 
 	if (idlist.size() != 0) { // some unknown users		
 		connect(performer, SIGNAL(finished(int)), this, SLOT(userListReceived(int)));
-		srv_idusers_async(&netibuf, &netobuf, performer, &idlist);
+		srv_idusers_async(&netibuf, &netobuf, performer, idlist);
 	} else {
 		dbsynclist[dbindex].shareversion = srvsynclist[ui.nameBox->currentIndex()].shareversion;
 		rc = db_update_sync(&dbsynclist[dbindex]);
@@ -752,7 +752,7 @@ void QtSyncDialog::accept() {
 		connect(performer, SIGNAL(finished(int)), this, SLOT(userReceived(int)));
 		list<int> l;
 		l.push_back(worksyncowner.id);
-		srv_idusers_async(&netibuf, &netobuf, performer, &l);
+		srv_idusers_async(&netibuf, &netobuf, performer, l);
 		//calls step2
 	} else if (rc) { 
 		reject(); 

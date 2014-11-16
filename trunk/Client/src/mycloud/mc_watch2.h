@@ -25,7 +25,7 @@ public:
 	QtLocalWatcher();
 	~QtLocalWatcher();
 
-	int setScope(list<mc_sync_db>& syncs);
+	int setScope(const list<mc_sync_db>& syncs);
 
 signals:
 	void pathChanged(const mc_sync_db& sync, const string& path);
@@ -86,20 +86,19 @@ public:
 	QtRemoteWatcher(const QString& url, const QString& certfile, bool acceptall);
 	~QtRemoteWatcher();
 
-	void setScope(list<mc_sync_db>* syncs);
+	void setScope(const list<mc_sync_db>& syncs);
 
 	int startSingle();
 	void stop();
 
 signals:
-	// the pointer is guaranteed to be in the list set via setScope
-	void syncChanged(mc_sync_db* sync);
+	void syncChanged(const mc_sync_db& sync);
 
 protected slots:
 	void remoteChange(int status);
 
 protected:
-	list<mc_sync_db>* syncs;
+	list<mc_sync_db> syncs;
 	QtNetworkPerformer* performer;
 	mc_buf netibuf, netobuf;
 

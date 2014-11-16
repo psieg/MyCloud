@@ -160,20 +160,20 @@ void pack_listusers(mc_buf *buf, unsigned char authtoken[16]) {
 	buf->used = sizeof(int)+16;
 }
 
-void pack_idusers(mc_buf *buf, unsigned char authtoken[16], list<int> *l) {
+void pack_idusers(mc_buf *buf, unsigned char authtoken[16], const list<int>& l) {
 	const int num = MC_SRVQRY_IDUSERS;
 	unsigned int index = 0;
-	MatchBuf(buf, sizeof(int)+16+l->size()*sizeof(int));
+	MatchBuf(buf, sizeof(int)+16+l.size()*sizeof(int));
 	memcpy(&buf->mem[index], &num, sizeof(int));
 	index += sizeof(int);
 	memcpy(&buf->mem[index], authtoken, 16);
 	index += 16;
 
-	for (int s : *l) {
+	for (int s : l) {
 		memcpy(&buf->mem[index], &s, sizeof(int));
 		index += sizeof(int);
 	}
-	buf->used = sizeof(int)+16+l->size()*sizeof(int);
+	buf->used = sizeof(int)+16+l.size()*sizeof(int);
 }
 
 void pack_listdir(mc_buf *buf, unsigned char authtoken[16], int parent) {
@@ -322,22 +322,22 @@ void pack_purgefile(mc_buf *buf, unsigned char authtoken[16], int id) {
 	buf->used = sizeof(int)+sizeof(int64)+16;
 }
 
-void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], list<mc_sync_db> *l) {
+void pack_notifychange(mc_buf *buf, unsigned char authtoken[16], const list<mc_sync_db>& l) {
 	const int num = MC_SRVQRY_NOTIYCHANGE;
 	unsigned int index = 0;
-	MatchBuf(buf, sizeof(int)+16+l->size()*(sizeof(int)+16));
+	MatchBuf(buf, sizeof(int)+16+l.size()*(sizeof(int)+16));
 	memcpy(&buf->mem[index], &num, sizeof(int));
 	index += sizeof(int);
 	memcpy(&buf->mem[index], authtoken, 16);
 	index += 16;
 
-	for (mc_sync_db& s : *l) {
+	for (const mc_sync_db& s : l) {
 		memcpy(&buf->mem[index], &s.id, sizeof(int));
 		index += sizeof(int);
 		memcpy(&buf->mem[index], &s.hash, 16);
 		index += 16;
 	}
-	buf->used = sizeof(int)+16+l->size()*(sizeof(int)+16);
+	buf->used = sizeof(int)+16+l.size()*(sizeof(int)+16);
 }
 
 void pack_passchange(mc_buf *buf, unsigned char authtoken[16], const string& newpass) {
