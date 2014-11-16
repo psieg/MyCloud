@@ -64,7 +64,7 @@ void QtNewSyncDialog::accept() {
 		connect(performer, SIGNAL(finished(int)), this, SLOT(userReceived(int)));
 		list<int> l;
 		l.push_back(s.uid);
-		srv_idusers_async(netibuf, netobuf, performer, &l);
+		srv_idusers_async(netibuf, netobuf, performer, l);
 	} else if (rc) {
 		reject();
 		return;

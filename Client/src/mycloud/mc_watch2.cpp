@@ -32,7 +32,7 @@ QtLocalWatcher::~QtLocalWatcher() {
 	delete watcher;
 }
 
-int QtLocalWatcher::setScope(list<mc_sync_db>& syncs) {
+int QtLocalWatcher::setScope(const list<mc_sync_db>& syncs) {
 	this->syncs.assign(syncs.begin(), syncs.end());
 	list<string> paths;
 
@@ -200,8 +200,6 @@ void QtFileSystemWatcher::run() {
 #endif /* MC_OS_WIN */
 
 QtRemoteWatcher::QtRemoteWatcher(const QString& url, const QString& certfile, bool acceptall) {
-	syncs = nullptr;
-
 	SetBuf(&netibuf);
 	SetBuf(&netobuf);
 
@@ -219,8 +217,8 @@ QtRemoteWatcher::~QtRemoteWatcher() {
 	ClearBuf(&netobuf);
 }
 
-void QtRemoteWatcher::setScope(list<mc_sync_db>* syncs) {
-	this->syncs = syncs;
+void QtRemoteWatcher::setScope(const list<mc_sync_db>& syncs) {
+	this->syncs.assign(syncs.begin(), syncs.end());
 }
 
 int QtRemoteWatcher::startSingle() {

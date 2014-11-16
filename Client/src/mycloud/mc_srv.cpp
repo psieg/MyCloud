@@ -41,8 +41,8 @@ int _srv_patchfile(mc_file *file);
 int _srv_delfile(mc_file *file);
 int _srv_getmeta(int id, mc_file *file);
 int _srv_purgefile(int id);
-int _srv_notifychange(list<mc_sync_db> *l, int *id);
-int _srv_idusers(list<int> *ids, list<mc_user> *l);
+int _srv_notifychange(const list<mc_sync_db>& l, int *id);
+int _srv_idusers(const list<int>& ids, list<mc_user> *l);
 
 #define SAFEFUNC(name, param, call)	int name(param) {	\
 	int rc;												\
@@ -693,8 +693,8 @@ int srv_listusers_process(mc_buf *obuf, list<mc_user> *l) {
 	return 0;
 }
 
-SAFEFUNC2(srv_idusers, list<int> *ids, list<mc_user> *l, ids, l)
-int _srv_idusers(list<int> *ids, list<mc_user>*l) {
+SAFEFUNC2(srv_idusers, const list<int>& ids, list<mc_user> *l, ids, l)
+int _srv_idusers(const list<int>& ids, list<mc_user> *l) {
 	MC_DBGL("Identifying users");
 	int rc;
 	token_mutex.lock();
@@ -710,7 +710,7 @@ int _srv_idusers(list<int> *ids, list<mc_user>*l) {
 	return 0;	
 }
 
-int srv_idusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<int> *l) {
+int srv_idusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const list<int>& l) {
 	MC_DBGL("Identifying users (async)");
 	token_mutex.lock();
 	pack_idusers(ibuf, authtoken, l);
@@ -985,8 +985,8 @@ int _srv_purgefile(int id) {
 	return 0;
 }
 
-SAFEFUNC2(srv_notifychange, list<mc_sync_db> *l, int *id, l, id)
-int _srv_notifychange(list<mc_sync_db> *l, int *id) {
+SAFEFUNC2(srv_notifychange, const list<mc_sync_db>& l, int *id, l, id)
+int _srv_notifychange(const list<mc_sync_db>& l, int *id) {
 	MC_DBGL("Watching srv changes");
 	int rc;
 	token_mutex.lock();
@@ -1001,7 +1001,7 @@ int _srv_notifychange(list<mc_sync_db> *l, int *id) {
 }
 
 //No SAFEFUNC as we don't use srv resources (other than reading authtoken)
-int srv_notifychange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_sync_db> *l) {
+int srv_notifychange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const list<mc_sync_db>& l) {
 	MC_DBGL("Watching srv changes (async)");
 	token_mutex.lock();
 	pack_notifychange(ibuf, authtoken, l);

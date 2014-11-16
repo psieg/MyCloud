@@ -56,7 +56,7 @@ int recoverReset(int olduid, int newuid) {
 		if (!found)
 			newids.push_back(srv.uid);
 	}
-	rc = srv_idusers(&newids, &srvusers);
+	rc = srv_idusers(newids, &srvusers);
 	if (rc) throw rc;
 
 	int recovered = 0;

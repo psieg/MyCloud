@@ -32,8 +32,8 @@ int srv_patchfile(mc_file *file);
 int srv_delfile(mc_file *file);
 int srv_getmeta(int id, mc_file *file);
 int srv_purgefile(int id);
-int srv_notifychange(list<mc_sync_db> *l, int *id);
-int srv_idusers(list<int> *ids, list<mc_user> *l);
+int srv_notifychange(const list<mc_sync_db>& l, int *id);
+int srv_idusers(const list<int>& ids, list<mc_user> *l);
 
 //For internal or async use only
 class QtNetworkPerformer : public QObject
@@ -93,9 +93,9 @@ int srv_delshare_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, mc_
 int srv_delshare_process(mc_buf *obuf);
 int srv_listusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf);
 int srv_listusers_process(mc_buf *obuf, list<mc_user> *l);
-int srv_idusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<int> *l);
+int srv_idusers_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const list<int>& l);
 int srv_idusers_process(mc_buf *obuf, list<mc_user> *l);
-int srv_notifychange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, list<mc_sync_db> *l);
+int srv_notifychange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const list<mc_sync_db>& l);
 int srv_notifychange_process(mc_buf *obuf, int *id);
 int srv_passchange_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& newpass);
 int srv_passchange_process(mc_buf *obuf);
