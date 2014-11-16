@@ -199,6 +199,44 @@ void QtFileSystemWatcher::run() {
 }
 #endif /* MC_OS_WIN */
 
+QtRemoteWatcher::QtRemoteWatcher(const QString& url, const QString& certfile, bool acceptall) {
+	syncs = nullptr;
+
+	SetBuf(&netibuf);
+	SetBuf(&netobuf);
+
+	QString _url = "https://";
+	_url.append(url);
+	_url.append("/bin.php");
+	performer = new QtNetworkPerformer(_url, certfile, acceptall, true, 40); //30sec is half-open time
+	connect(performer, SIGNAL(finished(int)), this, SLOT(remoteChange(int)));
+}
+
+QtRemoteWatcher::~QtRemoteWatcher() {
+	if (performer)
+		delete performer;
+	ClearBuf(&netibuf);
+	ClearBuf(&netobuf);
+}
+
+void QtRemoteWatcher::setScope(list<mc_sync_db>* syncs) {
+	this->syncs = syncs;
+}
+
+int QtRemoteWatcher::startSingle() {
+	return srv_notifychange_async(&netibuf, &netobuf, performer, syncs);
+}
+
+void QtRemoteWatcher::stop() {
+	performer->abort();
+}
+
+void QtRemoteWatcher::remoteChange(int status) {
+	
+}
+
+
+
 /*
 QtWatcher2::QtWatcher2() {
 	connect(&thread, SIGNAL(pathChanged(const string&)), this, SLOT(pathChanged(const string&)));

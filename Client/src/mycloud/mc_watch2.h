@@ -2,6 +2,7 @@
 #define MC_WATCH2_H
 #include <mc.h>
 #ifdef MC_WATCHMODE
+#include "mc_srv.h"
 #include <QtCore/QObject>
 
 #ifdef MC_OS_WIN
@@ -76,6 +77,33 @@ protected:
 	void* hasQuitEvent;
 };
 #endif
+
+class QtRemoteWatcher : public QObject
+{
+	Q_OBJECT
+
+public:
+	QtRemoteWatcher(const QString& url, const QString& certfile, bool acceptall);
+	~QtRemoteWatcher();
+
+	void setScope(list<mc_sync_db>* syncs);
+
+	int startSingle();
+	void stop();
+
+signals:
+	// the pointer is guaranteed to be in the list set via setScope
+	void syncChanged(mc_sync_db* sync);
+
+protected slots:
+	void remoteChange(int status);
+
+protected:
+	list<mc_sync_db>* syncs;
+	QtNetworkPerformer* performer;
+	mc_buf netibuf, netobuf;
+
+};
 
 /*
 class QtWatcher2 : public QObject
