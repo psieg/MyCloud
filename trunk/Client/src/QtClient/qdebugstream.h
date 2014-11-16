@@ -5,6 +5,8 @@
 #ifndef Q_DEBUG_STREAM_H
 #define Q_DEBUG_STREAM_H
 
+#include "mc.h"
+
 #include <iostream>
 #include <streambuf>
 #include <string>
@@ -36,6 +38,11 @@ protected:
   {
    log_window->logOutput(m_string.c_str());
    //log_window->setHtml(log_window->toHtml() + m_string.c_str() + "\n");
+#ifdef MC_OS_WIN
+   std::string tmp(m_string);
+   tmp.append("\n");
+   OutputDebugStringA(tmp.c_str());
+#endif
    m_string.erase(m_string.begin(), m_string.end());
   }
   else
@@ -57,7 +64,11 @@ protected:
     std::string tmp(m_string.begin(), m_string.begin() + pos);
     log_window->logOutput(tmp.c_str());
 	//log_window->setHtml(log_window->toHtml() + tmp.c_str() + "\n");
-    m_string.erase(m_string.begin(), m_string.begin() + pos + 1);
+#ifdef MC_OS_WIN
+	tmp.append("\n");
+	OutputDebugStringA(tmp.c_str());
+#endif
+	m_string.erase(m_string.begin(), m_string.begin() + pos + 1);
    }
   }
 
