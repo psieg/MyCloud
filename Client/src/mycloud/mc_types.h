@@ -30,7 +30,8 @@ enum MC_NOTIFYSINGLETYPE : int {
 	MC_NT_NOSYNCWARN		= 2, 
 	MC_NT_INCOMPATIBLE_FS	= 3, 
 	MC_NT_CRYPTOFAIL		= 4, 
-	MC_NT_SERVERRESET		= 5
+	MC_NT_SERVERRESET		= 5,
+	MC_NT_TLSFAIL			= 6
 };
 // for MC_NOTIFYSTART / MC_NOTIFYEND
 enum MC_NOTIFYSTATETYPE : int {
@@ -232,9 +233,9 @@ inline bool nocase_smaller (const std::string& first, const std::string& second)
   unsigned int i=0;
   while ( (i<first.length()) && (i<second.length()) )
   {
-    if (tolower(first[i])<tolower(second[i])) return true;
-    else if (tolower(first[i])>tolower(second[i])) return false;
-    ++i;
+	if (tolower(first[i])<tolower(second[i])) return true;
+	else if (tolower(first[i])>tolower(second[i])) return false;
+	++i;
   }
   if (first.length()<second.length()) return true;
   else return false;
@@ -244,9 +245,9 @@ inline bool nocase_greater (const std::string& first, const std::string& second)
   unsigned int i=0;
   while ( (i<first.length()) && (i<second.length()) )
   {
-    if (tolower(first[i])>tolower(second[i])) return true;
-    else if (tolower(first[i])<tolower(second[i])) return false;
-    ++i;
+	if (tolower(first[i])>tolower(second[i])) return true;
+	else if (tolower(first[i])<tolower(second[i])) return false;
+	++i;
   }
   if (first.length()>second.length()) return true;
   else return false;
@@ -256,9 +257,9 @@ inline bool nocase_equals (const std::string& first, const std::string& second)
   unsigned int i=0;
   while ( (i<first.length()) && (i<second.length()) )
   {
-    if (tolower(first[i])>tolower(second[i])) return false;
-    else if (tolower(first[i])<tolower(second[i])) return false;
-    ++i;
+	if (tolower(first[i])>tolower(second[i])) return false;
+	else if (tolower(first[i])<tolower(second[i])) return false;
+	++i;
   }
   if (first.length()==second.length()) return true;
   else return false;

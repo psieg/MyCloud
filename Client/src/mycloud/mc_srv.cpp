@@ -172,6 +172,11 @@ void QtNetworkPerformer::downloadProgress(qint64 received, qint64 total) {
 	crypt_seed(received);
 	MC_NOTIFYSUBPROGRESS(received, 0);
 }
+void QtNetworkPerformer::tlsError(const QList<QSslError> & errors) {
+	MC_WRN("TLS failure: " << qPrintable(errors.first().errorString()));
+	if (!async)
+		MC_NOTIFY(MC_NT_TLSFAIL, qPrintable(errors.first().errorString()));
+}
 
 void QtNetworkPerformer::abort() {
 	if (async) {
@@ -185,6 +190,7 @@ int QtNetworkPerformer::perform(mc_buf *inbuf, mc_buf *outbuf, bool withprogress
 	if (rep) MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED, "NetworkPerformer can only handle one query at a time");
 	req.setHeader(QNetworkRequest::ContentLengthHeader, QVariant::fromValue(inbuf->used));
 	rep = manager.post(req, QByteArray(inbuf->mem, inbuf->used));
+	connect(rep, SIGNAL(sslErrors(const QList<QSslError>&)), this, SLOT(tlsError(const QList<QSslError>&)));
 	MC_DBG("Request posted: " << this << " " << rep);
 	if (withprogress) {
 		connect(rep, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(downloadProgress(qint64, qint64)));
@@ -219,6 +225,11 @@ int QtNetworkPerformer::processReply() {
 				rep = NULL;
 				return QNetworkReply::OperationCanceledError; //User abort
 			}
+		} else if (rep->error() == QNetworkReply::SslHandshakeFailedError) {
+			// we already wrote a warning
+			if (rep) { if (async) rep->deleteLater(); else delete rep; }
+			rep = NULL;
+			return QNetworkReply::SslHandshakeFailedError;
 		} else {
 			int rc = rep->error();
 			MC_WRN("Network failure: " << qPrintable(rep->errorString()) << " (Code " << rep->error() << ")");
@@ -302,6 +313,8 @@ int srv_perform(MC_SRVSTATUS requiredcode, bool withprogress = false, MC_SRVSTAT
 				mc_sleep(5);
 				return srv_perform(requiredcode, withprogress, altcode, rdepth+1, inbuf, outbuf);
 			} else MC_ERR_MSG(MC_ERR_NETWORK, "3 network failures in a row");
+		case QNetworkReply::SslHandshakeFailedError:
+			MC_ERR_MSG(MC_ERR_NETWORK, "TLS connection failed");
 		case QNetworkReply::UnknownNetworkError:
 			if (rdepth < 1) {
 				MC_INF("Network error, retrying after 5 sec");

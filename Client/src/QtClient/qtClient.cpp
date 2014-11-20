@@ -119,14 +119,14 @@ QtClient::QtClient(QWidget *parent, int autorun)
 
 	//TrayIcon stuff
 	showAction = new QAction(tr("&Show"), this);
-    connect(showAction, SIGNAL(triggered()), this, SLOT(showNormal()));
+	connect(showAction, SIGNAL(triggered()), this, SLOT(showNormal()));
 	startAction = new QAction(tr("&Run"), this);
-    connect(startAction, SIGNAL(triggered()), this, SLOT(startNewRun()));
+	connect(startAction, SIGNAL(triggered()), this, SLOT(startNewRun()));
 	stopAction = new QAction(tr("&Abort"), this);
-    connect(stopAction, SIGNAL(triggered()), this, SLOT(stopCurrentRun()));
+	connect(stopAction, SIGNAL(triggered()), this, SLOT(stopCurrentRun()));
 	stopAction->setVisible(false);
 	quitAction = new QAction(tr("&Quit"), this);
-    connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
+	connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
 
 	trayIconMenu = new QMenu(this);
 	trayIconMenu->addAction(showAction);
@@ -270,13 +270,13 @@ void QtClient::__notify(int evt, QString object) {
 			progressLabel->hide();
 			setStatus(tr("Error: "), object, icon_err);
 			break;
-		case MC_NT_FULLSYNC: //A little out of row
+		case MC_NT_FULLSYNC:
 			listSyncs(); //refresh listing
 			setStatus(tr("Fully synced (") + object + ")", "", icon_ok);
 			break;
-		case MC_NT_NOSYNCWARN: //Even more out of row
+		case MC_NT_NOSYNCWARN:
 			trayIcon->showMessage(tr("No Server Connection"), tr("Last successful server connection: ") + object + tr(".\n"
-				"You might want to check the server settings"), QSystemTrayIcon::Critical);
+				"You might want to check the server settings"), QSystemTrayIcon::Warning);
 			disconnect(trayIcon, SIGNAL(messageClicked()));
 			connect(trayIcon, SIGNAL(messageClicked()), this, SLOT(show()));
 			break;
@@ -307,6 +307,12 @@ void QtClient::__notify(int evt, QString object) {
 																	object + tr(" Syncs could be recovered.\n"
 																	"We tried to automatically adopt the new IDs, please check the Sync list and restart the worker."));
 			listSyncs();
+			break;
+		case MC_NT_TLSFAIL:
+			trayIcon->showMessage(tr("Secure connection failed"), object + tr(".\n"
+				"This may mean your connection is under attack"), QSystemTrayIcon::Warning);
+			disconnect(trayIcon, SIGNAL(messageClicked()));
+			connect(trayIcon, SIGNAL(messageClicked()), this, SLOT(show()));
 			break;
 		default:
 			setStatus(tr("Unknown Notify Type received"), "", icon);
@@ -685,7 +691,7 @@ void QtClient::on_syncTable_itemSelectionChanged() {
 	}
 }
 
-void QtClient::trayIconActivated(QSystemTrayIcon::ActivationReason reason) {    
+void QtClient::trayIconActivated(QSystemTrayIcon::ActivationReason reason) {	
 	switch (reason) {
 		case QSystemTrayIcon::Trigger:
 			if (this->isVisible()) { this->showNormal(); this->activateWindow(); }
@@ -716,7 +722,7 @@ void QtClient::trayIconActivated(QSystemTrayIcon::ActivationReason reason) {
 			break;
 		default:
 			;
-     }
+	 }
 }
 
 void QtClient::newVersion(QString newver) {

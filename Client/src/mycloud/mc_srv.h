@@ -54,6 +54,7 @@ private slots:
 	void requestTimedout();
 	void uploadProgress(qint64 sent, qint64 total);
 	void downloadProgress(qint64 received, qint64 total);
+	void tlsError(const QList<QSslError> & errors);
 private:
 	int processReply();
 	QNetworkAccessManager manager;
