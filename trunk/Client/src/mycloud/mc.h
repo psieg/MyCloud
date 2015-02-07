@@ -52,6 +52,8 @@ extern ofstream mc_logfile;
 #	else
 #		define MC_DBG_BRK(cond, msg)	{ if(cond) { std::cout << msg << endl; raise(SIGINT); } }
 #	endif
+#else
+#	define MC_DBG_BRK(cond, msg)
 #endif
 
 
