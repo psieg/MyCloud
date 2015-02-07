@@ -133,14 +133,16 @@ protected:
 
 private:
 	mc_sync_db* findMine(const mc_sync_db& sync);
+	bool localChangesPending();
 
 	QtLocalWatcher localWatcher;
 	QtRemoteWatcher remoteWatcher;
 	QTimer quittimer, timetimer, delaytimer;
 	QEventLoop loop;
 	list<mc_sync_db> syncs;
-	list<QString> excludedPaths;
-	map<const mc_sync_db, list<QString>> changedPaths;
+	QStringList excludedPaths;
+	map<const mc_sync_db, QStringList> changedPaths;
+	bool watching;
 };
 
 
