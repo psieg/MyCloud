@@ -5,9 +5,37 @@
 #		include "qtClient.h"
 #	endif
 #endif
+#include "mc_watch2.h"
+
+#ifdef MC_WATCHMODE
+#define NOTIFYFUNC(name)	int name(const string& path) {	\
+	int rc;												\
+	MC_BEGIN_WRITING_FILE(path);						\
+	rc = _##name(path);									\
+	MC_END_WRITING_FILE(path);							\
+	return rc;											\
+}
+#define NOTIFYFUNC_TIME(name)	int name(const string& path, int64 mtime, int64 ctime) {	\
+	int rc;												\
+	MC_BEGIN_WRITING_FILE(path);						\
+	rc = _##name(path, mtime, ctime);					\
+	MC_END_WRITING_FILE(path);							\
+	return rc;											\
+}
+#else
+#define NOTIFYFUNC(name)	int name(const string& path) {	\
+	return _##name(path);								\
+}
+
+#define NOTIFYFUNC_TIME(name)	int name(const string& path, int64 mtime, int64 ctime) {	\
+	return _##name(path, mtime, ctime);					\
+}
+#endif
 
 #ifdef MC_OS_WIN
 FILE* fs_fopen(const string& filename, const string& mode) {
+	if (mode.find("w") != string::npos)
+		Q_ASSERT_X(QtWatcher2::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
 	return _wfsopen(utf8_to_unicode(filename).c_str(), utf8_to_unicode(mode).c_str(), _SH_DENYNO);
 
 }
@@ -219,44 +247,35 @@ int fs_listdir(list<mc_file_fs> *l, const string& path) {
 
 /* Set mtime of a file */
 #ifdef MC_OS_WIN
-int fs_touch(const string& path, int64 mtime, int64 ctime) {
+int _fs_touch(const string& path, int64 mtime, int64 ctime) {
 	int rc;
-	//__utimbuf64 buf;
 	HANDLE h;
 	FILETIME mt, ct;
 	if (ctime == 0)
 		MC_DBGL("Touching " << path << " with m" << mtime)
 	else
 		MC_DBGL("Touching " << path << " with m" << mtime << "/c" << ctime);
-	//buf.actime = time(NULL);
-	//buf.modtime = mtime;
-	//rc = _wutime64(utf8_to_unicode(path).c_str(), &buf); //DST crap
-	//if (rc) {
-	//	if (errno == EACCES) { //... path is a directory
-			h = CreateFileW(utf8_to_unicode(path).c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-			if (h == INVALID_HANDLE_VALUE)
-				MC_ERR_MSG(MC_ERR_IO, "Failed to set mtime for file " << path << ": " << GetLastError());
 
-			mt = PosixToFileTime(mtime);
+	h = CreateFileW(utf8_to_unicode(path).c_str(), FILE_WRITE_ATTRIBUTES, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	if (h == INVALID_HANDLE_VALUE)
+		MC_ERR_MSG(MC_ERR_IO, "Failed to set mtime for file " << path << ": " << GetLastError());
 
-			if (ctime == 0) {
-				rc = SetFileTime(h, NULL, NULL, &mt);
-			} else {
-				ct = PosixToFileTime(ctime);
-				rc = SetFileTime(h, &ct, NULL, &mt);
-			}
-			if (rc == 0) 
-				MC_ERR_MSG(MC_ERR_IO, "Failed to set mtime for file " << path << ": " << GetLastError());
+	mt = PosixToFileTime(mtime);
+	if (ctime == 0) {
+		rc = SetFileTime(h, NULL, NULL, &mt);
+	} else {
+		ct = PosixToFileTime(ctime);
+		rc = SetFileTime(h, &ct, NULL, &mt);
+	}
+	if (rc == 0) 
+		MC_ERR_MSG(MC_ERR_IO, "Failed to set mtime for file " << path << ": " << GetLastError());
 
-			CloseHandle(h);
-	//	} else {
-	//		MC_ERR_MSG(MC_ERR_IO, "Failed to set mtime for file " << path << ": " << errno);
-	//	}
-	//}
+	CloseHandle(h);
+
 	return 0;
 }
 #else
-int fs_touch(const string& path, int64 mtime, int64 ctime) {
+int _fs_touch(const string& path, int64 mtime, int64 ctime) {
 	int rc;
 	struct utimbuf buf;
 	if (ctime == 0)
@@ -271,10 +290,12 @@ int fs_touch(const string& path, int64 mtime, int64 ctime) {
 	return 0;
 }
 #endif
+NOTIFYFUNC_TIME(fs_touch);
+
 
 /* Create a directory */
 #ifdef MC_OS_WIN
-int fs_mkdir(const string& path, int64 mtime, int64 ctime) {
+int _fs_mkdir(const string& path, int64 mtime, int64 ctime) {
 	int rc;
 	MC_DBGL("Creating directory " << path);
 	rc = _wmkdir(utf8_to_unicode(path).c_str());
@@ -285,7 +306,7 @@ int fs_mkdir(const string& path, int64 mtime, int64 ctime) {
 		return 0;
 	}
 }
-int fs_mkdir(const string& path) {
+int _fs_mkdir(const string& path) {
 	int rc;
 	MC_DBGL("Creating directory " << path);
 	rc = _wmkdir(utf8_to_unicode(path).c_str());
@@ -293,7 +314,7 @@ int fs_mkdir(const string& path) {
 	return 0;
 }
 #else
-int fs_mkdir(const string& path, int64 mtime, int64 ctime) {
+int _fs_mkdir(const string& path, int64 mtime, int64 ctime) {
 	int rc;
 	MC_DBGL("Creating directory " << path);
 	rc = mkdir(path.c_str(), 0777);
@@ -304,7 +325,7 @@ int fs_mkdir(const string& path, int64 mtime, int64 ctime) {
 		return 0;
 	}
 }
-int fs_mkdir(const string& path) {
+int _fs_mkdir(const string& path) {
 	int rc;
 	MC_DBGL("Creating directory " << path);
 	rc = mkdir(path.c_str(), 0777);
@@ -312,10 +333,12 @@ int fs_mkdir(const string& path) {
 	return 0;
 }
 #endif
+NOTIFYFUNC_TIME(fs_mkdir);
+NOTIFYFUNC(fs_mkdir);
 
 /* Rename a file */
 #ifdef MC_OS_WIN
-int fs_rename(const string& oldpath, const string& newpath) {
+int _fs_rename(const string& oldpath, const string& newpath) {
 	int rc;
 	MC_DBGL("Renaming " << oldpath << " to " << newpath);
 	rc =_wrename(utf8_to_unicode(oldpath).c_str(), utf8_to_unicode(newpath).c_str());
@@ -323,7 +346,7 @@ int fs_rename(const string& oldpath, const string& newpath) {
 	return 0;
 }
 #else
-int fs_rename(const string& oldpath, const string& newpath) {
+int _fs_rename(const string& oldpath, const string& newpath) {
 	int rc;
 	MC_DBGL("Renaming " << oldpath << " to " << newpath);
 	rc = rename(oldpath.c_str(), newpath.c_str());
@@ -331,10 +354,19 @@ int fs_rename(const string& oldpath, const string& newpath) {
 	return 0;
 }
 #endif
+int fs_rename(const string& oldpath, const string& newpath) {
+	int rc;
+	MC_BEGIN_WRITING_FILE(oldpath);
+	MC_BEGIN_WRITING_FILE(newpath);
+	rc = _fs_rename(oldpath, newpath);
+	MC_END_WRITING_FILE(oldpath);
+	MC_END_WRITING_FILE(newpath);
+	return rc;
+}
 
 /* Delete a file */
 #ifdef MC_OS_WIN
-int fs_delfile(const string& path) {
+int _fs_delfile(const string& path) {
 	int rc;
 	MC_DBGL("Deleting file " << path);
 	rc = _wunlink(utf8_to_unicode(path).c_str());	
@@ -342,7 +374,7 @@ int fs_delfile(const string& path) {
 	return 0;
 }
 #else
-int fs_delfile(const string& path) {
+int _fs_delfile(const string& path) {
 	int rc;
 	MC_DBGL("Deleting file " << path);
 	rc = unlink(path.c_str());	
@@ -350,10 +382,11 @@ int fs_delfile(const string& path) {
 	return 0;
 }
 #endif
+NOTIFYFUNC(fs_delfile);
 
 /* Delete a directory */
 #ifdef MC_OS_WIN
-int fs_rmdir(const string& path) {
+int _fs_rmdir(const string& path) {
 	int rc;
 	MC_DBGL("Deleting dir " << path);
 	rc = _wrmdir(utf8_to_unicode(path).c_str());
@@ -361,7 +394,7 @@ int fs_rmdir(const string& path) {
 	return 0;
 }
 #else
-int fs_rmdir(const string& path) {
+int _fs_rmdir(const string& path) {
 	int rc;
 	MC_DBGL("Deleting dir " << path);
 	rc = rmdir(path.c_str());
@@ -369,6 +402,7 @@ int fs_rmdir(const string& path) {
 	return 0;
 }
 #endif
+NOTIFYFUNC(fs_rmdir);
 
 /* Test wether a file exists (is readable) - CARE: may be case insensitive */
 #ifdef MC_OS_WIN

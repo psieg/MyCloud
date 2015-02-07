@@ -4,6 +4,11 @@
 #else
 #	include "mc_workerthread.h"
 #endif
+#ifdef MC_WATCHMODE
+#include "mc_watch2.h"
+#endif
+
+#include "mc_helpers.h"
 
 /* The actions taken for a certain file. What to do is decided by walk.
 *	Note they may modify the mc_file(_fs) structs	*/
@@ -59,6 +64,7 @@ int dirempty(int id, bool *empty) {
 	return 0;
 }
 
+#pragma region download
 /* Download helpers	*/
 int download_checkmodified(mc_crypt_ctx *cctx, const string& fpath, mc_file *srv, bool *modified) {
 	unsigned char hash[16];
@@ -275,7 +281,9 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 		else rc = db_update_file(srv);
 		MC_CHKERR(rc);
 
+		MC_BEGIN_WRITING_FILE(fpath);
 		rc = download_actual(&cctx, fpath, srv);
+		MC_END_WRITING_FILE(fpath);
 		MC_CHKERR(rc);
 
 		srv->status = MC_FILESTAT_COMPLETE;
@@ -337,7 +345,9 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 	}
 	return rrc;
 }
+#pragma endregion
 
+#pragma region upload
 /* Upload helpers */
 int upload_checkmodified(mc_crypt_ctx *cctx, const string& fpath, mc_file_fs *fs, mc_file *srv, unsigned char hash[16], bool *modified) {
 	int rc;
@@ -368,6 +378,7 @@ int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, m
 	MC_DBGL("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL, fpath);
 	fdesc = fs_fopen(fpath, "rb");
+	if (!fdesc) MC_CHKERR_MSG(MC_ERR_IO, "Could not read the file");
 
 	fs_fseek(fdesc, 0, SEEK_SET);
 	rc = crypt_init_upload(cctx, db);
@@ -506,7 +517,9 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 			rc = crypt_filemd5_new(&cctx, newdb->hash, fpath, newdb->size);
 			MC_CHKERR(rc);		
 
+			MC_BEGIN_WRITING_FILE(fpath);
 			rc = upload_actual(&cctx, path, fpath, fs, newdb, true);
+			MC_END_WRITING_FILE(fpath);
 			MC_CHKERR(rc);
 
 			newdb->status = MC_FILESTAT_COMPLETE;
@@ -626,7 +639,9 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				rc = db_update_file(db);
 				MC_CHKERR(rc);
 
+				MC_BEGIN_WRITING_FILE(fpath);
 				rc = upload_actual(&cctx, path, fpath, fs, db);
+				MC_END_WRITING_FILE(fpath);
 				MC_CHKERR(rc);
 
 				db->status = MC_FILESTAT_COMPLETE;
@@ -662,7 +677,9 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 					rc = db_update_file(db);
 					MC_CHKERR(rc);
 
+					MC_BEGIN_WRITING_FILE(fpath);
 					rc = upload_actual(&cctx, path, fpath, fs, db);
+					MC_END_WRITING_FILE(fpath);
 					MC_CHKERR(rc);
 
 					db->status = MC_FILESTAT_COMPLETE;
@@ -694,7 +711,9 @@ int upload_normal(mc_sync_ctx *ctx, const string& path, const string& fpath, con
 				*rrc = walk(ctx, rpath, db->id, db->hash);
 			}
 		} else {
+			MC_BEGIN_WRITING_FILE(fpath);
 			rc = upload_actual(&cctx, path, fpath, fs, db, true);
+			MC_END_WRITING_FILE(fpath);
 			MC_CHKERR(rc);
 		}
 
@@ -798,12 +817,13 @@ int upload(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc
 	//While this sometimes overwrites legit changes, generally it undoes unwanted mtime changes from
 	//things we did within the directory
 	if (db && db->is_dir && db->status != MC_FILESTAT_DELETED) {
-		rc = fs_touch(fpath, db->mtime, db->ctime);
-		MC_CHKERR(rc);
+		rc = updateMtimeIfMismatch(fpath, db);
 	}
 
 	return rrc;
 }
+#pragma endregion
+
 /* Purge the file from the entire system, it is some kind of leftover - USE WITH CAUTION
 	the file should not exist in filesystem unless ignored!	
 	no conflict checks will be performed whatsoever!	
@@ -848,6 +868,8 @@ int purge(mc_file *db, mc_file *srv) {
 
 	return 0;
 }
+
+#pragma region complete
 /* Called by verifyandcomplete, resumes an interrupted upload 
 *	Should not be called on dirs	*/
 int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr) {
@@ -932,7 +954,7 @@ int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_fi
 
 /* Called by verifyandcomplete, resumes an interrupted download 
 *	Should not be called on dirs	*/
-int complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr) {
+int _complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr) {
 	FILE *fdesc;
 	int64 offset, written;
 	mc_crypt_ctx cctx;
@@ -995,3 +1017,11 @@ int complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_
 
 	return 0;
 }
+int complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr) {
+	int rc;
+	MC_BEGIN_WRITING_FILE(fpath);
+	rc = _complete_down(ctx, path, fpath, fs, db, srv, hashstr);
+	MC_END_WRITING_FILE(fpath);
+	return rc;
+}
+#pragma endregion

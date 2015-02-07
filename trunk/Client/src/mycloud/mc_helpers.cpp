@@ -55,6 +55,21 @@ int updateHash(mc_sync_ctx *ctx, mc_file *f, mc_sync_db *s) {
 	return 0;
 }
 
+int updateMtimeIfMismatch(string fpath, mc_file* db) {
+	int rc;
+	mc_file_fs fsnow;
+
+	rc = fs_filestats(&fsnow, fpath, db->name);
+	MC_CHKERR(rc);
+
+	if (fsnow.mtime != db->mtime) {
+		rc = fs_touch(fpath, db->mtime, db->ctime);
+		MC_CHKERR(rc);
+	}
+
+	return 0;
+}
+
 /* retrieve and compare sync hashes */
 int fullsync() {
 	list<mc_sync_db> dbsyncs;

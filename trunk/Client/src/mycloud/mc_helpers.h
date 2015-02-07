@@ -12,6 +12,9 @@
 /* cascade up the tree and recalc hashes from db */
 int updateHash(mc_sync_ctx *ctx, mc_file *f, mc_sync_db *s);
 
+/* if the mtime is not as db says, touch it */
+int updateMtimeIfMismatch(string fpath, mc_file* db);
+
 /* retrieve and compare sync hashes */
 int fullsync();
 int fullsync(list<mc_sync_db> *dbsyncs);

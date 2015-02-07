@@ -6,6 +6,7 @@
 #endif
 
 #include "mc_conflict.h"
+#include "mc_helpers.h"
 
 /* Helper: catches the case when a file was purged but then restored with a new ID 
 *	this case may apply whenever db and srv are known */
@@ -158,12 +159,8 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 		//While this sometimes overwrites legit changes, generally it undoes unwanted mtime changes from
 		//things we did within the directory
 		if (srv->status != MC_FILESTAT_DELETED) {
-			rc = fs_filestats(&mtimedummy, fpath, srv->name);
+			rc = updateMtimeIfMismatch(fpath, db);
 			MC_CHKERR(rc);
-			if (mtimedummy.mtime != srv->mtime) {
-				rc = fs_touch(fpath, srv->mtime);
-				MC_CHKERR(rc);
-			}
 		}
 	}
 

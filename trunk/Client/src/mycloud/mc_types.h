@@ -365,5 +365,4 @@ inline void init_crypt_ctx(mc_crypt_ctx *cctx, mc_sync_ctx *ctx)
 inline void init_crypt_ctx_copy(mc_crypt_ctx *cctx, mc_crypt_ctx *extcctx)
 	{ cctx->hasiv = extcctx->hasiv; cctx->hastag = extcctx->hastag; cctx->f = extcctx->f; cctx->ctx = extcctx->ctx; }
 
-
 #endif /* MC_TYPES_H */
