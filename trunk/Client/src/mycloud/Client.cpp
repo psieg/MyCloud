@@ -6,6 +6,7 @@
 #include "mc_srv.h"
 #include "mc_walk.h"
 #include "mc_watch.h"
+#include "mc_watch2.h"
 #include <regex>
 #ifdef MC_QTCLIENT
 #	include "qtClient.h"
@@ -145,6 +146,7 @@ int runmc()
 						rc = db_update_status(&status);
 						if (rc) throw rc;
 					
+						QtWatcher2 watcher(status.url.c_str(), CAFILE, status.acceptallcerts);
 
 						//TODO: resume and stuff
 						while (true) {
@@ -171,6 +173,8 @@ int runmc()
 							MC_INFL("Beginning run");
 
 							dbsyncs.sort(compare_mc_sync_db_prio);
+
+							watcher.setScope(dbsyncs);
 
 							dbsyncsit = dbsyncs.begin();
 							dbsyncsend = dbsyncs.end();
