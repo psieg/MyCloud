@@ -4,17 +4,13 @@
 #ifdef MC_WATCHMODE
 #include "mc_srv.h"
 #include <QtCore/QObject>
+#include <QtCore/QThread>
 
 #ifdef MC_OS_WIN
-
-#include <QtCore/QThread>
 class QtFileSystemWatcher;
 class CReadDirectoryChanges;
-
 #else
-
 class QFileSystemWatcher;
-
 #endif
 
 class QtLocalWatcher : public QObject
