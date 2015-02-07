@@ -104,43 +104,49 @@ protected:
 };
 
 
-class QtWatcher2 : protected QThread
+class QtWatcher2 : protected QObject
 {
 	Q_OBJECT
 
 public:
 	QtWatcher2(const QString& url, const QString& certfile, bool acceptall);
 	~QtWatcher2();
+	static QtWatcher2* instance() { return _instance; }
 
 	int setScope(const list<mc_sync_db>& syncs);
 	int catchUpAndWatch(int timeout);
 
 	void beginExcludingLocally(const QString& path);
 	void endExcludingLocally(const QString& path);
+	bool isExcludingLocally(const QString& path);
 
-protected slots:
+private slots:
 	void checkquit();
+	void endExcludingTimeout();
 	int localChange(const mc_sync_db& sync, const string& path);
 	int localChangeTimeout();
 	int remoteChange(const mc_sync_db& sync);
 
-protected:
-	virtual void run();
-
 private:
+	static QtWatcher2* _instance;
 	mc_sync_db* findMine(const mc_sync_db& sync);
 	bool localChangesPending();
 
 	QtLocalWatcher localWatcher;
 	QtRemoteWatcher remoteWatcher;
-	QTimer quittimer, timetimer, delaytimer;
+	QTimer quittimer, timetimer, delaytimer, excludetimer;
 	QEventLoop loop;
 	list<mc_sync_db> syncs;
 	QStringList excludedPaths;
+	QStringList pendingUnExcludes;
 	map<const mc_sync_db, QStringList> changedPaths;
 	bool watching;
 };
 
-
+#define MC_BEGIN_WRITING_FILE(fpath)	if(QtWatcher2::instance()) QtWatcher2::instance()->beginExcludingLocally(fpath.c_str());
+#define MC_END_WRITING_FILE(fpath)		if(QtWatcher2::instance()) QtWatcher2::instance()->endExcludingLocally(fpath.c_str());
+#else
+#define MC_BEGIN_WRITING_FILE(fpath)
+#define MC_END_WRITING_FILE(fpath)
 #endif /* MC_WATCHMODE */
 #endif /* MC_WATCH2_H */

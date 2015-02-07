@@ -5,6 +5,8 @@
 #include "mc_fs.h"
 #include "mc_walk.h"
 
+QtWatcher2 *QtWatcher2::_instance = NULL;
+
 #ifdef MC_QTCLIENT
 #include "qtClient.h"
 #endif
@@ -12,7 +14,6 @@
 #ifdef MC_OS_WIN
 
 #define INTERESTING_FILE_NOTIFY_CHANGES FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE
-
 #include "ReadDirectoryChanges/ReadDirectoryChanges.h"
 
 #else
@@ -282,7 +283,8 @@ QtWatcher2::QtWatcher2(const QString& url, const QString& certfile, bool accepta
 	remoteWatcher(url, certfile, acceptall),
 	localWatcher()
 {
-	moveToThread(this);
+	Q_ASSERT_X((QtWatcher2::_instance == NULL), "QtWatcher2", "There should only be one QtWatcher2 Instance");
+	QtWatcher2::_instance = this;
 
 	connect(&localWatcher, SIGNAL(pathChanged(const mc_sync_db&, const string&)), this, SLOT(localChange(const mc_sync_db&, const string&)));
 	connect(&remoteWatcher, SIGNAL(syncChanged(const mc_sync_db&)), this, SLOT(remoteChange(const mc_sync_db&)));
@@ -291,6 +293,10 @@ QtWatcher2::QtWatcher2(const QString& url, const QString& certfile, bool accepta
 	delaytimer.setInterval(5000);
 	connect(&delaytimer, SIGNAL(timeout()), this, SLOT(localChangeTimeout()));
 
+	excludetimer.setSingleShot(true);
+	excludetimer.setInterval(100);
+	connect(&excludetimer, SIGNAL(timeout()), this, SLOT(endExcludingTimeout()));
+
 	quittimer.setInterval(2000);
 	connect(&quittimer, SIGNAL(timeout()), this, SLOT(checkquit()));
 
@@ -298,12 +304,10 @@ QtWatcher2::QtWatcher2(const QString& url, const QString& certfile, bool accepta
 	connect(&timetimer, SIGNAL(timeout()), &loop, SLOT(quit()));
 
 	watching = false;
-
-	start();
 }
 
 QtWatcher2::~QtWatcher2() {
-	QMetaObject::invokeMethod(this, "quit", Qt::BlockingQueuedConnection);
+	QtWatcher2::_instance = NULL;
 }
 
 int QtWatcher2::setScope(const list<mc_sync_db>& syncs) {
@@ -325,18 +329,31 @@ int QtWatcher2::setScope(const list<mc_sync_db>& syncs) {
 
 	return 0;
 }
+
 void QtWatcher2::beginExcludingLocally(const QString& path) {
-	excludedPaths.push_back(path);
+	// always exclude the whole directory, create/delete modifies its mtime
+	MC_INF("exclude " << qPrintable(path.mid(0, path.lastIndexOf("/"))));
+	excludedPaths.push_back(path.mid(0, path.lastIndexOf("/")));
 }
 
 void QtWatcher2::endExcludingLocally(const QString& path) {
-	// remove only the first occurence in case they were stacked
-	for (QStringList::iterator it = excludedPaths.begin(); ; ++it) {
-		if (*it == path) {
-			excludedPaths.erase(it);
-			return;
-		}		
+	QString p = path.mid(0, path.lastIndexOf("/"));
+	// unfortunately we don't get the notify immediately when the operation happens in the fs
+	// so we have to wait a moment before actually un-excluding
+	pendingUnExcludes.push_back(p);
+	excludetimer.start();
+}
+
+void QtWatcher2::endExcludingTimeout() {
+	for (const QString& p : pendingUnExcludes) {
+		MC_INF("endexclude " << qPrintable(p));
+		excludedPaths.removeOne(p);
 	}
+}
+
+bool QtWatcher2::isExcludingLocally(const QString& path) {
+	QString p = path.mid(0, path.lastIndexOf("/"));
+	return excludedPaths.contains(p);
 }
 
 void QtWatcher2::checkquit() {
@@ -350,9 +367,11 @@ void QtWatcher2::checkquit() {
 int QtWatcher2::localChange(const mc_sync_db& sync, const string& path) {
 	crypt_seed(time(NULL) ^ path.length() * 137351);
 	QString _path(path.c_str());
+	QString fpath(sync.path.c_str());
+	fpath.append(_path);
 
 	for (const QString& p : excludedPaths) {
-		if (_path.startsWith(p)) {
+		if (fpath.startsWith(p)) {
 			return 0;
 		}
 	}
@@ -360,6 +379,7 @@ int QtWatcher2::localChange(const mc_sync_db& sync, const string& path) {
 	mc_sync_db* writableSync = findMine(sync);
 	if (!writableSync) MC_ERR_MSG(MC_OK, "Local change notification for non-watched sync");
 
+	MC_INFL("Changed: " << path);
 	changedPaths[*writableSync].push_back(_path);
 
 	if (watching)
@@ -372,7 +392,6 @@ int QtWatcher2::localChangeTimeout() {
 	int rc, i;
 	mc_sync_ctx context;
 	list<mc_sync_db> newsyncs;
-	list<mc_sync_db>::iterator dbsyncsit, dbsyncsend;
 
 	MC_INF("Local change detected");
 
@@ -380,6 +399,7 @@ int QtWatcher2::localChangeTimeout() {
 	rc = db_list_filter_sid(&generalfilter, 0);
 	MC_CHKERR(rc);
 
+	remoteWatcher.stop();
 	for (mc_sync_db& sync : syncs) {
 		auto changepaths = changedPaths[sync];
 
@@ -388,7 +408,7 @@ int QtWatcher2::localChangeTimeout() {
 		
 		//update filters
 		filter.assign(generalfilter.begin(), generalfilter.end());
-		rc = db_list_filter_sid(&filter, dbsyncsit->id);
+		rc = db_list_filter_sid(&filter, sync.id);
 		MC_CHKERR(rc);
 
 		changepaths.sort();
@@ -398,25 +418,25 @@ int QtWatcher2::localChangeTimeout() {
 			for (i = 0; i < changepaths.length(); i++) if (changepaths[i].startsWith(s)) { changepaths.removeAt(i); i--; }
 
 
-			init_sync_ctx(&context, &*dbsyncsit, &filter);
-			if (s == dbsyncsit->path.c_str()) { //it's a sync itself
-				MC_NOTIFYSTART(MC_NT_SYNC, dbsyncsit->name);
-				rc = walk_nochange(&context, "", -dbsyncsit->id, dbsyncsit->hash);
-				if (rc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+			init_sync_ctx(&context, &sync, &filter);
+			if (s.length() == 0) { //it's a sync itself
+				MC_NOTIFYSTART(MC_NT_SYNC, sync.name);
+				rc = walk_nochange(&context, "", -sync.id, sync.hash);
+				if (rc == MC_ERR_TERMINATING) sync.status = MC_SYNCSTAT_ABORTED;
 				else if (rc == MC_ERR_CRYPTOALERT) return cryptopanic();
-				else if (MC_IS_CRITICAL_ERR(rc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
-				else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
-				dbsyncsit->lastsync = time(NULL); //TODO: not always a full sync!
-				rc = db_update_sync(&*dbsyncsit);
+				else if (MC_IS_CRITICAL_ERR(rc)) sync.status = MC_SYNCSTAT_FAILED;
+				else sync.status = MC_SYNCSTAT_COMPLETED;
+				sync.lastsync = time(NULL); //TODO: not always a full sync!
+				rc = db_update_sync(&sync);
 				MC_CHKERR(rc);
 				MC_NOTIFYEND(MC_NT_SYNC);
 			} else {
 				mc_file f;
 				int i;
-				QString sp = s.mid(dbsyncsit->path.length()); //now relative to sync
-				QString ss = sp; //now relative to sync
+				QString sp = s;
+				QString ss = s;
 				i = ss.indexOf("/");
-				f.parent = -dbsyncsit->id;
+				f.parent = -sync.id;
 				f.name = qPrintable(ss.left(i));
 				rc = db_select_file_name(&f);
 				if (rc) MC_ERR_MSG(rc, "Could not find file in db");
@@ -431,21 +451,21 @@ int QtWatcher2::localChangeTimeout() {
 					i = ss.indexOf("/");
 				}
 				sp = sp.left(sp.length() - 1); //remove trailing /
-				MC_NOTIFYSTART(MC_NT_SYNC, dbsyncsit->name);
+				MC_NOTIFYSTART(MC_NT_SYNC, sync.name);
 				int wrc = walk_nochange(&context, qPrintable(sp), f.id, f.hash);
-				if (wrc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
+				if (wrc == MC_ERR_TERMINATING) sync.status = MC_SYNCSTAT_ABORTED;
 				else if (wrc == MC_ERR_CRYPTOALERT) return cryptopanic();
-				else if (MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
-				else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
-				dbsyncsit->lastsync = time(NULL);
+				else if (MC_IS_CRITICAL_ERR(wrc)) sync.status = MC_SYNCSTAT_FAILED;
+				else sync.status = MC_SYNCSTAT_COMPLETED;
+				sync.lastsync = time(NULL);
 
 				rc = db_update_file(&f);
 				MC_CHKERR(rc);
 
-				rc = updateHash(&context, &f, &*dbsyncsit);
+				rc = updateHash(&context, &f, &sync);
 				MC_CHKERR(rc);
 
-				rc = db_update_sync(&*dbsyncsit); //Hash must be written back to watchsyncs
+				rc = db_update_sync(&sync);
 				MC_CHKERR(rc);
 
 				if (wrc == MC_ERR_CRYPTOALERT) return cryptopanic();
@@ -457,6 +477,16 @@ int QtWatcher2::localChangeTimeout() {
 
 		}
 	}
+
+	//Check for sync
+	rc = fullsync();
+	if (!rc) {
+		MC_NOTIFY(MC_NT_FULLSYNC, TimeToString(time(NULL)));
+	} else if (rc == MC_ERR_NOTFULLYSYNCED) {
+	} else return rc;
+
+	remoteWatcher.setScope(syncs);
+	remoteWatcher.startSingle();
 
 	return 0;
 }
@@ -470,7 +500,6 @@ int QtWatcher2::remoteChange(const mc_sync_db& sync) {
 	MC_INF("Remote change detected");
 	mc_sync_ctx context;
 	list<mc_sync_db> newsyncs;
-	list<mc_sync_db>::iterator dbsyncsit, dbsyncsend;
 
 	//Filters
 	list<mc_filter> generalfilter, filter;
@@ -478,19 +507,19 @@ int QtWatcher2::remoteChange(const mc_sync_db& sync) {
 	MC_CHKERR(rc);
 
 	filter.assign(generalfilter.begin(), generalfilter.end());
-	rc = db_list_filter_sid(&filter, dbsyncsit->id);
+	rc = db_list_filter_sid(&filter, writableSync->id);
 	MC_CHKERR(rc);
 
 	//Run
-	init_sync_ctx(&context, &*dbsyncsit, &filter);
-	MC_NOTIFYSTART(MC_NT_SYNC, dbsyncsit->name);
-	int wrc = walk(&context, "", -dbsyncsit->id, dbsyncsit->hash);
-	if (wrc == MC_ERR_TERMINATING) dbsyncsit->status = MC_SYNCSTAT_ABORTED;
-	else if (wrc == MC_ERR_CRYPTOALERT) dbsyncsit->status = MC_SYNCSTAT_CRYPTOFAIL;
-	else if (MC_IS_CRITICAL_ERR(wrc)) dbsyncsit->status = MC_SYNCSTAT_FAILED;
-	else dbsyncsit->status = MC_SYNCSTAT_COMPLETED;
-	dbsyncsit->lastsync = time(NULL);
-	rc = db_update_sync(&*dbsyncsit);
+	init_sync_ctx(&context, writableSync, &filter);
+	MC_NOTIFYSTART(MC_NT_SYNC, writableSync->name);
+	int wrc = walk(&context, "", -writableSync->id, writableSync->hash);
+	if (wrc == MC_ERR_TERMINATING) writableSync->status = MC_SYNCSTAT_ABORTED;
+	else if (wrc == MC_ERR_CRYPTOALERT) writableSync->status = MC_SYNCSTAT_CRYPTOFAIL;
+	else if (MC_IS_CRITICAL_ERR(wrc)) writableSync->status = MC_SYNCSTAT_FAILED;
+	else writableSync->status = MC_SYNCSTAT_COMPLETED;
+	writableSync->lastsync = time(NULL);
+	rc = db_update_sync(writableSync);
 	MC_CHKERR(rc);
 	if (wrc == MC_ERR_CRYPTOALERT) return cryptopanic();
 	MC_NOTIFYEND(MC_NT_SYNC);
@@ -504,6 +533,7 @@ int QtWatcher2::remoteChange(const mc_sync_db& sync) {
 	} else if (rc == MC_ERR_NOTFULLYSYNCED) {
 	} else return rc;
 
+	remoteWatcher.setScope(syncs);
 	remoteWatcher.startSingle();
 	return 0;
 }
@@ -517,16 +547,16 @@ int QtWatcher2::catchUpAndWatch(int timeout) {
 		localChangeTimeout();
 
 	timetimer.setInterval(timeout * 1000);
+	quittimer.start();
 
+	remoteWatcher.startSingle();
 	loop.exec();
+	remoteWatcher.stop();
+
+	quittimer.stop();
 
 	watching = false;
 	return 0;
-}
-
-void QtWatcher2::run() {
-	QEventLoop loop;
-	loop.exec();
 }
 
 mc_sync_db* QtWatcher2::findMine(const mc_sync_db& sync) {
