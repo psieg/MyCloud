@@ -161,7 +161,7 @@ enum MC_CONFLICTRECOMMENDATION : int {
 
 inline bool compare_hashstr(const string& a, const string& b) { return *((int*)a.c_str()) < *((int*)b.c_str()); }
 
-typedef struct _mc_sync {
+struct mc_sync {
 	int id;
 	int uid;
 	string name;
@@ -169,12 +169,14 @@ typedef struct _mc_sync {
 	int shareversion;
 	bool crypted;
 	unsigned char hash[16];
-} mc_sync;
-inline bool compare_mc_sync(mc_sync a, mc_sync b) { return a.id < b.id; }
+
+	inline friend bool operator<(const mc_sync& left, const mc_sync& right) { return left.id < right.id; }
+	inline friend bool operator>(const mc_sync& left, const mc_sync& right) { return left.id > right.id; }
+};
 
 /* mc_sync */
 /* data of sync in db. includes local directory */
-typedef struct _mc_sync_db {
+struct mc_sync_db {
 	int id;
 	int uid;
 	int priority;
@@ -187,41 +189,43 @@ typedef struct _mc_sync_db {
 	int64 lastsync;
 	unsigned char hash[16];
 	unsigned char cryptkey[32];
-} mc_sync_db;
-inline bool compare_mc_sync_db(mc_sync_db a, mc_sync_db b) { return a.id < b.id; }
+
+	inline friend bool operator<(const mc_sync_db& left, const mc_sync_db& right) { return left.id < right.id; }
+	inline friend bool operator>(const mc_sync_db& left, const mc_sync_db& right) { return left.id > right.id; }
+};
 inline bool compare_mc_sync_db_prio(mc_sync_db a, mc_sync_db b) { return a.priority < b.priority; }
 
-typedef struct _mc_filter {
+struct mc_filter {
 	int id;
 	int sid;
 	bool files;
 	bool directories;
 	MC_FILTERTYPE type;
 	string rule;
-} mc_filter;
+};
 
-typedef struct _mc_share {
+struct mc_share {
 	int sid;
 	int uid;
-} mc_share;
+};
 
-typedef struct _mc_user {
+struct mc_user {
 	int id;
 	string name;
-} mc_user;
+};
 
-typedef struct _mc_keyringentry {
+struct mc_keyringentry {
 	string sname;
 	string uname;
 	unsigned char key[32];
-} mc_keyringentry;
+};
 
-typedef struct _mc_sync_ctx {
+struct mc_sync_ctx {
 	mc_sync_db *sync;
 	list<mc_filter> *filter;
 	MC_CONFLICTACTION dirconflictact;	// confict action for current directory
 	bool rconflictact;					// wether dirconflictact is recursive
-} mc_sync_ctx;
+};
 inline void init_sync_ctx(mc_sync_ctx *ctx, mc_sync_db *sync, list<mc_filter> *filter) { 
 	ctx->dirconflictact = MC_CONFLICTACT_UNKNOWN; ctx->rconflictact = false; 
 	ctx->sync = sync; ctx->filter = filter; };
@@ -265,7 +269,7 @@ inline bool nocase_equals (const std::string& first, const std::string& second)
   else return false;
 }
 
-typedef struct _mc_file {
+struct mc_file {
 	int id;
 	string name;
 	string cryptname; // = "" for unencrypted
@@ -276,27 +280,27 @@ typedef struct _mc_file {
 	int parent;
 	MC_FILESTATUS status;
 	unsigned char hash[16];
-} mc_file;
+};
 inline bool compare_mc_file(mc_file a, mc_file b) { return a.name < b.name; }
 inline bool compare_mc_file_id(mc_file a, mc_file b) { return a.id < b.id; }
 
 /* used by fs */
 /* smaller mc_file with information available directly from the os (= without md5 hashes) */
-typedef struct _mc_file_fs {
+struct mc_file_fs {
 	string name;
 	int64 ctime;
 	int64 mtime;
 	int64 size;
 	bool is_dir;
-} mc_file_fs;
+};
 inline bool compare_mc_file_fs(mc_file_fs a, mc_file_fs b) { return a.name < b.name; }
 
 /* used by srv */
-typedef struct _mc_buf {
+struct mc_buf {
   char *mem;
   size_t size;
   size_t used;
-} mc_buf;
+};
 
 inline void SetBuf(mc_buf *buf) {
 	buf->mem = (char*) malloc(4);
@@ -346,7 +350,7 @@ inline void FreeBuf(mc_buf *buf) {
 }
 
 /* used for crypt */
-typedef struct _mc_crypt_ctx {
+struct mc_crypt_ctx {
 	mc_sync_ctx *ctx;
 	EVP_CIPHER_CTX *evp;
 	mc_file *f;
@@ -355,7 +359,7 @@ typedef struct _mc_crypt_ctx {
 	unsigned char tag[16];
 	bool hastag;
 	mc_buf pbuf; //persistent buffer to avoid mallocs
-} mc_crypt_ctx;
+};
 inline void init_crypt_ctx(mc_crypt_ctx *cctx, mc_sync_ctx *ctx)
 	{ cctx->hasiv = false; cctx->hastag = false; cctx->f = NULL; cctx->ctx = ctx; cctx->pbuf.mem = NULL; }
 inline void init_crypt_ctx_copy(mc_crypt_ctx *cctx, mc_crypt_ctx *extcctx)

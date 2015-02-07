@@ -25,7 +25,7 @@ using namespace std;
 #endif
 
 #ifdef _DEBUG
-//#	define MC_DEBUGLOW
+#	define MC_DEBUGLOW
 #	define MC_DEBUG
 #	define MC_INFOLOW
 #	define MC_INFO
@@ -43,8 +43,17 @@ using namespace std;
 #endif
 
 #ifdef MC_LOGFILE
-	extern ofstream mc_logfile;
+extern ofstream mc_logfile;
 #endif
+
+#ifdef MC_DEBUG
+#	ifdef MC_OS_WIN
+#		define MC_DBG_BRK(cond, msg)	{ if(cond) { std::cout << msg << endl; DebugBreak(); } }
+#	else
+#		define MC_DBG_BRK(cond, msg)	{ if(cond) { std::cout << msg << endl; raise(SIGINT); } }
+#	endif
+#endif
+
 
 #ifdef MC_DEBUGLOW
 #	ifdef MC_LOGFILE
@@ -58,7 +67,7 @@ using namespace std;
 #endif
 #ifdef MC_DEBUG
 #	ifdef MC_LOGFILE
-#		define MC_DBG(msg)				{ std::cout << " D " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;	\
+#		define MC_DBG(msg)				{ /*std::cout << " D " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;*/	\
 											mc_logfile << " D " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;}
 #	else
 #		define MC_DBG(msg)				{ std::cout << " D " << __FUNCTION__ << "(" << __LINE__ << ") " << msg << std::endl;	}

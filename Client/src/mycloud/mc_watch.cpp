@@ -312,7 +312,7 @@ int enter_watchmode(int timeout) {
 	rc = db_list_sync(&dbsyncs);
 	MC_CHKERR(rc);
 
-	dbsyncs.sort(compare_mc_sync_db); //TODO: why?
+	dbsyncs.sort(); //TODO: why?
 	dbsyncsit = dbsyncs.begin();
 	dbsyncsend = dbsyncs.end();
 	for (;dbsyncsit != dbsyncsend; ++dbsyncsit) { //Foreach db sync

@@ -90,6 +90,7 @@ bool CReadChangesRequest::OpenDirectory()
 
 	if (m_hDirectory == INVALID_HANDLE_VALUE)
 	{
+		m_hDirectory = NULL;
 		return false;
 	}
 

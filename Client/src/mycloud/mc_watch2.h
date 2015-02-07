@@ -88,11 +88,13 @@ public:
 
 	void setScope(const list<mc_sync_db>& syncs);
 
-	int startSingle();
 	void stop();
 
 signals:
 	void syncChanged(const mc_sync_db& sync);
+
+public slots:
+	int startSingle();
 
 protected slots:
 	void remoteChange(int status);
@@ -101,33 +103,46 @@ protected:
 	list<mc_sync_db> syncs;
 	QtNetworkPerformer* performer;
 	mc_buf netibuf, netobuf;
+	QTimer restarttimer;
 
 };
 
-/*
-class QtWatcher2 : public QObject
+
+class QtWatcher2 : protected QThread
 {
 	Q_OBJECT
 
 public:
-	QtWatcher2();
+	QtWatcher2(const QString& url, const QString& certfile, bool acceptall);
 	~QtWatcher2();
 
-	void clearAndSetScope(list<mc_sync>& syncs);
+	int setScope(const list<mc_sync_db>& syncs);
 	int catchUpAndWatch(int timeout);
 
-	void beginExcluding(const string& path);
-	void endExcluding(const string& path);
+	void beginExcludingLocally(const QString& path);
+	void endExcludingLocally(const QString& path);
 
 protected slots:
-	void pathChanged(const string& path);
+	void checkquit();
+	int localChange(const mc_sync_db& sync, const string& path);
+	int localChangeTimeout();
+	int remoteChange(const mc_sync_db& sync);
+
+protected:
+	virtual void run();
 
 private:
-	QtFileSystemWatcher thread;
-	list<string> changedPaths;
-	list<string> excludedPaths;
+	mc_sync_db* findMine(const mc_sync_db& sync);
+
+	QtLocalWatcher localWatcher;
+	QtRemoteWatcher remoteWatcher;
+	QTimer quittimer, timetimer, delaytimer;
+	QEventLoop loop;
+	list<mc_sync_db> syncs;
+	list<QString> excludedPaths;
+	map<const mc_sync_db, list<QString>> changedPaths;
 };
-*/
+
 
 #endif /* MC_WATCHMODE */
 #endif /* MC_WATCH2_H */

@@ -80,8 +80,8 @@ int fullsync(list<mc_sync_db> *dbsyncs) {
 	rc = db_list_sync(dbsyncs);
 	MC_CHKERR(rc);
 
-	srvsyncs.sort(compare_mc_sync);	
-	dbsyncs->sort(compare_mc_sync_db);
+	srvsyncs.sort();	
+	dbsyncs->sort();
 	dbsyncsit = dbsyncs->begin();
 	dbsyncsend = dbsyncs->end();
 	srvsyncsend = srvsyncs.end();
