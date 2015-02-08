@@ -145,8 +145,9 @@ int runmc()
 						status.lastconn = time(NULL);
 						rc = db_update_status(&status);
 						if (rc) throw rc;
-					
+#ifdef MC_WATCHMODE					
 						QtWatcher2 watcher(status.url.c_str(), CAFILE, status.acceptallcerts);
+#endif
 
 						//TODO: resume and stuff
 						while (true) {
@@ -174,7 +175,9 @@ int runmc()
 
 							dbsyncs.sort(compare_mc_sync_db_prio);
 
+#ifdef MC_WATCHMODE
 							watcher.setScope(dbsyncs);
+#endif
 
 							dbsyncsit = dbsyncs.begin();
 							dbsyncsend = dbsyncs.end();

@@ -34,8 +34,10 @@
 
 #ifdef MC_OS_WIN
 FILE* fs_fopen(const string& filename, const string& mode) {
+#ifdef MC_WATCHMODE
 	if (mode.find("w") != string::npos)
 		Q_ASSERT_X(QtWatcher2::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+#endif
 	return _wfsopen(utf8_to_unicode(filename).c_str(), utf8_to_unicode(mode).c_str(), _SH_DENYNO);
 
 }
