@@ -379,7 +379,7 @@ int QtWatcher2::localChange(const mc_sync_db& sync, const string& path) {
 	mc_sync_db* writableSync = findMine(sync);
 	if (!writableSync) MC_ERR_MSG(MC_OK, "Local change notification for non-watched sync");
 
-	MC_INFL("Changed: " << path);
+	MC_INFL("Changed: " << sync.name << " > " << path);
 	changedPaths[*writableSync].push_back(_path);
 
 	if (watching)
