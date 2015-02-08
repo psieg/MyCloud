@@ -4,9 +4,8 @@
 #else
 #	include "mc_workerthread.h"
 #endif
-#ifdef MC_WATCHMODE
+
 #include "mc_watch2.h"
-#endif
 
 #include "mc_helpers.h"
 
