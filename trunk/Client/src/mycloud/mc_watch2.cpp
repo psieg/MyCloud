@@ -89,16 +89,6 @@ void QtLocalWatcher::pathChanged(const QString& path) {
 	string dirpath(qPrintable(path));
 #endif
 
-	// we are only interested in directories
-	if (!fs_isdir(dirpath)) {
-		size_t index = dirpath.find_last_of('/');
-		if (index != dirpath.length() - 1) {
-			dirpath = dirpath.substr(0, dirpath.find_last_of('/') + 1);
-		}
-	} else {
-		dirpath.append("/");
-	}
-
 	// find corresponding sync(s)
 	for (mc_sync_db& sync : this->syncs) {
 		if (dirpath.substr(0, sync.path.length()) == sync.path) {
@@ -332,8 +322,10 @@ int QtWatcher2::setScope(const list<mc_sync_db>& syncs) {
 
 void QtWatcher2::beginExcludingLocally(const QString& path) {
 	// always exclude the whole directory, create/delete modifies its mtime
-	MC_INF("exclude " << qPrintable(path.mid(0, path.lastIndexOf("/"))));
+	exclusionMutex.lock();
+	MC_DBG("Excluding " << qPrintable(path.mid(0, path.lastIndexOf("/"))));
 	excludedPaths.push_back(path.mid(0, path.lastIndexOf("/")));
+	exclusionMutex.unlock();
 }
 
 void QtWatcher2::endExcludingLocally(const QString& path) {
@@ -345,10 +337,12 @@ void QtWatcher2::endExcludingLocally(const QString& path) {
 }
 
 void QtWatcher2::endExcludingTimeout() {
+	exclusionMutex.lock();
 	for (const QString& p : pendingUnExcludes) {
-		MC_INF("endexclude " << qPrintable(p));
+		MC_DBG("No longer excluding " << qPrintable(p));
 		excludedPaths.removeOne(p);
 	}
+	exclusionMutex.unlock();
 }
 
 bool QtWatcher2::isExcludingLocally(const QString& path) {
@@ -435,28 +429,38 @@ int QtWatcher2::localChangeTimeout() {
 				int i;
 				QString sp = s;
 				QString ss = s;
-				i = ss.indexOf("/");
-				f.parent = -sync.id;
-				f.name = qPrintable(ss.left(i));
-				rc = db_select_file_name(&f);
-				if (rc) MC_ERR_MSG(rc, "Could not find file in db");
-				ss = ss.mid(i + 1);
-				i = ss.indexOf("/");
+				// for the first round, the parent is the sync
+				f.id = -sync.id;
+
+				i = 0;
 				while (i != -1) {
+					i = ss.indexOf("/");
 					f.parent = f.id;
 					f.name = qPrintable(ss.left(i));
 					rc = db_select_file_name(&f);
 					if (rc) MC_ERR_MSG(rc, "Could not find file in db");
 					ss = ss.mid(i + 1);
-					i = ss.indexOf("/");
 				}
-				sp = sp.left(sp.length() - 1); //remove trailing /
 				MC_NOTIFYSTART(MC_NT_SYNC, sync.name);
-				int wrc = walk_nochange(&context, qPrintable(sp), f.id, f.hash);
-				if (wrc == MC_ERR_TERMINATING) sync.status = MC_SYNCSTAT_ABORTED;
-				else if (wrc == MC_ERR_CRYPTOALERT) return cryptopanic();
-				else if (MC_IS_CRITICAL_ERR(wrc)) sync.status = MC_SYNCSTAT_FAILED;
-				else sync.status = MC_SYNCSTAT_COMPLETED;
+				if (f.is_dir) {
+					int wrc = walk_nochange(&context, qPrintable(sp), f.id, f.hash);
+					if (wrc == MC_ERR_TERMINATING) sync.status = MC_SYNCSTAT_ABORTED;
+					else if (wrc == MC_ERR_CRYPTOALERT) return cryptopanic();
+					else if (MC_IS_CRITICAL_ERR(wrc)) sync.status = MC_SYNCSTAT_FAILED;
+					else sync.status = MC_SYNCSTAT_COMPLETED;
+				} else {
+					mc_file_fs fs;
+					QString fpath(sync.path.c_str());
+					fpath.append(sp);
+					rc = fs_filestats(&fs, qPrintable(fpath), f.name);
+					MC_CHKERR(rc);
+					if (fs.mtime > f.mtime) {
+						sp = sp.left(sp.lastIndexOf("/") + 1); // upload expects the path only up to the dir
+						rc = upload(&context, qPrintable(sp), &fs, &f, &f, NULL);
+						if (rc == MC_ERR_CRYPTOALERT) return cryptopanic();
+						else if (MC_IS_CRITICAL_ERR(rc)) return rc;
+					}
+				}
 				sync.lastsync = time(NULL);
 
 				rc = db_update_file(&f);
@@ -467,8 +471,6 @@ int QtWatcher2::localChangeTimeout() {
 
 				rc = db_update_sync(&sync);
 				MC_CHKERR(rc);
-
-				if (wrc == MC_ERR_CRYPTOALERT) return cryptopanic();
 
 				MC_NOTIFYEND(MC_NT_SYNC);
 
