@@ -4,6 +4,7 @@
 #include "mc_helpers.h"
 #include "mc_fs.h"
 #include "mc_walk.h"
+#include "mc_filter.h"
 
 QtWatcher2 *QtWatcher2::_instance = NULL;
 
@@ -301,15 +302,27 @@ QtWatcher2::~QtWatcher2() {
 }
 
 int QtWatcher2::setScope(const list<mc_sync_db>& syncs) {
+	int rc;
+
 	this->syncs.clear();
+
+	//Filters
+	list<mc_filter> generalfilter;
+	rc = db_list_filter_sid(&generalfilter, 0);
+	MC_CHKERR(rc);
+
 	for (const mc_sync_db& sync : syncs) {
 		if (sync.status != MC_SYNCSTAT_DISABLED && sync.status != MC_SYNCSTAT_CRYPTOFAIL) {
 			this->syncs.push_back(sync);
-			this->changedPaths[sync] = QStringList();
+			this->changedPaths[sync.id] = QStringList();
+			this->filters[sync.id] = list<mc_filter>();
+
+			this->filters[sync.id].assign(generalfilter.begin(), generalfilter.end());
+			rc = db_list_filter_sid(&this->filters[sync.id], sync.id);
+			MC_CHKERR(rc);
 		}
 	}
 
-	int rc;
 	rc = localWatcher.setScope(this->syncs);
 	MC_CHKERR(rc);
 	remoteWatcher.setScope(this->syncs);
@@ -370,11 +383,37 @@ int QtWatcher2::localChange(const mc_sync_db& sync, const string& path) {
 		}
 	}
 
-	mc_sync_db* writableSync = findMine(sync);
-	if (!writableSync) MC_ERR_MSG(MC_OK, "Local change notification for non-watched sync");
+	// match against normal filters
+	int p = _path.lastIndexOf("/") + 1;
+	QString dirpath = _path.left(p);
+	QString name = _path.mid(p);
+	string _fpath = qPrintable(fpath);
+	mc_file_fs fs;
+	if (fs_exists(_fpath)) {
+		int rc = fs_filestats(&fs, _fpath, qPrintable(name));
+		MC_CHKERR(rc)
+	} else {
+		fs.name = qPrintable(name);
+		fs.is_dir = true; // speculation
+	}
+	if (match_full(qPrintable(dirpath), &fs, &this->filters[sync.id])) {
+		return 0;
+	}
+	// the containing directory might already be ignored...
+	while (p != -1) {
+		dirpath = dirpath.left(dirpath.length() - 1);
+		p = dirpath.lastIndexOf("/") + 1;
+		name = dirpath.mid(p);
+		dirpath = dirpath.left(p);
+		fs.is_dir = true;
+		fs.name = qPrintable(name);
+		if (match_full(qPrintable(dirpath), &fs, &this->filters[sync.id])) {
+			return 0;
+		}
+	}
 
 	MC_INFL("Changed: " << sync.name << " > " << path);
-	changedPaths[*writableSync].push_back(_path);
+	changedPaths[sync.id].push_back(_path);
 
 	if (watching)
 		delaytimer.start();
@@ -395,7 +434,7 @@ int QtWatcher2::localChangeTimeout() {
 
 	remoteWatcher.stop();
 	for (mc_sync_db& sync : syncs) {
-		auto changepaths = changedPaths[sync];
+		auto changepaths = changedPaths[sync.id];
 
 		if (changepaths.empty())
 			continue;
@@ -503,17 +542,10 @@ int QtWatcher2::remoteChange(const mc_sync_db& sync) {
 	mc_sync_ctx context;
 	list<mc_sync_db> newsyncs;
 
-	//Filters
-	list<mc_filter> generalfilter, filter;
-	rc = db_list_filter_sid(&generalfilter, 0);
-	MC_CHKERR(rc);
 
-	filter.assign(generalfilter.begin(), generalfilter.end());
-	rc = db_list_filter_sid(&filter, writableSync->id);
-	MC_CHKERR(rc);
 
 	//Run
-	init_sync_ctx(&context, writableSync, &filter);
+	init_sync_ctx(&context, writableSync, &this->filters[writableSync->id]);
 	MC_NOTIFYSTART(MC_NT_SYNC, writableSync->name);
 	int wrc = walk(&context, "", -writableSync->id, writableSync->hash);
 	if (wrc == MC_ERR_TERMINATING) writableSync->status = MC_SYNCSTAT_ABORTED;
@@ -572,7 +604,7 @@ mc_sync_db* QtWatcher2::findMine(const mc_sync_db& sync) {
 
 bool QtWatcher2::localChangesPending() {
 	for (mc_sync_db& sync : syncs) {
-		auto changepaths = changedPaths[sync];
+		auto changepaths = changedPaths[sync.id];
 
 		if (!changepaths.empty())
 			return true;
