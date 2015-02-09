@@ -27,8 +27,9 @@ public:
 
 	enum DialogCode {
 		Rejected = 0, 
-		Accepted = 1, 
-		NeedRestart = 2
+		Accepted = 1,
+		NeedRestart = 2,
+		NeedRestartCriticalChanged = 3
 	};
 
 public slots:
