@@ -140,7 +140,8 @@ private:
 	QMutex exclusionMutex;
 	QStringList excludedPaths;
 	QStringList pendingUnExcludes;
-	map<const mc_sync_db, QStringList> changedPaths;
+	map<int, QStringList> changedPaths;
+	map<int, list<mc_filter>> filters;
 	bool watching;
 };
 

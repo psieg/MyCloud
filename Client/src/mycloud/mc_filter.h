@@ -9,7 +9,7 @@
 /* update filter lists for sync from server	*/
 int update_filters(int sid, list<mc_filter> *l);
 
-/* match the full path against all filters, returns wether hit	*/
+/* match the full path against all filters, returns whether hit	*/
 bool match_full(const string& path, mc_file *file, list<mc_filter> *filter);
 bool match_full(const string& path, mc_file_fs *file, list<mc_filter> *filter);
 /* filter the listings of files we want to ignore */

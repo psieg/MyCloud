@@ -18,7 +18,7 @@ int update_filters(int sid, list<mc_filter> *l) {
 
 
 /* match the full path against all filters, returns wether hit	
-*	is_dir will append a / to the path for matching	*/
+*	if it's a dir, it must have a trailing / */
 bool _match_full(const string& path, const string& fname, bool is_dir, list<mc_filter> *filter) {
 	regex r;
 	string fpath, name, ext;
