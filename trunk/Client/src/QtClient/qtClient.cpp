@@ -635,11 +635,20 @@ void QtClient::on_editButton_clicked() {
 
 void QtClient::on_settingsButton_clicked() {
 	QtSettingsDialog d(this);
-	if (d.exec() == QtSettingsDialog::NeedRestart) {
+	int result = d.exec();
+	if (result == QtSettingsDialog::NeedRestartCriticalChanged) {
+		QMessageBox b(this);
+		b.setText(tr("Your server/user account has changed"));
+		b.setInformativeText(tr("This means the Sync list and other settings are most likely outdated. Please remove all Syncs and re-subscribe unless you know exactly what you are doing."));
+		b.setStandardButtons(QMessageBox::Ok);
+		b.setIcon(QMessageBox::Warning);
+		b.exec();
+	}
+	if (result == QtSettingsDialog::NeedRestart) {
 		if (worker.isRunning()) {
 			QMessageBox b(this);
 			b.setText(tr("Changing the settings requires restarting the Sync"));
-			b.setInformativeText(tr("Hit OK to restart now or Cancel to apply on next run."));
+			b.setInformativeText(tr("Hit OK to restart now or Cancel to apply the settings on next run."));
 			b.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
 			b.setDefaultButton(QMessageBox::Ok);
 			b.setIcon(QMessageBox::Warning);

@@ -110,16 +110,17 @@ void QtSettingsDialog::on_startupBox_clicked(bool checked) {
 
 void QtSettingsDialog::accept() {
 	bool restart = false;
+	bool critical = false;
 	int rc;
 
 	rc = db_select_status(&s);
 	if (rc) reject();
 
-	if (passchanged || ui.urlEdit->text() != s.url.c_str() || ui.nameEdit->text() != s.uname.c_str() 
-		|| ui.watchmodeBox->isChecked() != (s.watchmode > 0) || abs(ui.sleeptimeSpin->value()) != abs(s.watchmode)) {
-		//"restart" required
+	if (ui.urlEdit->text() != s.url.c_str() || ui.nameEdit->text() != s.uname.c_str()) {
+		critical = true;
 		restart = true;
-		//MC_INF("Important info changed, requires restart");
+	} else if (passchanged || ui.watchmodeBox->isChecked() != (s.watchmode > 0) || abs(ui.sleeptimeSpin->value()) != abs(s.watchmode)) {
+		restart = true;
 	}
 	
 	s.url = qPrintable(ui.urlEdit->text());
@@ -137,7 +138,9 @@ void QtSettingsDialog::accept() {
 	
 	db_update_status(&s);
 
-	if (restart) {
+	if (critical) {
+		done(NeedRestartCriticalChanged);
+	} else if (restart) {
 		done(NeedRestart);
 	} else {
 		done(Accepted);
