@@ -137,6 +137,7 @@ private:
 	QTimer quittimer, timetimer, delaytimer, excludetimer;
 	QEventLoop loop;
 	list<mc_sync_db> syncs;
+	QMutex exclusionMutex;
 	QStringList excludedPaths;
 	QStringList pendingUnExcludes;
 	map<const mc_sync_db, QStringList> changedPaths;
