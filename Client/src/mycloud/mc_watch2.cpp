@@ -400,7 +400,7 @@ int QtWatcher2::localChange(const mc_sync_db& sync, const string& path) {
 		return 0;
 	}
 	// the containing directory might already be ignored...
-	while (p != -1) {
+	while (p != 0) {
 		dirpath = dirpath.left(dirpath.length() - 1);
 		p = dirpath.lastIndexOf("/") + 1;
 		name = dirpath.mid(p);
@@ -435,6 +435,7 @@ int QtWatcher2::localChangeTimeout() {
 	remoteWatcher.stop();
 	for (mc_sync_db& sync : syncs) {
 		auto changepaths = changedPaths[sync.id];
+		changedPaths[sync.id].clear();
 
 		if (changepaths.empty())
 			continue;
@@ -473,10 +474,24 @@ int QtWatcher2::localChangeTimeout() {
 
 				i = 0;
 				while (i != -1) {
+					int parent = f.parent;
 					i = ss.indexOf("/");
 					f.parent = f.id;
 					f.name = qPrintable(ss.left(i));
 					rc = db_select_file_name(&f);
+					if (rc == SQLITE_DONE) {
+						// if the file is new / not found, walk the parent
+						// to do so, reload the parent from db
+						rc = db_select_file_id(&f);
+						if (rc == SQLITE_DONE)
+						{
+							// great, it's the root dir aka the sync
+							f.id = -sync.id;
+							f.is_dir = true;
+							sp = "";
+						} else MC_CHKERR(rc);
+						break;
+					}
 					if (rc) MC_ERR_MSG(rc, "Could not find file in db");
 					ss = ss.mid(i + 1);
 				}
@@ -489,13 +504,19 @@ int QtWatcher2::localChangeTimeout() {
 					else sync.status = MC_SYNCSTAT_COMPLETED;
 				} else {
 					mc_file_fs fs;
-					QString fpath(sync.path.c_str());
-					fpath.append(sp);
-					rc = fs_filestats(&fs, qPrintable(fpath), f.name);
-					MC_CHKERR(rc);
+					mc_file_fs* upload_fs;
+					string fpath(sync.path.c_str());
+					fpath.append(qPrintable(sp));
+					if (fs_exists(fpath)) {
+						rc = fs_filestats(&fs, fpath, f.name);
+						MC_CHKERR(rc);
+						upload_fs = &fs;
+					} else {
+						upload_fs = NULL;
+					}
 					if (fs.mtime > f.mtime) {
 						sp = sp.left(sp.lastIndexOf("/") + 1); // upload expects the path only up to the dir
-						rc = upload(&context, qPrintable(sp), &fs, &f, &f, NULL);
+						rc = upload(&context, qPrintable(sp), upload_fs, &f, &f, NULL);
 						if (rc == MC_ERR_CRYPTOALERT) return cryptopanic();
 						else if (MC_IS_CRITICAL_ERR(rc)) return rc;
 					}
@@ -514,8 +535,8 @@ int QtWatcher2::localChangeTimeout() {
 				MC_NOTIFYEND(MC_NT_SYNC);
 
 			}
-			if (MC_TERMINATING()) return MC_ERR_TERMINATING;
 
+			if (MC_TERMINATING()) return MC_ERR_TERMINATING;
 		}
 	}
 
