@@ -136,7 +136,7 @@ int crypt_file_tosrv(mc_sync_ctx *ctx, const string& path, mc_file *f) {
 	if (ctx->sync->crypted) {
 		if (f->cryptname == "") {
 			int rc = crypt_encryptstring(ctx, path, f->name, &f->cryptname);
-			if (!rc) MC_INFL("Encrypted " << f->id << ": " << f->name << " with " << path << " to " << f->cryptname);
+			if (!rc) MC_DBG("Encrypted " << f->id << ": " << f->name << " with " << path << " to " << f->cryptname);
 			return rc;
 		}
 	} else f->cryptname = "";
