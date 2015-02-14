@@ -59,12 +59,14 @@ int updateMtimeIfMismatch(string fpath, mc_file* db) {
 	int rc;
 	mc_file_fs fsnow;
 
-	rc = fs_filestats(&fsnow, fpath, db->name);
-	MC_CHKERR(rc);
-
-	if (fsnow.mtime != db->mtime) {
-		rc = fs_touch(fpath, db->mtime, db->ctime);
+	if (db) {
+		rc = fs_filestats(&fsnow, fpath, db->name);
 		MC_CHKERR(rc);
+
+		if (fsnow.mtime != db->mtime) {
+			rc = fs_touch(fpath, db->mtime, db->ctime);
+			MC_CHKERR(rc);
+		}
 	}
 
 	return 0;
