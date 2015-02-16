@@ -602,6 +602,8 @@ int QtWatcher2::catchUpAndWatch(int timeout) {
 		localChangeTimeout();
 
 	timetimer.setInterval(timeout * 1000);
+	timetimer.start();
+
 	quittimer.start();
 
 	remoteWatcher.startSingle();
