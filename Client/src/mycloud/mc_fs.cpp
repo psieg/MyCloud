@@ -138,15 +138,27 @@ int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname) 
 	h = CreateFile(utf8_to_unicode(fpath).c_str(), NULL, NULL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 	if (h == INVALID_HANDLE_VALUE) MC_ERR_MSG(MC_ERR_IO, "CreateFile failed: " << GetLastError());
 
-	if (!GetFileTime(h, &ctime, NULL, &mtime)) MC_ERR_MSG(MC_ERR_IO, "GetFileTime failed: " << GetLastError());
+	if (!GetFileTime(h, &ctime, NULL, &mtime)) {
+		DWORD err = GetLastError();
+		CloseHandle(h);
+		MC_ERR_MSG(MC_ERR_IO, "GetFileTime failed: " << err);
+	}
 	file_fs->ctime = FileTimeToPosix(ctime);
 	file_fs->mtime = FileTimeToPosix(mtime);
 
-	if (!GetFileSizeEx(h, &size)) MC_ERR_MSG(MC_ERR_IO, "GetFileSizeEx failed: " << GetLastError());
+	if (!GetFileSizeEx(h, &size)) {
+		DWORD err = GetLastError();
+		CloseHandle(h);
+		MC_ERR_MSG(MC_ERR_IO, "GetFileSizeEx failed: " << err);
+	}
 	file_fs->size = size.QuadPart;
 
 	attr = GetFileAttributes(utf8_to_unicode(fpath).c_str());
-	if (attr == INVALID_FILE_ATTRIBUTES) MC_ERR_MSG(MC_ERR_IO, "GetFileAttributes failed: " << GetLastError());
+	if (attr == INVALID_FILE_ATTRIBUTES) {
+		DWORD err = GetLastError();
+		CloseHandle(h);
+		MC_ERR_MSG(MC_ERR_IO, "GetFileAttributes failed: " << err);
+	}
 	file_fs->is_dir = (attr & FILE_ATTRIBUTE_DIRECTORY);
 
 	CloseHandle(h);
