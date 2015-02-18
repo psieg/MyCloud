@@ -15,12 +15,6 @@ int main(int argc, char *argv[])
 	int rc;
 	int d;
 
-#ifdef MC_LOGFILE
-	mc_logfile.open("MyCloud.log", ios::app);
-	mc_logfile << "####################################################################" << endl;
-	mc_logfile << "MyCloud QtClient Version " << MC_VERSION << endl;
-#endif
-
 	QApplication a(argc, argv);
 	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 	a.setQuitOnLastWindowClosed(false);
@@ -29,6 +23,12 @@ int main(int argc, char *argv[])
 		//On -startup set working directory to own, as Windows starts us at System32
 		QDir::setCurrent(QApplication::applicationDirPath());
 	} else d = 0;
+
+#ifdef MC_LOGFILE
+	mc_logfile.open("MyCloud.log", ios::app);
+	mc_logfile << "####################################################################" << endl;
+	mc_logfile << "MyCloud QtClient Version " << MC_VERSION << endl;
+#endif
 
 	QtClient w(NULL, d);
 	QDebugStream qout(std::cout, &w);
