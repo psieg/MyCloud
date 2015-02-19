@@ -5,7 +5,7 @@
 #		include "qtClient.h"
 #	endif
 #endif
-#include "mc_watch2.h"
+#include "mc_watch.h"
 
 #ifdef MC_WATCHMODE
 #define NOTIFYFUNC(name)	int name(const string& path) {	\
@@ -36,7 +36,7 @@
 FILE* fs_fopen(const string& filename, const string& mode) {
 #ifdef MC_WATCHMODE
 	if (mode.find("w") != string::npos)
-		Q_ASSERT_X(QtWatcher2::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+		Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
 #endif
 	return _wfsopen(utf8_to_unicode(filename).c_str(), utf8_to_unicode(mode).c_str(), _SH_DENYNO);
 

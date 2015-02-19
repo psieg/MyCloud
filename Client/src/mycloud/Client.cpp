@@ -6,7 +6,7 @@
 #include "mc_srv.h"
 #include "mc_walk.h"
 #include "mc_watch.h"
-#include "mc_watch2.h"
+#include "mc_helpers.h"
 #include <regex>
 #ifdef MC_QTCLIENT
 #	include "qtClient.h"
@@ -146,7 +146,7 @@ int runmc()
 						rc = db_update_status(&status);
 						if (rc) throw rc;
 #ifdef MC_WATCHMODE					
-						QtWatcher2 watcher(status.url.c_str(), CAFILE, status.acceptallcerts);
+						QtWatcher watcher(status.url.c_str(), CAFILE, status.acceptallcerts);
 #endif
 
 						//TODO: resume and stuff
