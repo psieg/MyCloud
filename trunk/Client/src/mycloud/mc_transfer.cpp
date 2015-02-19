@@ -5,7 +5,7 @@
 #	include "mc_workerthread.h"
 #endif
 
-#include "mc_watch2.h"
+#include "mc_watch.h"
 
 #include "mc_helpers.h"
 
