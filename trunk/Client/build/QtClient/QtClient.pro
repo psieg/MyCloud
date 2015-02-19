@@ -34,7 +34,6 @@ HEADERS += ../../src/mycloud/Client.h \
            ../../src/mycloud/mc_version.h \
            ../../src/mycloud/mc_walk.h \
            ../../src/mycloud/mc_watch.h \
-           ../../src/mycloud/mc_watch2.h \
            ../../src/mycloud/mc_workerthread.h \
            ../../src/QtClient/qdebugstream.h \
            ../../src/QtClient/qtClient.h \
@@ -71,7 +70,6 @@ SOURCES += ../../src/mycloud/Client.cpp \
            ../../src/mycloud/mc_util.cpp \
            ../../src/mycloud/mc_walk.cpp \
            ../../src/mycloud/mc_watch.cpp \
-           ../../src/mycloud/mc_watch2.cpp \
            ../../src/mycloud/mc_workerthread.cpp \
            ../../src/QtClient/main.cpp \
            ../../src/QtClient/qtClient.cpp \

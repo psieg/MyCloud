@@ -77,9 +77,6 @@
     <CustomBuild Include="..\..\src\mycloud\mc_srv.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\mycloud\mc_watch.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="..\..\src\QtClient\qtGeneralFilterDialog.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
@@ -110,7 +107,7 @@
     <CustomBuild Include="..\..\src\QtClient\qtShareDialog.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="..\..\src\mycloud\mc_watch2.h">
+    <CustomBuild Include="..\..\src\mycloud\mc_watch.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
@@ -207,12 +204,6 @@
     <ClCompile Include="GeneratedFiles\Release\moc_mc_srv.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_mc_watch.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_mc_watch.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_qtUpdateChecker.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
@@ -256,9 +247,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\mycloud\mc_walk.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\mycloud\mc_watch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\mycloud\mc_workerthread.cpp">
@@ -336,20 +324,20 @@
     <ClCompile Include="..\..\src\mycloud\mc_conflict.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\mycloud\mc_watch2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_mc_watch2.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_mc_watch2.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChanges.cpp">
       <Filter>Source Files\ReadDirectoryChanges</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChangesPrivate.cpp">
       <Filter>Source Files\ReadDirectoryChanges</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_mc_watch.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_mc_watch.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\mc_watch.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
