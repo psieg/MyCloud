@@ -601,6 +601,14 @@ int QtWatcher::catchUpAndWatch(int timeout) {
 	if (localChangesPending())
 		localChangeTimeout();
 
+	// before we start, make sure we have the latest hashes
+	for (mc_sync_db &sync : this->syncs)
+	{
+		rc = db_select_sync(&sync);
+		MC_CHKERR(rc);
+	}
+	remoteWatcher.setScope(syncs);
+
 	timetimer.setInterval(timeout * 1000);
 	timetimer.start();
 
