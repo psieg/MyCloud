@@ -270,14 +270,14 @@ inline bool nocase_equals (const std::string& first, const std::string& second)
 }
 
 struct mc_file {
-	int id;
+	int id; // negative if we don't know the server's id
 	string name;
 	string cryptname; // = "" for unencrypted
 	int64 ctime;
 	int64 mtime;
 	int64 size;
 	bool is_dir;
-	int parent;
+	int parent; // negative for parent is a sync
 	MC_FILESTATUS status;
 	unsigned char hash[16];
 };

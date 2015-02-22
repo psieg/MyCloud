@@ -373,6 +373,7 @@ int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, m
 	int rc;
 	FILE* fdesc;
 	int64 sent;
+	Q_ASSERT(insertnew == (db->id == MC_FILEID_NONE));
 
 	MC_DBGL("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL, fpath);
@@ -385,14 +386,28 @@ int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, m
 
 	MC_NOTIFYPROGRESS(0, db->size);						
 	MC_CHECKTERMINATING_FD_UP(fdesc, cctx);
+
 	if (db->size <= MC_SENDBLOCKSIZE) {
 		rc = crypt_putfile(cctx, path, db, db->size, fdesc);
-		MC_CHKERR_FD_UP(rc, fdesc, cctx);
 		sent = db->size;
 	} else {
 		rc = crypt_putfile(cctx, path, db, MC_SENDBLOCKSIZE, fdesc);
-		MC_CHKERR_FD_UP(rc, fdesc, cctx);
 		sent = MC_SENDBLOCKSIZE;
+	}
+	if (rc) {
+		// We're in a bit of trouble here, we can't be sure the server didn't create it
+		// but we don't know it's id... If the server created it INCOMPLETE_UP and we don't know it's ours
+		// and it's deleted lateron, it will be stuck forever
+		int failure = rc;
+
+		rc = db_select_min_fileid(&db->id);
+		MC_CHKERR_FD_UP(rc, fdesc, cctx);
+		db->id--;
+
+		rc = db_insert_file(db);
+		MC_CHKERR_FD_UP(rc, fdesc, cctx);
+
+		MC_CHKERR_FD_UP(failure, fdesc, cctx);
 	}
 
 	if (insertnew) {
@@ -514,7 +529,7 @@ int upload_new(mc_sync_ctx *ctx, const string& path, const string& fpath, const 
 			}
 		} else {
 			rc = crypt_filemd5_new(&cctx, newdb->hash, fpath, newdb->size);
-			MC_CHKERR(rc);		
+			MC_CHKERR(rc);
 
 			MC_BEGIN_WRITING_FILE(fpath);
 			rc = upload_actual(&cctx, path, fpath, fs, newdb, true);
@@ -894,6 +909,10 @@ int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_fi
 		crypt_abort_upload(&cctx);
 		return upload(ctx, path, fs, db, srv, hashstr);
 	}
+
+	db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
+	rc = db_update_file(db);
+	MC_CHKERR_UP(rc, &cctx);
 
 	MC_DBG("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL, fpath);
