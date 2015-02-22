@@ -110,6 +110,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 						return conflicted(ctx, path, fs, db, srv, hashstr, MC_CONFLICTREC_DONTKNOW);
 				} else if (srv->status == MC_FILESTAT_INCOMPLETE_UP) {
 					//Shouldn't actually happen: The file was complete but is incomplete now, although its the same file?
+					Q_ASSERT_X(false, "verifyandcomplete", "Shouldn't happen:\ndb:COMPLETE\nsrv:INCOMPLETE_UP");
 					//Continue upload
 					return complete_up(ctx, path, fpath, fs, srv, srv, hashstr);
 				} else { //srv->status == MC_FILESTAT_DELETED
@@ -117,6 +118,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				}
 			} else if (db->status == MC_FILESTAT_DELETED) {
 				//Woha, this really shoudn't happen
+				Q_ASSERT_X(false, "verifyandcomplete", "Shouldn't happen: Deleted at the same time it was (re)added");
 				//Deleted at the same time it was (re)added
 				if (srv->status == MC_FILESTAT_DELETED) {
 					return conflicted(ctx, path, fs, db, srv, hashstr, MC_CONFLICTREC_DOWN);
@@ -130,6 +132,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				} else if (srv->status == MC_FILESTAT_INCOMPLETE_UP) {
 					//Since we don't start downloading incomplete uploads, this shouldn't happen either
 					MC_INFL("Not downloading file " << srv->id << ": " << srv->name << ", file is not complete");
+					Q_ASSERT_X(false, "verifyandcomplete", "Shouldn't happen:\ndb:INCOMPLETE_DOWN\nsrv:INCOMPLETE_UP");
 					return MC_ERR_INCOMPLETE_SKIP;
 				} else { //srv->status == MC_FILESTAT_DELETED
 					return conflicted(ctx, path, fs, db, srv, hashstr, MC_CONFLICTREC_DONTKNOW); 
@@ -728,6 +731,7 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 				// File has been deleted
 				if (onsrvit->mtime < indbit->mtime) {
 					// Local deletion newer (another thing that shouldn't happen)
+					Q_ASSERT_X(false, "walk_noremote", "Shouldn't happen: Local deletion newer");
 					rc = upload(ctx, path, NULL, &*indbit, &*onsrvit, &hashstr);
 					if (MC_IS_CRITICAL_ERR(rc)) return rc; else if (rc) clean = false;
 				} else { //onsrvit->mtime >= indbit->mtime) {
@@ -746,6 +750,7 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 		} else if (onfsit->name == indbit->name) {
 			if ((onsrvit == onsrvend) || (onsrvit->name > onfsit->name)) {
 				// Should not happen (known to db = known to srv at last sync)
+				Q_ASSERT_X(false, "walk_noremote", "Shouldn't happen: Known to db but purged remotely");
 				rc = conflicted_noremote(ctx, path, &*onfsit, &*indbit, NULL, &hashstr);
 				if (MC_IS_CRITICAL_ERR(rc)) return rc; else if (rc) clean = false;
 				++onfsit;
@@ -757,6 +762,7 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 				if ((onfsit->mtime == indbit->mtime) || (indbit->status == MC_FILESTAT_INCOMPLETE_DOWN)) {
 					if (onsrvit->mtime < indbit->mtime) {
 						// Local newer
+						Q_ASSERT_X(false, "walk_noremote", "Shouldn't happen: db newer than srv but srv deleted");
 						// shouldn't happen either
 						rc = conflicted_noremote(ctx, path, &*onfsit, &*indbit, &*onsrvit, &hashstr);
 						if (MC_IS_CRITICAL_ERR(rc)) return rc; else if (rc) clean = false;
