@@ -514,7 +514,7 @@ int QtWatcher::localChangeTimeout() {
 					} else {
 						upload_fs = NULL;
 					}
-					if (!upload_fs || upload_fs->mtime != f.mtime) {
+					if (!upload_fs || upload_fs->mtime != f.mtime || f.status != MC_FILESTAT_COMPLETE) {
 						sp = sp.left(sp.lastIndexOf("/") + 1); // upload expects the path only up to the dir
 						rc = upload(&context, qPrintable(sp), upload_fs, &f, &f, NULL);
 						if (rc == MC_ERR_CRYPTOALERT) return cryptopanic();

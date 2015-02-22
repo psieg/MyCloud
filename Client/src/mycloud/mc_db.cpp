@@ -14,7 +14,7 @@ sqlite3_stmt *stmt_select_status, *stmt_update_status, \
 				*stmt_select_filter, *stmt_list_filter_sid, *stmt_insert_filter, *stmt_update_filter, *stmt_delete_filter, *stmt_delete_filter_sid, \
 				*stmt_list_share_sid, *stmt_insert_share, *stmt_delete_share, *stmt_delete_share_sid, \
 				*stmt_select_user, *stmt_list_user, *stmt_insert_user, \
-				*stmt_select_file_name, *stmt_select_file_id, *stmt_list_file_parent, *stmt_insert_file, *stmt_update_file, *stmt_delete_file;
+				*stmt_select_file_name, *stmt_select_file_id, *stmt_list_file_parent, *stmt_insert_file, *stmt_update_file, *stmt_delete_file, *stmt_select_min_fileid;
 /* the respective queries */
 #define QRY_SELECT_STATUS "SELECT locked, url, uname, passwd, acceptallcerts, watchmode, basedate, updatecheck, updateversion, uid, lastconn FROM status"
 #define QRY_UPDATE_STATUS "UPDATE status SET locked = ?, url = ?, uname = ?, passwd = ?, acceptallcerts = ?, watchmode = ?, basedate = ?, updatecheck = ?, updateversion = ?, uid = ?, lastconn = ?"
@@ -47,6 +47,7 @@ sqlite3_stmt *stmt_select_status, *stmt_update_status, \
 #define QRY_INSERT_FILE "INSERT INTO files (id, name, cryptname, ctime, mtime, size, is_dir, parent, hash, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 #define QRY_UPDATE_FILE "UPDATE files SET name = ?, cryptname = ?, ctime = ?, mtime = ?, size = ?, is_dir = ?, parent = ?, hash = ?, status = ? WHERE id = ?"
 #define QRY_DELETE_FILE "DELETE FROM files WHERE id = ?"
+#define QRY_SELECT_MIN_FILEID "SELECT MIN(id) FROM files"
 
 // the internal versions ignore the mutex, only use when the mutex is already held by you
 bool _db_isopen();
@@ -85,7 +86,8 @@ int _db_list_file_parent(list<mc_file> *l, int parent);
 int _db_insert_file(mc_file *var);
 int _db_update_file(mc_file *var);
 int _db_delete_file(int id);
-//Helper macro to create safety wrapper those funcs
+int _db_select_min_fileid(int *id);
+//Helper macro to create safety wrapper around those funcs
 #define SAFEFUNC(name, param, call)		int name(param) {			\
 	int rc;															\
 	db_mutex.lock();												\
@@ -93,8 +95,8 @@ int _db_delete_file(int id);
 	if (!db) {														\
 		MC_DBG("Query on closed db, opening");						\
 		rc = _db_open("state.db");									\
-		if (!rc) rc = _##name(call);									\
-		if (rc) _db_close();											\
+		if (!rc) rc = _##name(call);								\
+		if (rc) _db_close();										\
 		else rc = _db_close();										\
 	} else {														\
 		rc = _##name(call);											\
@@ -110,8 +112,8 @@ int _db_delete_file(int id);
 	if (!db) {														\
 		MC_DBG("Query on closed db, opening");						\
 		rc = _db_open("state.db");									\
-		if (!rc) rc = _##name(call1, call2);							\
-		if (rc) _db_close();											\
+		if (!rc) rc = _##name(call1, call2);						\
+		if (rc) _db_close();										\
 		else rc = _db_close();										\
 	} else {														\
 		rc = _##name(call1, call2);									\
@@ -233,6 +235,8 @@ int _db_open(const string& fname) {
 		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
 		rc = sqlite3_prepare_v2(db, QRY_DELETE_FILE, sizeof(QRY_DELETE_FILE), &stmt_delete_file, NULL);
 		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
+		rc = sqlite3_prepare_v2(db, QRY_SELECT_MIN_FILEID, sizeof(QRY_SELECT_MIN_FILEID), &stmt_select_min_fileid, NULL);
+		MC_CHKERR_MSG(rc, "Failed to prepare statement: " << sqlite3_errmsg(db));
 
 		/* check wether the db was closed properly */
 		mc_status status;
@@ -291,6 +295,7 @@ int _db_close() {
 		sqlite3_finalize(stmt_insert_file);
 		sqlite3_finalize(stmt_update_file);
 		sqlite3_finalize(stmt_delete_file);
+		sqlite3_finalize(stmt_select_min_fileid);
 		rc = _db_execstr("UPDATE status SET locked = 0");
 		if (rc) if (rc != SQLITE_READONLY) MC_WRN("Failed to close db cleanly");
 		rc = sqlite3_close_v2(db);
@@ -913,7 +918,7 @@ int _db_update_file(mc_file *var) {
 SAFEFUNC(db_delete_file, int id, id)
 int _db_delete_file(int id) {
 	int rc;
-	MC_DBGL("Deleting file " << id );
+	MC_DBGL("Deleting file " << id);
 	rc = sqlite3_reset(stmt_delete_file);
 	rc = sqlite3_clear_bindings(stmt_delete_file);
 	MC_CHKERR_MSG(rc, "Clear failed");
@@ -921,5 +926,19 @@ int _db_delete_file(int id) {
 	MC_CHKERR_MSG(rc, "Bind failed");
 	rc = sqlite3_step(stmt_delete_file);
 	MC_CHKERR_EXP(rc, SQLITE_DONE, "Query failed: " << sqlite3_errmsg(db));
+	return 0;
+}
+
+SAFEFUNC(db_select_min_fileid, int *id, id)
+int _db_select_min_fileid(int *id) {
+	int rc;
+	MC_DBGL("Selecting minimal file ID");
+	rc = sqlite3_reset(stmt_select_min_fileid);
+	rc = sqlite3_step(stmt_select_min_fileid);
+	if (rc != SQLITE_DONE && rc != SQLITE_ROW) MC_ERR_MSG(rc, "Query failed: " << sqlite3_errmsg(db))
+	else if (rc == SQLITE_DONE) return rc; /* Empty result set */
+	else if (rc == SQLITE_ROW) { /* We expect only one result set */
+		*id = sqlite3_column_int(stmt_select_file_id, 0);
+	}
 	return 0;
 }

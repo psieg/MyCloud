@@ -44,5 +44,6 @@ int db_list_file_parent(list<mc_file> *l, int parent);
 int db_insert_file(mc_file *var);
 int db_update_file(mc_file *var);
 int db_delete_file(int id);
+int db_select_min_fileid(int *id);
 
 #endif /* MC_DB_H */

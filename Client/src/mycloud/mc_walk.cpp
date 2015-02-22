@@ -10,8 +10,16 @@
 
 /* Helper: catches the case when a file was purged but then restored with a new ID 
 *	this case may apply whenever db and srv are known */
-int checkmissedpurge(mc_file *db, mc_file *srv) {
+int checkidmismatch(mc_file *db, mc_file *srv) {
 	int rc;
+	if (db->id < 0) { // this means we inserted a file without knowing its remote id... now we do
+		rc = db_delete_file(db->id);
+		MC_CHKERR(rc);
+
+		db->id = srv->id;
+		rc = db_insert_file(db);
+		MC_CHKERR(rc);
+	}
 	if (db->id < srv->id) { //this means the file was purged (which this client missed) and then restored
 		MC_DBG("Missed purge detected");
 		//solution: purge and restore with new id
@@ -21,6 +29,7 @@ int checkmissedpurge(mc_file *db, mc_file *srv) {
 		rc = db_insert_file(db);
 		MC_CHKERR(rc);
 	}
+	Q_ASSERT(!(db->id > srv->id));
 	return 0;
 }
 
@@ -58,7 +67,6 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 				srv->status = MC_FILESTAT_INCOMPLETE_UP_ME;
 				rc = db_insert_file(srv);
 				MC_CHKERR(rc);
-
 
 				return complete_up(ctx, path, fpath, fs, srv, srv, hashstr);
 			} else { //srv->status == MC_FILESTAT_DELETED
@@ -264,7 +272,7 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]) {
 				if (MC_IS_CRITICAL_ERR(rc)) return rc; else if (rc) clean = false;
 				++indbit;
 			} else if (onsrvit->name == indbit->name) {
-				rc = checkmissedpurge(&*indbit, &*onsrvit);
+				rc = checkidmismatch(&*indbit, &*onsrvit);
 				MC_CHKERR(rc);
 				// File has been deleted or is incomplete up
 				if (onsrvit->mtime == indbit->mtime) { //on incomplete up timestamps match
@@ -296,7 +304,7 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]) {
 				++indbit;
 			} else if (onsrvit->name == onfsit->name) {
 				// Standard: File known to all, check modified
-				rc = checkmissedpurge(&*indbit, &*onsrvit);
+				rc = checkidmismatch(&*indbit, &*onsrvit);
 				MC_CHKERR(rc);
 				if (onfsit->mtime == indbit->mtime) {
 					if (indbit->mtime == onsrvit->mtime) {
@@ -592,7 +600,7 @@ int walk_nolocal(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]) 
 			}
 			++onsrvit;
 		} else { // indbit->name == onsrvit->name
-			rc = checkmissedpurge(&*indbit, &*onsrvit);
+			rc = checkidmismatch(&*indbit, &*onsrvit);
 			MC_CHKERR(rc);
 			if (onsrvit->mtime != indbit->mtime) {
 				rc = conflicted_nolocal(ctx, path, &*indbit, &*onsrvit, &hashstr);
@@ -715,7 +723,7 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 				if (MC_IS_CRITICAL_ERR(rc)) return rc; else if (rc) clean = false;
 				++indbit;
 			} else if (onsrvit->name == indbit->name) {
-				rc = checkmissedpurge(&*indbit, &*onsrvit);
+				rc = checkidmismatch(&*indbit, &*onsrvit);
 				MC_CHKERR(rc);
 				// File has been deleted
 				if (onsrvit->mtime < indbit->mtime) {
@@ -744,7 +752,7 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 				++indbit;
 			} else if (onsrvit->name == onfsit->name) {
 				// Standard: File known to all, check modified
-				rc = checkmissedpurge(&*indbit, &*onsrvit);
+				rc = checkidmismatch(&*indbit, &*onsrvit);
 				MC_CHKERR(rc);
 				if ((onfsit->mtime == indbit->mtime) || (indbit->status == MC_FILESTAT_INCOMPLETE_DOWN)) {
 					if (onsrvit->mtime < indbit->mtime) {
