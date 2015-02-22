@@ -25,7 +25,7 @@ using namespace std;
 #endif
 
 #ifdef _DEBUG
-#	define MC_DEBUGLOW
+//#	define MC_DEBUGLOW
 #	define MC_DEBUG
 #	define MC_INFOLOW
 #	define MC_INFO
