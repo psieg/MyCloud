@@ -123,6 +123,9 @@ void QtNewSyncDialog::replyReceived(int rc) {
 
 	// donwload keyring
 	if (sync.crypted) {
+
+
+
 		ui.sendLabel->setText(tr("<i>downloading keyring...</i>"));
 		connect(performer, SIGNAL(finished(int)), this, SLOT(keyringReceived(int)));
 		srv_getkeyring_async(netibuf, netobuf, performer);
@@ -214,7 +217,7 @@ void QtNewSyncDialog::keyringReceived(int rc) {
 		}
 		if (ok && pass.length() < 10) {
 			QMessageBox::warning(this, tr("Insecure Password"), 
-				tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."));
+				tr("This is the password to your keychain. I can't force you to use a secure password, but it has to be at least 10 characters long."));
 			ok = false;
 		}
 		if (ok)

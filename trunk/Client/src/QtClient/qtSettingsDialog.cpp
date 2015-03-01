@@ -116,7 +116,7 @@ void QtSettingsDialog::accept() {
 	rc = db_select_status(&s);
 	if (rc) reject();
 
-	if (ui.urlEdit->text() != s.url.c_str() || ui.nameEdit->text() != s.uname.c_str()) {
+	if ((ui.urlEdit->text() != s.url.c_str() && s.url.length() != 0) || (ui.nameEdit->text() != s.uname.c_str() && s.uname.length() != 0)) {
 		critical = true;
 		restart = true;
 	} else if (passchanged || ui.watchmodeBox->isChecked() != (s.watchmode > 0) || abs(ui.sleeptimeSpin->value()) != abs(s.watchmode)) {
