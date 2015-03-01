@@ -632,7 +632,7 @@ void QtSyncDialog::keyringReceivedAdding(int rc) {
 				}
 				if (ok && pass.length() < 10) {
 					QMessageBox::warning(this, tr("Insecure Password"), 
-						tr("This is the key to the keys to all your files!\nI can't force you to use a secure password, but..."));
+						tr("This is the password to your keychain. I can't force you to use a secure password, but it has to be at least 10 characters long."));
 					ok = false;
 				}
 				if (ok)
@@ -765,6 +765,11 @@ void QtSyncDialog::accept() {
 void QtSyncDialog::accept_step2() {
 	if (worksync->crypted) {
 		if (ui.keyEdit->text() != "") {
+			if (ui.keyEdit->text() == "0000000000000000000000000000000000000000000000000000000000000000") {
+				QMessageBox::warning(this, tr("This a a very insecure key"),
+					tr("All zeroes is not a key. If you want a secure key generated for you, delete and recreate the Sync."));
+				return;
+			}
 			QRegExp hexMatcher("^[0-9A-F]{64}$", Qt::CaseInsensitive);
 			if (hexMatcher.exactMatch(ui.keyEdit->text())) {
 				QByteArray ckey = QByteArray::fromHex(ui.keyEdit->text().toLatin1());
@@ -774,26 +779,17 @@ void QtSyncDialog::accept_step2() {
 				}
 
 				if (keychanged) {				
-					QMessageBox b(this);
-					b.setText(tr("Keyring"));
-					b.setInformativeText(tr("This key might not be in the keyring yet. Do you want to check and add/update it?"));
-					b.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-					b.setDefaultButton(QMessageBox::Yes);
-					b.setIcon(QMessageBox::Question);
-					if (b.exec() == QMessageBox::Yes) {
-						ui.statusLabel->setText(tr("<i>downloading keyring...</i>"));
-						connect(performer, SIGNAL(finished(int)), this, SLOT(keyringReceivedAdding(int)));
-						srv_getkeyring_async(&netibuf, &netobuf, performer);
-						ui.okButton->setEnabled(false);
-
-						return;
-					}
+					ui.statusLabel->setText(tr("<i>downloading keyring...</i>"));
+					connect(performer, SIGNAL(finished(int)), this, SLOT(keyringReceivedAdding(int)));
+					srv_getkeyring_async(&netibuf, &netobuf, performer);
+					ui.okButton->setEnabled(false);
+					return;
 				}
 				// not changed or doesn't want to upload
 				accept_step3();
 			} else {
 				QMessageBox::warning(this, tr("Please enter a valid 256-bit key in hex format"), 
-					tr("Alternatively, you can leave the field empty to generate a new key, if you don't have one yet."));
+					tr("You only need to enter the key if this sync is shared to you or the key is not in you keyring."));
 				return;
 			}
 		} else {
