@@ -59,7 +59,7 @@ int QtUpdateChecker::checkForUpdate() {
 			connect(rep, SIGNAL(finished()), this, SLOT(checkResult()));
 		} else {
 			if (s.updateversion != "") {
-				if (s.updateversion == MC_VERSION) {
+				if (s.updateversion == MC_VERSION_PLAIN) {
 					s.updateversion = "";
 					rc = db_update_status(&s);
 				} else {
