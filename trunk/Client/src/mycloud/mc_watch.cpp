@@ -432,6 +432,8 @@ int QtWatcher::localChangeTimeout() {
 	rc = db_list_filter_sid(&generalfilter, 0);
 	MC_CHKERR(rc);
 
+    watching = false;
+    delaytimer.stop();
 	remoteWatcher.stop();
 	for (mc_sync_db& sync : syncs) {
 		auto changepaths = changedPaths[sync.id];
@@ -533,7 +535,6 @@ int QtWatcher::localChangeTimeout() {
 				MC_CHKERR(rc);
 
 				MC_NOTIFYEND(MC_NT_SYNC);
-
 			}
 
 			if (MC_TERMINATING()) return MC_ERR_TERMINATING;
@@ -546,6 +547,10 @@ int QtWatcher::localChangeTimeout() {
 		MC_NOTIFY(MC_NT_FULLSYNC, TimeToString(time(NULL)));
 	} else if (rc == MC_ERR_NOTFULLYSYNCED) {
 	} else return rc;
+
+    watching = true;
+    if (localChangesPending())
+        delaytimer.start();
 
 	remoteWatcher.setScope(syncs);
 	remoteWatcher.startSingle();
@@ -563,7 +568,8 @@ int QtWatcher::remoteChange(const mc_sync_db& sync) {
 	mc_sync_ctx context;
 	list<mc_sync_db> newsyncs;
 
-
+    watching = false;
+    delaytimer.stop();
 
 	//Run
 	init_sync_ctx(&context, writableSync, &this->filters[writableSync->id]);
@@ -587,6 +593,10 @@ int QtWatcher::remoteChange(const mc_sync_db& sync) {
 		MC_NOTIFY(MC_NT_FULLSYNC, TimeToString(time(NULL)));
 	} else if (rc == MC_ERR_NOTFULLYSYNCED) {
 	} else return rc;
+
+    watching = true;
+    if (localChangesPending())
+        delaytimer.start();
 
 	remoteWatcher.setScope(syncs);
 	remoteWatcher.startSingle();
@@ -618,6 +628,8 @@ int QtWatcher::catchUpAndWatch(int timeout) {
 	loop.exec();
 	remoteWatcher.stop();
 
+    delaytimer.stop();
+    changedPaths.clear();
 	quittimer.stop();
 
 	watching = false;
