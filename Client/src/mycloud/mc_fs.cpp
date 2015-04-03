@@ -41,7 +41,7 @@ FILE* fs_fopen(const string& filename, MC_FILEACCESS access) {
     DWORD desiredAccess = 0;
     DWORD shareMode = 0;
     DWORD disposition = 0;
-    char* mode;
+    string mode;
     switch (access) {
     case MC_FA_READ:
         desiredAccess = GENERIC_READ;
@@ -97,7 +97,7 @@ int fs_fclose(FILE *f) {
 }
 #else
 FILE* fs_fopen(const string& filename, MC_FILEACCESS access) {
-    char* mode;
+    string mode;
     switch (access) {
     case MC_FA_READ:
         mode = "rb";
