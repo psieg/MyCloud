@@ -7,6 +7,10 @@
 #endif
 #include "mc_watch.h"
 
+#ifdef MC_OS_WIN
+#include <io.h>
+#endif
+
 #ifdef MC_WATCHMODE
 #define NOTIFYFUNC(name)	int name(const string& path) {	\
 	int rc;												\
@@ -33,12 +37,53 @@
 #endif
 
 #ifdef MC_OS_WIN
-FILE* fs_fopen(const string& filename, const string& mode) {
+FILE* fs_fopen(const string& filename, MC_FILEACCESS access) {
+    DWORD desiredAccess = 0;
+    DWORD shareMode = 0;
+    DWORD disposition = 0;
+    char* mode;
+    switch (access) {
+    case MC_FA_READ:
+        desiredAccess = GENERIC_READ;
+        shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+        mode = "rb";
+        disposition = OPEN_EXISTING;
+        break;
+    case MC_FA_OVERWRITECREATE:
 #ifdef MC_WATCHMODE
-	if (mode.find("w") != string::npos)
-		Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+        Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
 #endif
-	return _wfsopen(utf8_to_unicode(filename).c_str(), utf8_to_unicode(mode).c_str(), _SH_DENYNO);
+        desiredAccess = GENERIC_READ | GENERIC_WRITE;
+        shareMode = FILE_SHARE_READ;
+        mode = "wb";
+        disposition = CREATE_ALWAYS;
+        break;
+    case MC_FA_READWRITEEXISTING:
+#ifdef MC_WATCHMODE
+        Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+#endif
+        desiredAccess = GENERIC_READ | GENERIC_WRITE;
+        shareMode = FILE_SHARE_READ;
+        mode = "r+b";
+        disposition = OPEN_EXISTING;
+        break;
+    default:
+        return NULL;
+    }
+
+    HANDLE h = CreateFileW(
+        utf8_to_unicode(filename).c_str(), 
+        desiredAccess,
+        shareMode,
+        NULL,
+        disposition,
+        FILE_FLAG_BACKUP_SEMANTICS,
+        NULL);
+    if (h == INVALID_HANDLE_VALUE) return 0;
+
+    return _wfdopen(_open_osfhandle((intptr_t)h, 0), utf8_to_unicode(mode).c_str());
+        
+	//return _wfsopen(utf8_to_unicode(filename).c_str(), utf8_to_unicode(mode).c_str(), _SH_DENYNO);
 
 }
 int fs_fseek(FILE *f, int64 offset, int origin) {
@@ -51,7 +96,27 @@ int fs_fclose(FILE *f) {
 	return fclose(f);
 }
 #else
-FILE* fs_fopen(const string& filename, const string& mode) {
+FILE* fs_fopen(const string& filename, MC_FILEACCESS access) {
+    char* mode;
+    switch (access) {
+    case MC_FA_READ:
+        mode = "rb";
+        break;
+    case MC_FA_OVERWRITECREATE:
+#ifdef MC_WATCHMODE
+        Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+#endif
+        mode = "wb";
+        break;
+    case MC_FA_READWRITEEXISTING:
+#ifdef MC_WATCHMODE
+        Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+#endif
+        mode = "r+b";
+        break;
+    default:
+        return NULL;
+    }
 	return fopen(filename.c_str(), mode.c_str());
 }
 int fs_fseek(FILE *f, int64 offset, int origin) {
@@ -109,7 +174,7 @@ int fs_filemd5(unsigned char hash[16], const string& fpath, size_t fsize) {
 	FILE *fdesc;
 	int rc;
 	MC_DBGL("Opening " << fpath);
-	fdesc = fs_fopen(fpath, "rb");
+	fdesc = fs_fopen(fpath, MC_FA_READ);
 	if (!fdesc) MC_ERR_MSG(-1, "Can't open file");
 	
 	rc = fs_filemd5(hash, fsize, fdesc);
@@ -135,7 +200,7 @@ int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname) 
 	//rc =_wstat64(utf8_to_unicode(fpath).c_str(), &attr);
 	//MC_CHKERR_MSG(rc, "Failed to get stats of file");
 	file_fs->name = fname;
-	h = CreateFile(utf8_to_unicode(fpath).c_str(), NULL, NULL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	h = CreateFileW(utf8_to_unicode(fpath).c_str(), NULL, NULL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 	if (h == INVALID_HANDLE_VALUE) MC_ERR_MSG(MC_ERR_IO, "CreateFile failed: " << GetLastError());
 
 	if (!GetFileTime(h, &ctime, NULL, &mtime)) {
