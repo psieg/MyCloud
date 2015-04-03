@@ -384,7 +384,7 @@ int crypt_filemd5_new(mc_crypt_ctx *cctx, unsigned char hash[16], const string& 
 		FILE *fdesc;
 		int rc;
 		MC_DBGL("Opening " << fpath);
-		fdesc = fs_fopen(fpath, "rb");
+		fdesc = fs_fopen(fpath, MC_FA_READ);
 		if (!fdesc) MC_ERR_MSG(MC_ERR_IO, "Can't open file");
 	
 		rc = crypt_filemd5_new(cctx, hash, fpath, fsize, fdesc);
@@ -410,7 +410,7 @@ int crypt_filemd5_known(mc_crypt_ctx *cctx, mc_file *file, unsigned char hash[16
 		FILE *fdesc;
 		int rc;
 		MC_DBGL("Opening " << fpath);
-		fdesc = fs_fopen(fpath, "rb");
+		fdesc = fs_fopen(fpath, MC_FA_READ);
 		if (!fdesc) MC_ERR_MSG(MC_ERR_IO, "Can't open file");
 	
 		rc = crypt_filemd5_known(cctx, file, hash, fpath, fdesc);

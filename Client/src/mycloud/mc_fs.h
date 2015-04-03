@@ -16,8 +16,14 @@
 #include <dirent.h>
 #endif
 
+enum MC_FILEACCESS : int {
+    MC_FA_READ,
+    MC_FA_OVERWRITECREATE,
+    MC_FA_READWRITEEXISTING
+};
+
 /* For platform independence */
-FILE* fs_fopen(const string& filename, const string& mode);
+FILE* fs_fopen(const string& filename, MC_FILEACCESS access);
 int fs_fseek(FILE *f, int64 offset, int origin);
 int64 fs_ftell(FILE *f);
 int fs_fclose(FILE *f);

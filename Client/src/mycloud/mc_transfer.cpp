@@ -80,30 +80,22 @@ int download_checkmodified(mc_crypt_ctx *cctx, const string& fpath, mc_file *srv
 	}
 	return 0;
 }
-int download_actual(mc_crypt_ctx *cctx, const string& fpath, mc_file *srv) {
+int download_actual(mc_crypt_ctx *cctx, const string& fpath, mc_file *srv, FILE* fdesc) {
 	int64 offset = 0, written = 0;
-	FILE *fdesc = 0;
 	int rc;
-	MC_DBGL("Opening file " << fpath << " for writing");
-	MC_NOTIFYSTART(MC_NT_DL, fpath);
-	fdesc = fs_fopen(fpath, "wb");
-	if (!fdesc) MC_CHKERR_MSG(MC_ERR_IO, "Could not (re)write the file");
 	rc = crypt_init_download(cctx, srv);
-	MC_CHKERR_FD_DOWN(rc, fdesc, cctx);
+	MC_CHKERR_DOWN(rc, cctx);
 					
 	while (offset < srv->size) {
 		MC_NOTIFYPROGRESS(offset, srv->size);
-		MC_CHECKTERMINATING_FD_DOWN(fdesc, cctx);
+		MC_CHECKTERMINATING_DOWN(cctx);
 		rc = crypt_getfile(cctx, srv->id, offset, MC_RECVBLOCKSIZE, fdesc, &written, srv->hash);
-		MC_CHKERR_FD_DOWN(rc, fdesc, cctx);
+		MC_CHKERR_DOWN(rc, cctx);
 		offset += written;
 	}
 
 	rc = crypt_finish_download(cctx);
-	MC_CHKERR_FD(rc, fdesc);
-
-	fs_fclose(fdesc);
-	MC_NOTIFYEND(MC_NT_DL);
+	MC_CHKERR(rc);
 	return 0;
 }
 /* sub-downloads */
@@ -275,13 +267,23 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 	}
 
 	if (doit) {
-		srv->status = MC_FILESTAT_INCOMPLETE_DOWN;				
-		if (db == NULL) rc = db_insert_file(srv);
-		else rc = db_update_file(srv);
-		MC_CHKERR(rc);
 
-		MC_BEGIN_WRITING_FILE(fpath);
-		rc = download_actual(&cctx, fpath, srv);
+        MC_BEGIN_WRITING_FILE(fpath);
+        MC_DBGL("Opening file " << fpath << " for writing");
+        MC_NOTIFYSTART(MC_NT_DL, fpath);
+        FILE* fdesc = fs_fopen(fpath, MC_FA_OVERWRITECREATE);
+        if (!fdesc) MC_CHKERR_MSG(MC_ERR_IO, "Could not (re)write the file");
+
+        // Update the db state only once we know we touched it to avoid incorrect choices after aborts
+        srv->status = MC_FILESTAT_INCOMPLETE_DOWN;
+        if (db == NULL) rc = db_insert_file(srv);
+        else rc = db_update_file(srv);
+        MC_CHKERR(rc);
+
+		rc = download_actual(&cctx, fpath, srv, fdesc);
+
+        fs_fclose(fdesc);
+        MC_NOTIFYEND(MC_NT_DL);
 		MC_END_WRITING_FILE(fpath);
 		MC_CHKERR(rc);
 
@@ -377,7 +379,7 @@ int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, m
 
 	MC_DBGL("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL, fpath);
-	fdesc = fs_fopen(fpath, "rb");
+    fdesc = fs_fopen(fpath, MC_FA_READ);
 	if (!fdesc) MC_CHKERR_MSG(MC_ERR_IO, "Could not read the file");
 
 	fs_fseek(fdesc, 0, SEEK_SET);
@@ -916,7 +918,7 @@ int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_fi
 
 	MC_DBG("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL, fpath);
-	fdesc = fs_fopen(fpath, "rb");
+    fdesc = fs_fopen(fpath, MC_FA_READ);
 	if (!fdesc) {
 		crypt_abort_upload(&cctx);
 		MC_CHKERR_MSG(MC_ERR_IO, "Could not read the file");
@@ -992,7 +994,7 @@ int _complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc
 
 	MC_DBG("Opening file " << fpath << " for writing");
 	MC_NOTIFYSTART(MC_NT_DL, fpath);
-	fdesc = fs_fopen(fpath, "r+b");
+	fdesc = fs_fopen(fpath, MC_FA_READWRITEEXISTING);
 	if (!fdesc) {
 		crypt_abort_download(&cctx);
 		MC_CHKERR_MSG(MC_ERR_IO, "Could not write the file");
