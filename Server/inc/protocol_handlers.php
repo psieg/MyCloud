@@ -49,11 +49,12 @@ function handle_delsync($ibuf,$uid){
 	global $mysqli;
 	$id = unpack_delsync($ibuf);
 	//check whether it existse
-	$q = $mysqli->query("SELECT id,name FROM mc_syncs WHERE id = ".$id." AND uid = ".$uid);
+	$q = $mysqli->query("SELECT id,name,crypted FROM mc_syncs WHERE id = ".$id." AND uid = ".$uid);
 	if(!$q) return pack_interror($mysqli->error);
 	if($q->num_rows == 0) return pack_code(MC_SRVSTAT_NOEXIST);
 	$res = $q->fetch_row();
 	$name = $res[1];
+	$crypted = $res[2];
 
 	//delete all files
 	$q = $mysqli->query("DELETE FROM mc_files WHERE sid = ".$id);
@@ -65,6 +66,11 @@ function handle_delsync($ibuf,$uid){
 
 	$rc = rmrdir(MC_FS_BASEDIR."/".$res[0]."/".$name);
 	if(!$rc) return pack_interror("Failed to remove files");
+
+	if ($crypted) {
+		$rc = unlink(MC_FS_BASEDIR."/".$res[0]."/".$name.".crypted");
+		if(!$rc) return pack_interror("Failed to remove meta file");
+	}
 
 	//delete all filters
 	$q = $mysqli->query("DELETE FROM mc_filters WHERE sid = ".$id);
