@@ -25,7 +25,7 @@ function handle_createsync($ibuf,$uid){
 		return pack_exists($res[0]);
 	}
 	//create new
-	$q = $mysqli->query("INSERT INTO mc_syncs (uid,name,filterversion,shareversion,crypted,hash) VALUES (".$uid.", '".esc($qry[1])."',1,1,".($qry[0]?1:0).",'".esc(hex2bin(d41d8cd98f00b204e9800998ecf8427e))."')");
+	$q = $mysqli->query("INSERT INTO mc_syncs (uid,name,filterversion,shareversion,crypted,hash) VALUES (".$uid.", '".esc($qry[1])."',1,1,".($qry[0]?1:0).",'".esc(hex2bin('d41d8cd98f00b204e9800998ecf8427e'))."')");
 	if(!$q) return pack_interror($mysqli->error);
 	$sid = $mysqli->insert_id;
 
