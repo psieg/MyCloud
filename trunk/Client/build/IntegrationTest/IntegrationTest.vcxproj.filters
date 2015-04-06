@@ -37,9 +37,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\IntegrationTest\IntegrationTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -117,6 +114,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChangesPrivate.cpp">
       <Filter>Source Files\ReadDirectoryChanges</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\IntegrationTest\main.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
