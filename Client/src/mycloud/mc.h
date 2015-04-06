@@ -24,22 +24,24 @@ using namespace std;
 #	define MC_OS_UNIX
 #endif
 
-#ifdef _DEBUG
-//#	define MC_DEBUGLOW
-#	define MC_DEBUG
-#	define MC_INFOLOW
-#	define MC_INFO
-#	define MC_WARN
-#	define MC_ERROR
-#	define MC_LOGFILE
-#	define MC_IONOTIFY
-#else
-#	define MC_INFOLOW
-#	define MC_INFO
-#	define MC_WARN
-#	define MC_ERROR
-#	define MC_LOGFILE
-#	define MC_IONOTIFY
+#ifndef MC_SILENT
+    #ifdef _DEBUG
+    //#	define MC_DEBUGLOW
+    #	define MC_DEBUG
+    #	define MC_INFOLOW
+    #	define MC_INFO
+    #	define MC_WARN
+    #	define MC_ERROR
+    #	define MC_LOGFILE
+    #	define MC_IONOTIFY
+    #else
+    #	define MC_INFOLOW
+    #	define MC_INFO
+    #	define MC_WARN
+    #	define MC_ERROR
+    #	define MC_LOGFILE
+    #	define MC_IONOTIFY
+    #endif
 #endif
 
 #ifdef MC_LOGFILE
@@ -181,7 +183,7 @@ extern ofstream mc_logfile;
 #	define MC_ERR_MSG_FD(rc, fd, msg)	{ if (fd) fclose(fd); return rc; }
 #	define MC_CHKERR_MSG(rc, msg)	{ MC_CHKERR(rc); }
 #	define MC_CHKERR_EXP(rc, exp, msg) { if (rc != exp) return rc; }
-#	define MC_MEM(ptr, size)			{ throw ENOMEM; }
+#	define MC_MEM(ptr, size)			{ if (!ptr) throw ENOMEM; }
 #endif
 
 #define MC_CHKERR(rc)					{ if (rc) return rc; }
