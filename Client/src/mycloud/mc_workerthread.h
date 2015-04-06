@@ -17,7 +17,7 @@ public:
 		Q_ASSERT_X((QtWorkerThread::_instance == NULL), "QtWorkerThread", "There should only be one QtWorkerThread Instance");
 		QtWorkerThread::_instance = this;
 		terminating = false;
-		//moveToThread(this); //?
+		runSingle = false;
 	};
 	~QtWorkerThread() {
 		QtWorkerThread::_instance = NULL;
@@ -50,6 +50,7 @@ public:
 
 	static QtWorkerThread* instance() { return _instance; }
 	bool terminating;
+	bool runSingle;
 
 
 protected:

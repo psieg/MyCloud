@@ -133,14 +133,16 @@ int runmc()
 					try {
 						MC_NOTIFYSTART(MC_NT_CONN, status.url);
 						if (status.basedate != basedate) {
+							bool cancel = false;
 							if (status.basedate != 0) {
 								recoverReset(status.uid, uid);
+								cancel = true;
 							}
 							status.basedate = basedate;
 							status.uid = uid;
 							rc = db_update_status(&status);
 							if (rc) throw rc;
-							return 0; //RecoverReset has notified the user
+							if (cancel) return 0; //RecoverReset has notified the user
 						}
 						status.lastconn = time(NULL);
 						rc = db_update_status(&status);
@@ -274,6 +276,10 @@ int runmc()
 							}
 							srv_standby();
 
+							if (MC_TERMINATING()) break;
+
+							if (QtWorkerThread::instance()->runSingle)
+								break;
 
 	#ifdef MC_WATCHMODE
 							if (status.watchmode > 0)
@@ -321,7 +327,10 @@ int runmc()
 				}
 				srv_close();
 				if (MC_TERMINATING()) break;
-				
+
+				if (QtWorkerThread::instance()->runSingle)
+					break;
+
 				//Reach here on longer connection fail
 				//MC_INF("Retrying in 60 sec");
 				mc_sleep_checkterminate(60);
