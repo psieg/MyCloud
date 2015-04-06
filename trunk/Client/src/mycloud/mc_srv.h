@@ -35,6 +35,9 @@ int srv_purgefile(int id);
 int srv_notifychange(const list<mc_sync_db>& l, int *id);
 int srv_idusers(const list<int>& ids, list<mc_user> *l);
 
+int srv_createsync(const string& name, bool crypted, int *id);
+int srv_delsync(int id);
+
 //For internal or async use only
 class QtNetworkPerformer : public QObject
 {

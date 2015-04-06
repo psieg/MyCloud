@@ -43,6 +43,8 @@ int _srv_getmeta(int id, mc_file *file);
 int _srv_purgefile(int id);
 int _srv_notifychange(const list<mc_sync_db>& l, int *id);
 int _srv_idusers(const list<int>& ids, list<mc_user> *l);
+int _srv_createsync(const string& name, bool crypted, int *id);
+int _srv_delsync(int id);
 
 #define SAFEFUNC(name, param, call)	int name(param) {	\
 	int rc;												\
@@ -542,6 +544,23 @@ int srv_listsyncs_process(mc_buf *obuf, list<mc_sync> *l) {
 }
 
 
+SAFEFUNC3(srv_createsync, const string& name, bool crypted, int *id, name, crypted, id)
+int _srv_createsync(const string& name, bool crypted, int *id) {
+	MC_DBGL("Creating new sync " << name);
+	int rc;
+	token_mutex.lock();
+	pack_createsync(&ibuf, authtoken, name, crypted);
+	token_mutex.unlock();
+	rc = srv_perform(MC_SRVSTAT_SYNCID);
+	if (rc == MC_ERR_LOGIN) {
+		rc = _srv_reauth(); MC_CHKERR(rc);
+		memcpy(&ibuf.mem[sizeof(int)], authtoken, 16); rc = srv_perform(MC_SRVSTAT_SYNCID);
+	}
+	MC_CHKERR(rc);
+
+	unpack_syncid(&obuf, id);
+	return 0;
+}
 int srv_createsync_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, const string& name, bool crypted) {
 	MC_DBGL("Creating new sync " << name << " (async)");
 	token_mutex.lock();
@@ -555,6 +574,22 @@ int srv_createsync_process(mc_buf *obuf, int *id) {
 	MC_CHKERR(rc);
 
 	unpack_syncid(obuf, id);
+	return 0;
+}
+SAFEFUNC(srv_delsync, int id, id);
+int _srv_delsync(int id) {
+	MC_DBGL("Deleting sync " << id);
+	int rc;
+	token_mutex.lock();
+	pack_delsync(&ibuf, authtoken, id);
+	token_mutex.unlock();
+	rc = srv_perform(MC_SRVSTAT_OK);
+	if (rc == MC_ERR_LOGIN) {
+		rc = _srv_reauth(); MC_CHKERR(rc);
+		memcpy(&ibuf.mem[sizeof(int)], authtoken, 16); rc = srv_perform(MC_SRVSTAT_SYNCID);
+	}
+	MC_CHKERR(rc);
+
 	return 0;
 }
 int srv_delsync_async(mc_buf *ibuf, mc_buf *obuf, QtNetworkPerformer *perf, int id) {
