@@ -8,6 +8,7 @@ using namespace std;
 #define Q_CHKERR(x) if (!x) return 1;
 
 int IntegrationTest::setupDB() {
+
 	mc_status s;
 	s.acceptallcerts = true;
 	s.basedate = 0;
@@ -17,13 +18,13 @@ int IntegrationTest::setupDB() {
 	s.uname = "test";
 	s.updatecheck = -1;
 	s.updateversion = "";
-	s.url = "padimail.de/cloud";
+	s.url = this->testHost;
 
 	return db_update_status(&s);
 }
 
 int IntegrationTest::openConnection(int* uid) {
-	return srv_open("padimail.de/cloud", "", "test", "integrationtest", nullptr, uid, true);
+	return srv_open(this->testHost, "", "test", "integrationtest", nullptr, uid, true);
 }
 
 int IntegrationTest::setupClient(string path)
@@ -58,6 +59,7 @@ int IntegrationTest::setupClient(string path)
 }
 
 void IntegrationTest::initTestCase() {
+    this->testHost = qPrintable(QProcessEnvironment::systemEnvironment().value("MC_TESTHOST", "psieg.de/cloud"));
 }
 void IntegrationTest::cleanupTestCase() {
 }

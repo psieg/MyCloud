@@ -7,14 +7,15 @@ class IntegrationTest : public QObject
 
 	QString uniqueName;
 	QDir testDir;
+    string testHost;
 	int syncID = -1;
 	int userID = -1;
 	QtWorkerThread thread; // needed for MC_CHECKTERMINATE
 
 private:
-	int IntegrationTest::setupDB();
-	int IntegrationTest::openConnection(int* uid);
-	int IntegrationTest::setupClient(string path);
+	int setupDB();
+	int openConnection(int* uid);
+	int setupClient(string path);
 
 private slots:
 
