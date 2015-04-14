@@ -283,7 +283,7 @@ int runmc()
 
 	#ifdef MC_WATCHMODE
 							if (status.watchmode > 0)
-								//enter_watchmode(status.watchmode);
+								enter_watchmode(status.watchmode);
 								watcher.catchUpAndWatch(status.watchmode);
 							else
 								mc_sleep_checkterminate(-status.watchmode);
