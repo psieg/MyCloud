@@ -6,8 +6,18 @@
 #include "mc_db.h"
 #include "mc_crypt.h"
 
+bool printing = false;
 void printfunc(QtMsgType t, const QMessageLogContext & c, const QString & s){
-	Q_ASSERT_X(false, "Qt", qPrintable(s));
+	if (printing)
+	{
+		cerr << qPrintable(s);
+	}
+	else
+	{
+		printing = true;
+		Q_ASSERT_X(false, "Qt", qPrintable(s));
+		printing = false;
+	}
 }
 
 int main(int argc, char *argv[])

@@ -88,7 +88,7 @@ enum MC_NOTIFYIOTYPE : int {
 #define MC_ERR_TERMINATING		100 //Asynchronous terminate request from GUI
 //Hopefully dev only
 #define MC_ERR_NOT_IMPLEMENTED	101
-#define MC_IS_CRITICAL_ERR(rc)		(rc && (rc == MC_ERR_TERMINATING || rc == MC_ERR_NETWORK || rc == MC_ERR_LOGIN || rc == MC_ERR_BADQRY || rc == MC_ERR_PROTOCOL || rc == MC_ERR_CRYPTO || rc == MC_ERR_CRYPTOALERT))
+#define MC_IS_CRITICAL_ERR(rc)		(rc && (rc == MC_ERR_TERMINATING || rc == MC_ERR_NETWORK || rc == MC_ERR_LOGIN || rc == MC_ERR_TIMEDIFF || rc == MC_ERR_BADQRY || rc == MC_ERR_PROTOCOL || rc == MC_ERR_CRYPTO || rc == MC_ERR_CRYPTOALERT))
 
 
 #define MC_SYNCID_NONE -1
