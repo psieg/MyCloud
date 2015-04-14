@@ -608,9 +608,6 @@ int QtWatcher::catchUpAndWatch(int timeout) {
 	MC_INFL("Entering Watchmode for " << timeout << " secs");
 	watching = true;
 
-	if (localChangesPending())
-		localChangeTimeout();
-
 	// before we start, make sure we have the latest hashes
 	for (mc_sync_db &sync : this->syncs)
 	{
@@ -624,7 +621,11 @@ int QtWatcher::catchUpAndWatch(int timeout) {
 
 	quittimer.start();
 
-	remoteWatcher.startSingle();
+	if (localChangesPending())
+		localChangeTimeout(); // starts remoteWatcher when done
+	else
+		remoteWatcher.startSingle();
+
 	loop.exec();
 	remoteWatcher.stop();
 
