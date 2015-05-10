@@ -49,6 +49,7 @@ int _srv_delsync(int id);
 #define SAFEFUNC(name, param, call)	int name(param) {	\
 	int rc;												\
 	srv_mutex.lock();									\
+	if (!_srv_isopen()) { srv_mutex.unlock(); return MC_ERR_NETWORK; } \
 	MC_NOTIFYIOSTART(MC_NT_SRV);						\
 	rc = _##name(call);									\
 	MC_NOTIFYIOEND(MC_NT_SRV);							\
@@ -58,6 +59,7 @@ int _srv_delsync(int id);
 #define SAFEFUNC2(name, param1, param2, call1, call2)	int name(param1, param2) {	\
 	int rc;												\
 	srv_mutex.lock();									\
+	if (!_srv_isopen()) { srv_mutex.unlock(); return MC_ERR_NETWORK; } \
 	MC_NOTIFYIOSTART(MC_NT_SRV);						\
 	rc = _##name(call1, call2);							\
 	MC_NOTIFYIOEND(MC_NT_SRV);							\
@@ -67,8 +69,9 @@ int _srv_delsync(int id);
 #define SAFEFUNC3(name, p1, p2, p3, c1, c2, c3)	int name(p1, p2, p3) {	\
 	int rc;												\
 	srv_mutex.lock();									\
+	if (!_srv_isopen()) { srv_mutex.unlock(); return MC_ERR_NETWORK; } \
 	MC_NOTIFYIOSTART(MC_NT_SRV);						\
-	rc = _##name(c1, c2, c3);								\
+	rc = _##name(c1, c2, c3);							\
 	MC_NOTIFYIOEND(MC_NT_SRV);							\
 	srv_mutex.unlock();									\
 	return rc;											\
@@ -76,8 +79,9 @@ int _srv_delsync(int id);
 #define SAFEFUNC4(name, p1, p2, p3, p4, c1, c2, c3, c4)	int name(p1, p2, p3, p4) {	\
 	int rc;												\
 	srv_mutex.lock();									\
+	if (!_srv_isopen()) { srv_mutex.unlock(); return MC_ERR_NETWORK; } \
 	MC_NOTIFYIOSTART(MC_NT_SRV);						\
-	rc = _##name(c1, c2, c3, c4);							\
+	rc = _##name(c1, c2, c3, c4);						\
 	MC_NOTIFYIOEND(MC_NT_SRV);							\
 	srv_mutex.unlock();									\
 	return rc;											\
@@ -85,8 +89,9 @@ int _srv_delsync(int id);
 #define SAFEFUNC5(name, p1, p2, p3, p4, p5, c1, c2, c3, c4, c5)	int name(p1, p2, p3, p4, p5) {	\
 	int rc;												\
 	srv_mutex.lock();									\
+	if (!_srv_isopen()) { srv_mutex.unlock(); return MC_ERR_NETWORK; } \
 	MC_NOTIFYIOSTART(MC_NT_SRV);						\
-	rc = _##name(c1, c2, c3, c4, c5);						\
+	rc = _##name(c1, c2, c3, c4, c5);					\
 	MC_NOTIFYIOEND(MC_NT_SRV);							\
 	srv_mutex.unlock();									\
 	return rc;											\
@@ -94,8 +99,18 @@ int _srv_delsync(int id);
 #define SAFEFUNC6(name, p1, p2, p3, p4, p5, p6, c1, c2, c3, c4, c5, c6)	int name(p1, p2, p3, p4, p5, p6) {	\
 	int rc;												\
 	srv_mutex.lock();									\
+	if (!_srv_isopen()) { srv_mutex.unlock(); return MC_ERR_NETWORK; } \
 	MC_NOTIFYIOSTART(MC_NT_SRV);						\
-	rc = _##name(c1, c2, c3, c4, c5, c6);					\
+	rc = _##name(c1, c2, c3, c4, c5, c6);				\
+	MC_NOTIFYIOEND(MC_NT_SRV);							\
+	srv_mutex.unlock();									\
+	return rc;											\
+}
+#define SAFEFUNC7_ALLOWCLOSED(name, p1, p2, p3, p4, p5, p6, p7, c1, c2, c3, c4, c5, c6, c7)	int name(p1, p2, p3, p4, p5, p6, p7) {	\
+	int rc;												\
+	srv_mutex.lock();									\
+	MC_NOTIFYIOSTART(MC_NT_SRV);						\
+	rc = _##name(c1, c2, c3, c4, c5, c6, c7);			\
 	MC_NOTIFYIOEND(MC_NT_SRV);							\
 	srv_mutex.unlock();									\
 	return rc;											\
@@ -103,8 +118,9 @@ int _srv_delsync(int id);
 #define SAFEFUNC7(name, p1, p2, p3, p4, p5, p6, p7, c1, c2, c3, c4, c5, c6, c7)	int name(p1, p2, p3, p4, p5, p6, p7) {	\
 	int rc;												\
 	srv_mutex.lock();									\
+	if (!_srv_isopen()) { srv_mutex.unlock(); return MC_ERR_NETWORK; } \
 	MC_NOTIFYIOSTART(MC_NT_SRV);						\
-	rc = _##name(c1, c2, c3, c4, c5, c6, c7);					\
+	rc = _##name(c1, c2, c3, c4, c5, c6, c7);			\
 	MC_NOTIFYIOEND(MC_NT_SRV);							\
 	srv_mutex.unlock();									\
 	return rc;											\
@@ -112,8 +128,9 @@ int _srv_delsync(int id);
 #define SAFEFUNC8(name, p1, p2, p3, p4, p5, p6, p7, p8, c1, c2, c3, c4, c5, c6, c7, c8)	int name(p1, p2, p3, p4, p5, p6, p7, p8) {	\
 	int rc;												\
 	srv_mutex.lock();									\
+	if (!_srv_isopen()) { srv_mutex.unlock(); return MC_ERR_NETWORK; } \
 	MC_NOTIFYIOSTART(MC_NT_SRV);						\
-	rc = _##name(c1, c2, c3, c4, c5, c6, c7, c8);				\
+	rc = _##name(c1, c2, c3, c4, c5, c6, c7, c8);		\
 	MC_NOTIFYIOEND(MC_NT_SRV);							\
 	srv_mutex.unlock();									\
 	return rc;											\
@@ -331,7 +348,7 @@ int srv_perform(MC_SRVSTATUS requiredcode, bool withprogress = false, MC_SRVSTAT
 				// Fixes an issue with long-running instances (standby) where QNetwork doesn't seem to realize the connection is dead
 				// and calls neither error nor finished
 				MC_INF("Dead connection detected, attempting reconnect");
-				rc =_srv_reopen();
+				rc = _srv_reopen();
 				MC_CHKERR(rc);
 				return srv_perform(requiredcode, withprogress, altcode, rdepth+1, inbuf, outbuf);
 			} else MC_ERR_MSG(MC_ERR_NETWORK, "Dead connection detected, failed to reconnect");
@@ -354,7 +371,7 @@ bool srv_isopen() {
 	return rc;
 }
 
-SAFEFUNC7(srv_open, const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall, \
+SAFEFUNC7_ALLOWCLOSED(srv_open, const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall, \
 		  url, certfile, user, passwd, basedate, uid, acceptall)
 int _srv_open(const string& url, const string& certfile, const string& user, const string& passwd, int64 *basedate, int *uid, bool acceptall) {
 	int rc;
