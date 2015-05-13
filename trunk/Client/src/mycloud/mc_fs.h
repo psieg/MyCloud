@@ -33,7 +33,7 @@ int fs_filemd5(unsigned char hash[16], const string& fpath, size_t fsize);
 int fs_filemd5(unsigned char hash[16], size_t fsize, FILE *fdesc);
 
 /* Get stats of a file */
-int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname); //TODO: not used. deprecate?
+int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname, bool fileMightBeGone = false);
 
 /* List directory, expects / at end of path */
 int fs_listdir(list<mc_file_fs> *l, const string& path);

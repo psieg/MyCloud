@@ -185,9 +185,8 @@ int fs_filemd5(unsigned char hash[16], const string& fpath, size_t fsize) {
 }
 
 /* Get stats of a file */
-//TODO: linux version
 #ifdef MC_OS_WIN
-int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname) {
+int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname, bool fileMightBeGone) {
 	//struct _stat64 attr;
 	HANDLE h;
 	FILETIME ctime, mtime;
@@ -201,7 +200,15 @@ int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname) 
 	//MC_CHKERR_MSG(rc, "Failed to get stats of file");
 	file_fs->name = fname;
 	h = CreateFileW(utf8_to_unicode(fpath).c_str(), NULL, NULL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-	if (h == INVALID_HANDLE_VALUE) MC_ERR_MSG(MC_ERR_IO, "CreateFile failed: " << GetLastError());
+	if (h == INVALID_HANDLE_VALUE) {
+		DWORD err = GetLastError();
+		if (fileMightBeGone && err == 2) {
+			MC_DBG("CreateFile failed because file gone");
+			return MC_ERR_IO;
+		} else {
+			MC_ERR_MSG(MC_ERR_IO, "CreateFile failed: " << GetLastError());
+		}
+	}
 
 	if (!GetFileTime(h, &ctime, NULL, &mtime)) {
 		DWORD err = GetLastError();
@@ -222,7 +229,12 @@ int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname) 
 	if (attr == INVALID_FILE_ATTRIBUTES) {
 		DWORD err = GetLastError();
 		CloseHandle(h);
-		MC_ERR_MSG(MC_ERR_IO, "GetFileAttributes failed: " << err);
+		if (fileMightBeGone && err == 2) {
+			MC_DBG("GetFileAttributes failed because file gone");
+			return MC_ERR_IO;
+		} else {
+			MC_ERR_MSG(MC_ERR_IO, "GetFileAttributes failed: " << err);
+		}
 	}
 	file_fs->is_dir = (attr & FILE_ATTRIBUTE_DIRECTORY);
 
@@ -231,13 +243,20 @@ int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname) 
 	return 0;
 }
 #else
-int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname) {
+int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname, bool fileMightBeGone) {
 	struct stat st;
 	int rc;
 	MC_DBGL("Getting stats of " << fname);
 
 	rc = stat(fpath.c_str(), &st);
-	if (rc) MC_ERR_MSG(MC_ERR_IO, "stat failed: " << errno);
+	if (rc) {
+		if (fileMightBeGone && errno == ENOENT) {
+			MC_DBG("stat failed because file gone");
+			return MC_ERR_IO;
+		} else {
+			MC_ERR_MSG(MC_ERR_IO, "stat failed: " << errno);
+		}
+	}
 	file_fs->name = fname;
 	file_fs->ctime = st.st_ctime;
 	file_fs->mtime = st.st_mtime;
