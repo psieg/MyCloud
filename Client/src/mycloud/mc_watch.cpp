@@ -390,7 +390,8 @@ int QtWatcher::localChange(const mc_sync_db& sync, const string& path) {
 	string _fpath = qPrintable(fpath);
 	mc_file_fs fs;
 	if (fs_exists(_fpath)) {
-		int rc = fs_filestats(&fs, _fpath, qPrintable(name));
+		// shortlived files may be gone by the time we check
+		int rc = fs_filestats(&fs, _fpath, qPrintable(name), true);
 		MC_CHKERR(rc)
 	} else {
 		fs.name = qPrintable(name);
