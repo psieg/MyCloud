@@ -911,6 +911,7 @@ int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_fi
 		crypt_abort_upload(&cctx);
 		return upload(ctx, path, fs, db, srv, hashstr);
 	}
+	MC_INFL("Resume offset is " << sent);
 
 	db->status = MC_FILESTAT_INCOMPLETE_UP_ME;
 	rc = db_update_file(db);
@@ -1002,6 +1003,7 @@ int _complete_down(mc_sync_ctx *ctx, const string& path, const string& fpath, mc
 
 	fs_fseek(fdesc, 0, SEEK_END);
 	offset = fs_ftell(fdesc);
+	MC_INFL("Resume offset is " << offset);
 
 	rc = crypt_resumetopos_down(&cctx, srv, offset, fdesc);
 	MC_CHKERR_FD_DOWN(rc, fdesc, &cctx);
