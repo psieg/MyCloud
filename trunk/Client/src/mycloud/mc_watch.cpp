@@ -234,11 +234,13 @@ void QtRemoteWatcher::setScope(const list<mc_sync_db>& syncs) {
 }
 
 int QtRemoteWatcher::startSingle() {
+	restarttimer.stop();
 	return srv_notifychange_async(&netibuf, &netobuf, performer, syncs);
 }
 
 void QtRemoteWatcher::stop() {
 	performer->abort();
+	restarttimer.stop();
 }
 
 void QtRemoteWatcher::remoteChange(int status) {
