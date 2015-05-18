@@ -48,7 +48,7 @@ int verifyandcomplete(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_f
 	
 	spath.assign(path).append(srv->name);
 	fpath.assign(ctx->sync->path).append(spath);
-	MC_DBG("Verifying file " << srv->id << ": " << printname(srv));
+	MC_DBGL("Verifying file " << srv->id << ": " << printname(srv));
 
 	if (db == NULL) {
 		if (fs->is_dir != srv->is_dir) 
