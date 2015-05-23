@@ -12,9 +12,8 @@
 #include "mc_db.h"
 
 #define MC_UPDATEFREQ	86400
-#define MC_UPDATECHECKURL	"https://padimail.de/mycloud/update/currentver/"
-#define MC_UPDATEGETURL		"https://padimail.de/mycloud/update/getpatch/?oldver=" MC_VERSION
-#define MC_UPDATECERT	"updateCA.crt"
+#define MC_UPDATECHECKURL	"https://psieg.de/mycloud/update/currentver/"
+#define MC_UPDATEGETURL		"https://psieg.de/mycloud/update/getpatch/?oldver=" MC_VERSION
 
 class QtUpdateChecker : public QObject {
 	Q_OBJECT
