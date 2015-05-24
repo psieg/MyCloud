@@ -3,10 +3,8 @@
 QtClient *QtClient::_instance = NULL;
 #ifdef MC_IONOTIFY
 #	define RESERVED_STATUSWIDTH				80
-#	define RESERVED_STATUSWIDTH_PROGRESS	310
 #else
 #	define RESERVED_STATUSWIDTH				10
-#	define RESERVED_STATUSWIDTH_PROGRESS	240
 #endif
 
 QtClient::QtClient(QWidget *parent, int autorun)
@@ -20,8 +18,13 @@ QtClient::QtClient(QWidget *parent, int autorun)
 
 	ui.setupUi(this);
 
-	//QFontMetrics met(ui.statusBar->font());
-	//charWidth = (met.width("ABCDEFKHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")/50.0);
+	float scalingFactor = this->logicalDpiX() / 96.0;
+	setMinimumSize(minimumSize() * scalingFactor);
+	
+	// FIXME: works only if icon source is big enough
+	//foreach(QToolButton* button,findChildren<QToolButton*>()) {
+	//	button->setIconSize(button->iconSize() * scalingFactor);
+	//}
 
 	connect(this, SIGNAL(_logOutput(QString)), this, SLOT(__logOutput(QString)), Qt::QueuedConnection);
 	connect(this, SIGNAL(_notify(int, QString)), this, SLOT(__notify(int, QString)), Qt::BlockingQueuedConnection); //Notify presents dialogs to the user, wait for it
@@ -84,16 +87,16 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	progressBar->setRange(0, 100);
 	progressBar->setFormat("");
 	progressBar->setTextVisible(false);
-	progressBar->setMinimumWidth(120);
-	progressBar->setMaximumWidth(120);
-	progressBar->setMinimumHeight(15);
-	progressBar->setMaximumHeight(15);
+	progressBar->setMinimumWidth(120 * scalingFactor);
+	progressBar->setMaximumWidth(120 * scalingFactor);
+	progressBar->setMinimumHeight(15 * scalingFactor);
+	progressBar->setMaximumHeight(15 * scalingFactor);
 	ui.statusBar->addPermanentWidget(progressBar, 0);
 	progressBar->hide();
 	progressLabel = new QLabel();
 	progressLabel->setText("");
-	progressLabel->setMinimumWidth(100);
-	progressLabel->setMaximumWidth(100);
+	progressLabel->setMinimumWidth(100 * scalingFactor);
+	progressLabel->setMaximumWidth(100 * scalingFactor);
 	ui.statusBar->addPermanentWidget(progressLabel, 0);
 	progressLabel->hide();
 #ifdef MC_IONOTIFY
@@ -147,11 +150,11 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	ui.updateButton->setVisible(false);
 	connect(&updateChecker, SIGNAL(newVersion(QString)), this, SLOT(newVersion(QString)));
 
-	if (autorun>0) {
+	if (autorun > 0) {
 		setStatus("idle (delay " + QString::number(autorun) + " sec)", "", icon);
 		delayTimer = new QTimer();
 		delayTimer->setSingleShot(true);
-		delayTimer->setInterval(autorun*1000);
+		delayTimer->setInterval(autorun * 1000);
 		connect(delayTimer, SIGNAL(timeout()), this, SLOT(startNewRun()));
 		connect(delayTimer, SIGNAL(timeout()), &updateChecker, SLOT(checkForUpdate()));
 		delayTimer->start();
@@ -823,24 +826,16 @@ void QtClient::updateStatus(QString object) {
 
 	trayIcon->setToolTip(currentPrefix + (object.length()>60-currentPrefix.length()?"..."+object.right(60-currentPrefix.length()):object));
 	statusLabel->setToolTip(currentPrefix + object);
-	if (progressBar->isVisible()) {
-		if (met.width(obj)+prwidth < this->geometry().width()-RESERVED_STATUSWIDTH_PROGRESS) statusLabel->setText(currentPrefix + obj);
-		else {
-			if (this->geometry().width() < RESERVED_STATUSWIDTH_PROGRESS+prwidth+powidth+20) obj = ""; else
-				while (met.width(obj)+prwidth+powidth > this->geometry().width()-RESERVED_STATUSWIDTH_PROGRESS) obj = obj.right(obj.length()-5);
-			statusLabel->setText(currentPrefix + "..." + obj);
-		}
-		//statusLabel->setText(currentPrefix + (object.length()>(((this->geometry().width()-310)/charWidth)-(currentPrefix.length()+4))?"..."+object.right(((this->geometry().width()-310)/charWidth)-(currentPrefix.length()+4)):object));
-	} else {
-		if (met.width(obj)+prwidth < this->geometry().width()-RESERVED_STATUSWIDTH) statusLabel->setText(currentPrefix + obj);
-		else {
-			if (this->geometry().width() < RESERVED_STATUSWIDTH+prwidth+powidth+20) obj = ""; else
-				while (met.width(obj)+prwidth+powidth > this->geometry().width()-RESERVED_STATUSWIDTH) obj = obj.right(obj.length()-5);
-			statusLabel->setText(currentPrefix + "..." + obj);
-		}
-		//statusLabel->setText(currentPrefix + (object.length()>(((this->geometry().width()-80)/charWidth)-(currentPrefix.length()+4))?"..."+object.right(((this->geometry().width()-80)/charWidth)-(currentPrefix.length()+4)):object));
+	float reservedwidth = progressBar->isVisible() ? RESERVED_STATUSWIDTH + progressBar->width() + progressLabel->width() : RESERVED_STATUSWIDTH;
+
+	if (met.width(obj) + prwidth < this->geometry().width() - reservedwidth) statusLabel->setText(currentPrefix + obj);
+	else {
+		if (this->geometry().width() < reservedwidth + prwidth + powidth + 20) obj = ""; else
+			while (met.width(obj) + prwidth + powidth > this->geometry().width() - reservedwidth) obj = obj.right(obj.length() - 5);
+		statusLabel->setText(currentPrefix + "..." + obj);
 	}
 }
+
 void QtClient::setStatus(QString prefix, QString object, QIcon icon, bool wicon) {
 	QFontMetrics met(ui.statusBar->font());
 	QString obj = object;
@@ -854,21 +849,12 @@ void QtClient::setStatus(QString prefix, QString object, QIcon icon, bool wicon)
 		this->setWindowIcon(icon);
 	}
 	statusLabel->setToolTip(prefix + object);
-	if (progressBar->isVisible()) {
-		if (met.width(obj)+prwidth < this->geometry().width()-RESERVED_STATUSWIDTH_PROGRESS) statusLabel->setText(prefix + obj);
-		else {
-			if (this->geometry().width() < RESERVED_STATUSWIDTH_PROGRESS+prwidth+powidth+20) obj = ""; else
-				while (met.width(obj)+prwidth+powidth > this->geometry().width()-RESERVED_STATUSWIDTH_PROGRESS) obj = obj.right(obj.length()-5);
-			statusLabel->setText(prefix + "..." + obj);
-		}
-		//statusLabel->setText(prefix + (object.length()>(((this->geometry().width()-310)/charWidth)-(prefix.length()+4))?"..."+object.right(((this->geometry().width()-310)/charWidth)-(prefix.length()+4)):object));
-	} else {
-		if (met.width(obj)+prwidth < this->geometry().width()-RESERVED_STATUSWIDTH) statusLabel->setText(prefix + obj);
-		else {
-			if (this->geometry().width() < RESERVED_STATUSWIDTH+prwidth+powidth+20) obj = ""; else
-				while (met.width(obj)+prwidth+powidth > this->geometry().width()-RESERVED_STATUSWIDTH) obj = obj.right(obj.length()-5);
-			statusLabel->setText(prefix + "..." + obj);
-		}
-		//statusLabel->setText(prefix + (object.length()>(((this->geometry().width()-80)/charWidth)-(prefix.length()+4))?"..."+object.right(((this->geometry().width()-80)/charWidth)-(prefix.length()+4)):object));
+	float reservedwidth = progressBar->isVisible() ? RESERVED_STATUSWIDTH + progressBar->width() + progressLabel->width() : RESERVED_STATUSWIDTH;
+
+	if (met.width(obj) + prwidth < this->geometry().width() - reservedwidth) statusLabel->setText(currentPrefix + obj);
+	else {
+		if (this->geometry().width() < reservedwidth + prwidth + powidth + 20) obj = ""; else
+			while (met.width(obj) + prwidth + powidth > this->geometry().width() - reservedwidth) obj = obj.right(obj.length() - 5);
+		statusLabel->setText(currentPrefix + "..." + obj);
 	}
 }
