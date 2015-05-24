@@ -578,13 +578,13 @@ int crypt_getfile(mc_crypt_ctx *cctx, int id, int64 offset, int64 blocksize, FIL
 					MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED, "Should not happen");
 				}
 			} else {
-				if (cctx->f->size - offset + MC_CRYPT_PADDING <= blocksize) { //Get TAG					
+				if (cctx->f->size - offset + MC_CRYPT_PADDING <= blocksize) { //Get TAG
 					rc = srv_getfile(id, offset+MC_CRYPT_OFFSET, blocksize, cctx->pbuf.mem, &memwritten, hash);
 					MC_CHKERR(rc);
 
 					memcpy(cctx->tag, cctx->pbuf.mem+memwritten-MC_CRYPT_PADDING, MC_CRYPT_PADDING);
 					cctx->hastag = true;
-					write = memwritten - MC_CRYPT_PADDING;					
+					write = memwritten - MC_CRYPT_PADDING;
 				} else if (cctx->f->size - offset <= blocksize) { //Partial TAG
 					tagoffset = blocksize - (cctx->f->size - offset);
 					rc = srv_getfile(id, offset+MC_CRYPT_OFFSET, blocksize, cctx->pbuf.mem, &memwritten, hash);
@@ -607,9 +607,14 @@ int crypt_getfile(mc_crypt_ctx *cctx, int id, int64 offset, int64 blocksize, FIL
 			}
 			
 			//Decrypt
+			QByteArray pre = QCryptographicHash::hash(QByteArray(cctx->pbuf.mem + writeoffset, write), QCryptographicHash::Md5);
 			rc = EVP_DecryptUpdate(cctx->evp, (unsigned char*) cctx->pbuf.mem+writeoffset, &cryptwritten, (unsigned char*) cctx->pbuf.mem+writeoffset, write);
 			if (!rc) MC_ERR_MSG(MC_ERR_CRYPTO, "DecryptUpdate failed");
 			//write = cryptwritten; //is the same anyway
+
+			QByteArray post = QCryptographicHash::hash(QByteArray(cctx->pbuf.mem + writeoffset, write), QCryptographicHash::Md5);
+
+			MC_DBG("Decrypted chunk at " << offset << " from " << MD5BinToHex((unsigned char*)pre.constData()) << " to " << MD5BinToHex((unsigned char*)post.constData()));
 
 			//Write to file
 			MC_NOTIFYIOSTART(MC_NT_FS);
@@ -628,7 +633,17 @@ int crypt_finish_download(mc_crypt_ctx *cctx) {
 	if (cctx->ctx->sync->crypted) {
 		if (!cctx->f->is_dir && cctx->f->size > 0) {
 
-			if (!cctx->hastag) MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED, "This should not happen, must have called getfile");
+			if (!cctx->hastag) {
+				// We can't blame the caller, he doesn't know we need additional data from the server
+				//MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED, "This should not happen, must have called getfile");
+
+				rc = srv_getfile(cctx->f->id, cctx->f->size, MC_CRYPT_PADDING, cctx->pbuf.mem, NULL, cctx->f->hash);
+				MC_CHKERR(rc);
+
+				memcpy(cctx->tag, cctx->pbuf.mem, MC_CRYPT_PADDING);
+				cctx->hastag = true;
+			}
+
 			rc = EVP_CIPHER_CTX_ctrl(cctx->evp, EVP_CTRL_GCM_SET_TAG, MC_CRYPT_PADDING, cctx->tag);
 			if (!rc) MC_ERR_MSG(MC_ERR_CRYPTO, "CipherCTXCtrl failed");
 
