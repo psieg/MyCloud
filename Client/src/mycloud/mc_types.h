@@ -361,8 +361,24 @@ struct mc_crypt_ctx {
 	mc_buf pbuf; //persistent buffer to avoid mallocs
 };
 inline void init_crypt_ctx(mc_crypt_ctx *cctx, mc_sync_ctx *ctx)
-	{ cctx->hasiv = false; cctx->hastag = false; cctx->f = NULL; cctx->ctx = ctx; cctx->pbuf.mem = NULL; }
+{
+	cctx->hasiv = false;
+	cctx->hastag = false; 
+	cctx->f = NULL; 
+	cctx->ctx = ctx; 
+	cctx->evp = NULL;
+	cctx->pbuf.size = 0; 
+	cctx->pbuf.mem = NULL;
+}
 inline void init_crypt_ctx_copy(mc_crypt_ctx *cctx, mc_crypt_ctx *extcctx)
-	{ cctx->hasiv = extcctx->hasiv; cctx->hastag = extcctx->hastag; cctx->f = extcctx->f; cctx->ctx = extcctx->ctx; }
+{
+	cctx->hasiv = extcctx->hasiv;
+	cctx->hastag = extcctx->hastag; 
+	cctx->f = extcctx->f; 
+	cctx->ctx = extcctx->ctx;  
+	cctx->evp = NULL;
+	cctx->pbuf.size = 0; 
+	cctx->pbuf.mem = NULL;
+}
 
 #endif /* MC_TYPES_H */

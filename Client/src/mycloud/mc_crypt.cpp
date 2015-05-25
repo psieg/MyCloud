@@ -877,7 +877,7 @@ int crypt_finish_upload(mc_crypt_ctx *cctx) {
 
 void crypt_abort_upload(mc_crypt_ctx *cctx) {
 	if (cctx->ctx->sync->crypted) {
-		if (!cctx->f->is_dir) {
+		if (cctx->f && !cctx->f->is_dir) {
 			EVP_CIPHER_CTX_cleanup(cctx->evp);
 			EVP_CIPHER_CTX_free(cctx->evp);
 			FreeBuf(&cctx->pbuf);
