@@ -365,6 +365,8 @@ function handle_putfile($ibuf,$uid){
 		if(!$q) return pack_interror($mysqli->error);
 
 		$fid = $mysqli->insert_id;
+		updateHash($fid);
+
 		$filedata = filedata($fid,$qry['name'],$qry['parent']);
 		if($qry['is_dir']){
 			$rc = mkdir($filedata[0]);
@@ -415,6 +417,7 @@ function handle_putfile($ibuf,$uid){
 					" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 			if(!$q) return pack_interror($mysqli->error);
 			$fid = $qry['id'];
+			updateHash($fid);
 			
 			if(file_exists($oldfiledata[0])){
 				$rc = rename($oldfiledata[0],$filedata[0]);
@@ -438,13 +441,14 @@ function handle_putfile($ibuf,$uid){
 					" AND (uid = ".$uid." OR sid IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))");
 			if(!$q) return pack_interror($mysqli->error);
 			$fid = $qry['id'];
+			updateHash($fid);
 		}
 		if($qry['is_dir'] && $res[3] == MC_FILESTAT_DELETED){
 			$rc = mkdir($filedata[0]);
 			if(!$rc) return pack_interror("Failed to create directory");			
 		}
-
 	}
+
 	if(!$qry['is_dir']){
 		$fdesc = fopen($filedata[0],"wb");
 		if(!$fdesc) return pack_interror("Failed to open file");
@@ -468,8 +472,7 @@ function handle_putfile($ibuf,$uid){
 		return pack_interror("Writing beyond file size!");
 	}
 	
-	updateHash($fid);	
-
+	updateHash($fid);
 
 	return pack_fileid($fid);
 }
