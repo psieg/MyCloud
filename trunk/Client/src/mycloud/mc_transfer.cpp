@@ -314,8 +314,7 @@ int download(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, 
 		if (db) rc = db_update_file(srv);
 		else rc = db_insert_file(srv);
 		MC_CHKERR(rc);
-		if (db) crypt_filestring(ctx, db, hashstr);
-		else crypt_filestring(ctx, srv, hashstr);
+		crypt_filestring(ctx, srv, hashstr);
 		return MC_ERR_INCOMPLETE_SKIP;
 		//TODO: Partial download?
 
