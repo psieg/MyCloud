@@ -455,7 +455,8 @@ function handle_putfile($ibuf,$uid){
 		$readbytes = 0;
 		$startoffset = ftell($fdesc);
 		while($readbytes < $qry['blocksize']){
-			fwrite($fdesc,fread($ibuf,MC_BUFSIZE),MC_BUFSIZE);
+			$rc = fwrite($fdesc,fread($ibuf,MC_BUFSIZE),MC_BUFSIZE);
+			if ($rc === FALSE) return pack_interror("Failed to write content");
 			$readbytes = ftell($fdesc)-$startoffset;
 			if(feof($ibuf) && $readbytes < $qry['blocksize']) return pack_code(MC_SRVSTAT_BADQRY);
 		}
@@ -497,7 +498,8 @@ function handle_addfile($ibuf,$uid){
 	if($offset != $qry[1]) return pack_code(MC_SRVSTAT_OFFSETFAIL); // Add at end pls
 	$readbytes = 0;
 	while($readbytes < $qry[2]){
-		fwrite($fdesc,fread($ibuf,MC_BUFSIZE),MC_BUFSIZE);
+		$rc = fwrite($fdesc,fread($ibuf,MC_BUFSIZE),MC_BUFSIZE);
+		if ($rc === FALSE) return pack_interror("Failed to write content");
 		$readbytes = ftell($fdesc)-$offset;
 		if(feof($ibuf) && $readbytes < $qry[2]) return pack_code(MC_SRVSTAT_BADQRY);
 	}
