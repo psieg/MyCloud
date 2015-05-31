@@ -19,7 +19,7 @@ public:
 
 	enum DialogCode {
 		// Bitmap 
-		//     32        16       8    4      2        1
+		//	 32		16	   8	4	  2		1
 		// 0 0 Recursive Direcory Keep Upload Download Skip
 		// Recursive is an extension to Directory!
 		// Used in conflicted()

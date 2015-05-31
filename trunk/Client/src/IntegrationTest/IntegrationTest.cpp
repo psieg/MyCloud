@@ -59,7 +59,7 @@ int IntegrationTest::setupClient(string path)
 }
 
 void IntegrationTest::initTestCase() {
-    this->testHost = qPrintable(QProcessEnvironment::systemEnvironment().value("MC_TESTHOST", "psieg.de/cloud"));
+	this->testHost = qPrintable(QProcessEnvironment::systemEnvironment().value("MC_TESTHOST", "psieg.de/cloud"));
 }
 void IntegrationTest::cleanupTestCase() {
 }

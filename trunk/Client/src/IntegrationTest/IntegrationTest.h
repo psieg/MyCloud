@@ -7,7 +7,7 @@ class IntegrationTest : public QObject
 
 	QString uniqueName;
 	QDir testDir;
-    string testHost;
+	string testHost;
 	int syncID = -1;
 	int userID = -1;
 	QtWorkerThread thread; // needed for MC_CHECKTERMINATE

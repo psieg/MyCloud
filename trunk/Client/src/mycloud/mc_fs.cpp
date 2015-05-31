@@ -38,51 +38,51 @@
 
 #ifdef MC_OS_WIN
 FILE* fs_fopen(const string& filename, MC_FILEACCESS access) {
-    DWORD desiredAccess = 0;
-    DWORD shareMode = 0;
-    DWORD disposition = 0;
-    string mode;
-    switch (access) {
-    case MC_FA_READ:
-        desiredAccess = GENERIC_READ;
-        shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-        mode = "rb";
-        disposition = OPEN_EXISTING;
-        break;
-    case MC_FA_OVERWRITECREATE:
+	DWORD desiredAccess = 0;
+	DWORD shareMode = 0;
+	DWORD disposition = 0;
+	string mode;
+	switch (access) {
+	case MC_FA_READ:
+		desiredAccess = GENERIC_READ;
+		shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+		mode = "rb";
+		disposition = OPEN_EXISTING;
+		break;
+	case MC_FA_OVERWRITECREATE:
 #ifdef MC_WATCHMODE
-        Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+		Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
 #endif
-        desiredAccess = GENERIC_READ | GENERIC_WRITE;
-        shareMode = FILE_SHARE_READ;
-        mode = "wb";
-        disposition = CREATE_ALWAYS;
-        break;
-    case MC_FA_READWRITEEXISTING:
+		desiredAccess = GENERIC_READ | GENERIC_WRITE;
+		shareMode = FILE_SHARE_READ;
+		mode = "wb";
+		disposition = CREATE_ALWAYS;
+		break;
+	case MC_FA_READWRITEEXISTING:
 #ifdef MC_WATCHMODE
-        Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+		Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
 #endif
-        desiredAccess = GENERIC_READ | GENERIC_WRITE;
-        shareMode = FILE_SHARE_READ;
-        mode = "r+b";
-        disposition = OPEN_EXISTING;
-        break;
-    default:
-        return NULL;
-    }
+		desiredAccess = GENERIC_READ | GENERIC_WRITE;
+		shareMode = FILE_SHARE_READ;
+		mode = "r+b";
+		disposition = OPEN_EXISTING;
+		break;
+	default:
+		return NULL;
+	}
 
-    HANDLE h = CreateFileW(
-        utf8_to_unicode(filename).c_str(), 
-        desiredAccess,
-        shareMode,
-        NULL,
-        disposition,
-        FILE_FLAG_BACKUP_SEMANTICS,
-        NULL);
-    if (h == INVALID_HANDLE_VALUE) return 0;
+	HANDLE h = CreateFileW(
+		utf8_to_unicode(filename).c_str(), 
+		desiredAccess,
+		shareMode,
+		NULL,
+		disposition,
+		FILE_FLAG_BACKUP_SEMANTICS,
+		NULL);
+	if (h == INVALID_HANDLE_VALUE) return 0;
 
-    return _wfdopen(_open_osfhandle((intptr_t)h, 0), utf8_to_unicode(mode).c_str());
-        
+	return _wfdopen(_open_osfhandle((intptr_t)h, 0), utf8_to_unicode(mode).c_str());
+		
 	//return _wfsopen(utf8_to_unicode(filename).c_str(), utf8_to_unicode(mode).c_str(), _SH_DENYNO);
 
 }
@@ -97,26 +97,26 @@ int fs_fclose(FILE *f) {
 }
 #else
 FILE* fs_fopen(const string& filename, MC_FILEACCESS access) {
-    string mode;
-    switch (access) {
-    case MC_FA_READ:
-        mode = "rb";
-        break;
-    case MC_FA_OVERWRITECREATE:
+	string mode;
+	switch (access) {
+	case MC_FA_READ:
+		mode = "rb";
+		break;
+	case MC_FA_OVERWRITECREATE:
 #ifdef MC_WATCHMODE
-        Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+		Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
 #endif
-        mode = "wb";
-        break;
-    case MC_FA_READWRITEEXISTING:
+		mode = "wb";
+		break;
+	case MC_FA_READWRITEEXISTING:
 #ifdef MC_WATCHMODE
-        Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
+		Q_ASSERT_X(QtWatcher::instance()->isExcludingLocally(filename.c_str()), "fs_fopen", "Opening non-excluded file");
 #endif
-        mode = "r+b";
-        break;
-    default:
-        return NULL;
-    }
+		mode = "r+b";
+		break;
+	default:
+		return NULL;
+	}
 	return fopen(filename.c_str(), mode.c_str());
 }
 int fs_fseek(FILE *f, int64 offset, int origin) {

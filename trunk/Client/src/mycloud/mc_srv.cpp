@@ -206,10 +206,10 @@ void QtNetworkPerformer::abort() {
 }
 
 int QtNetworkPerformer::perform(mc_buf *inbuf, mc_buf *outbuf, bool withprogress) {
-    if (rep) {
-        Q_ASSERT_X(false, "QtNetworkPerformer", "can only handle one query at a time");
-        MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED, "NetworkPerformer can only handle one query at a time");
-    }
+	if (rep) {
+		Q_ASSERT_X(false, "QtNetworkPerformer", "can only handle one query at a time");
+		MC_ERR_MSG(MC_ERR_NOT_IMPLEMENTED, "NetworkPerformer can only handle one query at a time");
+	}
 	req.setHeader(QNetworkRequest::ContentLengthHeader, QVariant::fromValue(inbuf->used));
 	rep = manager.post(req, QByteArray(inbuf->mem, inbuf->used));
 	connect(rep, SIGNAL(sslErrors(const QList<QSslError>&)), this, SLOT(tlsError(const QList<QSslError>&)));

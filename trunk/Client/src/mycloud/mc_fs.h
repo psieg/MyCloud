@@ -17,9 +17,9 @@
 #endif
 
 enum MC_FILEACCESS : int {
-    MC_FA_READ,
-    MC_FA_OVERWRITECREATE,
-    MC_FA_READWRITEEXISTING
+	MC_FA_READ,
+	MC_FA_OVERWRITECREATE,
+	MC_FA_READWRITEEXISTING
 };
 
 /* For platform independence */

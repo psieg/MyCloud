@@ -38,8 +38,8 @@ string MD5BinToHex(unsigned char binhash[16]) {
 /* Convert a string of binary data to a hex string */
 string BinToHex(const string& data) {
 	std::ostringstream ret;
-    const char* beg = reinterpret_cast<const char*>(data.c_str());
-    const char* end = beg + data.length();
+	const char* beg = reinterpret_cast<const char*>(data.c_str());
+	const char* end = beg + data.length();
 	static const char symbols[] = "0123456789abcdef";
 	while (beg != end) ret << symbols[ (*beg >> 4) & 0xf] << symbols[ *beg++ &0xf ];
 	return ret.str();
