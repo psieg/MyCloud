@@ -1,3 +1,11 @@
+0.4.1
++ Basic UI scaling capability
++ Windows: use non-blocking file handles so files being uploaded can be deleted
+* Fix decision logic errors caused by aborted uploads
+* Fix deadlock and failures in new watch mechanism
+* Fix crashes on server error
+* Updated updateCA and trustCA (padimailCA + StartSSL CA)
+
 0.4
 + Better watch mechanism on windows
 + Warning when changing the server or username as local data might be invalid
