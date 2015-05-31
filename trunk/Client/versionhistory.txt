@@ -5,6 +5,7 @@
 * Fix deadlock and failures in new watch mechanism
 * Fix crashes on server error
 * Updated updateCA and trustCA (padimailCA + StartSSL CA)
+* Allowed time difference increased to 20 seconds
 
 0.4
 + Better watch mechanism on windows
