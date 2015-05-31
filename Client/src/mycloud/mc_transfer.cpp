@@ -268,22 +268,22 @@ int download_file(mc_sync_ctx *ctx, const string& fpath, const string& rpath, mc
 
 	if (doit) {
 
-        MC_BEGIN_WRITING_FILE(fpath);
-        MC_DBGL("Opening file " << fpath << " for writing");
-        MC_NOTIFYSTART(MC_NT_DL, fpath);
-        FILE* fdesc = fs_fopen(fpath, MC_FA_OVERWRITECREATE);
-        if (!fdesc) MC_CHKERR_MSG(MC_ERR_IO, "Could not (re)write the file");
+		MC_BEGIN_WRITING_FILE(fpath);
+		MC_DBGL("Opening file " << fpath << " for writing");
+		MC_NOTIFYSTART(MC_NT_DL, fpath);
+		FILE* fdesc = fs_fopen(fpath, MC_FA_OVERWRITECREATE);
+		if (!fdesc) MC_CHKERR_MSG(MC_ERR_IO, "Could not (re)write the file");
 
-        // Update the db state only once we know we touched it to avoid incorrect choices after aborts
-        srv->status = MC_FILESTAT_INCOMPLETE_DOWN;
-        if (db == NULL) rc = db_insert_file(srv);
-        else rc = db_update_file(srv);
-        MC_CHKERR(rc);
+		// Update the db state only once we know we touched it to avoid incorrect choices after aborts
+		srv->status = MC_FILESTAT_INCOMPLETE_DOWN;
+		if (db == NULL) rc = db_insert_file(srv);
+		else rc = db_update_file(srv);
+		MC_CHKERR(rc);
 
 		rc = download_actual(&cctx, fpath, srv, fdesc);
 
-        fs_fclose(fdesc);
-        MC_NOTIFYEND(MC_NT_DL);
+		fs_fclose(fdesc);
+		MC_NOTIFYEND(MC_NT_DL);
 		MC_END_WRITING_FILE(fpath);
 		MC_CHKERR(rc);
 
@@ -378,7 +378,7 @@ int upload_actual(mc_crypt_ctx *cctx, const string& path, const string& fpath, m
 
 	MC_DBGL("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL, fpath);
-    fdesc = fs_fopen(fpath, MC_FA_READ);
+	fdesc = fs_fopen(fpath, MC_FA_READ);
 	if (!fdesc) MC_CHKERR_MSG(MC_ERR_IO, "Could not read the file");
 
 	fs_fseek(fdesc, 0, SEEK_SET);
@@ -917,7 +917,7 @@ int complete_up(mc_sync_ctx *ctx, const string& path, const string& fpath, mc_fi
 
 	MC_DBG("Opening file " << fpath << " for reading");
 	MC_NOTIFYSTART(MC_NT_UL, fpath);
-    fdesc = fs_fopen(fpath, MC_FA_READ);
+	fdesc = fs_fopen(fpath, MC_FA_READ);
 	if (!fdesc) {
 		crypt_abort_upload(&cctx);
 		MC_CHKERR_MSG(MC_ERR_IO, "Could not read the file");

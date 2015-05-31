@@ -25,23 +25,23 @@ using namespace std;
 #endif
 
 #ifndef MC_SILENT
-    #ifdef _DEBUG
-    //#	define MC_DEBUGLOW
-    #	define MC_DEBUG
-    #	define MC_INFOLOW
-    #	define MC_INFO
-    #	define MC_WARN
-    #	define MC_ERROR
-    #	define MC_LOGFILE
-    #	define MC_IONOTIFY
-    #else
-    #	define MC_INFOLOW
-    #	define MC_INFO
-    #	define MC_WARN
-    #	define MC_ERROR
-    #	define MC_LOGFILE
-    #	define MC_IONOTIFY
-    #endif
+	#ifdef _DEBUG
+	//#	define MC_DEBUGLOW
+	#	define MC_DEBUG
+	#	define MC_INFOLOW
+	#	define MC_INFO
+	#	define MC_WARN
+	#	define MC_ERROR
+	#	define MC_LOGFILE
+	#	define MC_IONOTIFY
+	#else
+	#	define MC_INFOLOW
+	#	define MC_INFO
+	#	define MC_WARN
+	#	define MC_ERROR
+	#	define MC_LOGFILE
+	#	define MC_IONOTIFY
+	#endif
 #endif
 
 #ifdef MC_LOGFILE

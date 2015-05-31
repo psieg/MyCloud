@@ -78,15 +78,15 @@ bool CReadChangesRequest::OpenDirectory()
 
 	m_hDirectory = ::CreateFile(
 		m_wstrDirectory.c_str(),			// pointer to the file name
-		FILE_LIST_DIRECTORY,                // access (read/write) mode
+		FILE_LIST_DIRECTORY,				// access (read/write) mode
 		FILE_SHARE_READ						// share mode
 		 | FILE_SHARE_WRITE
 		 | FILE_SHARE_DELETE,
-		NULL,                               // security descriptor
-		OPEN_EXISTING,                      // how to create
+		NULL,							   // security descriptor
+		OPEN_EXISTING,					  // how to create
 		FILE_FLAG_BACKUP_SEMANTICS			// file attributes
 		 | FILE_FLAG_OVERLAPPED,
-		NULL);                              // file with attributes to copy
+		NULL);							  // file with attributes to copy
 
 	if (m_hDirectory == INVALID_HANDLE_VALUE)
 	{
@@ -104,13 +104,13 @@ void CReadChangesRequest::BeginRead()
 	// This call needs to be reissued after every APC.
 	BOOL success = ::ReadDirectoryChangesW(
 		m_hDirectory,						// handle to directory
-		&m_Buffer[0],                       // read results buffer
+		&m_Buffer[0],					   // read results buffer
 		m_Buffer.size(),					// length of buffer
-		m_bChildren,                        // monitoring option
-		FILE_NOTIFY_CHANGE_LAST_WRITE|FILE_NOTIFY_CHANGE_CREATION|FILE_NOTIFY_CHANGE_FILE_NAME,        // filter conditions
-		&dwBytes,                           // bytes returned
-		&m_Overlapped,                      // overlapped buffer
-		&NotificationCompletion);           // completion routine
+		m_bChildren,						// monitoring option
+		FILE_NOTIFY_CHANGE_LAST_WRITE|FILE_NOTIFY_CHANGE_CREATION|FILE_NOTIFY_CHANGE_FILE_NAME,		// filter conditions
+		&dwBytes,						   // bytes returned
+		&m_Overlapped,					  // overlapped buffer
+		&NotificationCompletion);		   // completion routine
 }
 
 //static

@@ -61,8 +61,8 @@ protected:
    pos = m_string.find('\n');
    if (pos != std::string::npos)
    {
-    std::string tmp(m_string.begin(), m_string.begin() + pos);
-    log_window->logOutput(tmp.c_str());
+	std::string tmp(m_string.begin(), m_string.begin() + pos);
+	log_window->logOutput(tmp.c_str());
 	//log_window->setHtml(log_window->toHtml() + tmp.c_str() + "\n");
 #ifdef MC_OS_WIN
 	tmp.append("\n");

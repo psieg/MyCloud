@@ -481,12 +481,12 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 			++onfsit;
 		} else if ((onfsit == onfsend) || onfsit->name > indbit->name) {
 			// File has been deleted or is incomplete up
-            if (indbit->id < 0) {
-                // We inserted a file without knowing it's remote ID, but it was not created on the server
-                // and it's gone in fs too... nvm then
-                rc = db_delete_file(indbit->id);
-            } else
-			    rc = verifyandcomplete(ctx, path, NULL, &*indbit, &*indbit, &hashstr);
+			if (indbit->id < 0) {
+				// We inserted a file without knowing it's remote ID, but it was not created on the server
+				// and it's gone in fs too... nvm then
+				rc = db_delete_file(indbit->id);
+			} else
+				rc = verifyandcomplete(ctx, path, NULL, &*indbit, &*indbit, &hashstr);
 			if (MC_IS_CRITICAL_ERR(rc)) return rc; else if (rc) clean = false;
 			++indbit;
 		} else if (onfsit->name == indbit->name) {
