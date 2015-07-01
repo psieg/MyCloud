@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?define binaryDir = "..\build\x64\Release"?>
+<?define qtDir = "C:\Qt\5.4\msvc2013_64"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+	<Product Id="*" Name="MyCloud Client" Language="1033" Version="1.0.0.0" Manufacturer="Patrick Siegler" UpgradeCode="dd5f59de-08bb-4ef8-9017-65b2ef4cd9ce">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64"/>
+  
+		<MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+		<MediaTemplate />
+
+		<Feature Id="ProductFeature" Title="MyCloudClient" Level="1">
+			<ComponentGroupRef Id="ProductComponents" />
+		</Feature>
+    
+    <Icon Id="icon.ico" SourceFile="..\src\QtClient\Resources\icon.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+	</Product>
+
+
+  <Fragment>
+		<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="MyCloud">
+          <Directory Id="QTPLUGINSFOLDER" Name="qtplugins">
+            <Directory Id="QTPLATFORMSFOLDER" Name="platforms" />
+          </Directory>
+        </Directory>
+			</Directory>
+      <Directory Id="ProgramMenuFolder" />
+		</Directory>
+	</Fragment>
+
+	<Fragment>
+		<ComponentGroup Id="ProductComponents">
+			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
+      <Component Id="ProductComponent" Directory="INSTALLFOLDER" Guid="5EFAC359-1A03-4F8C-B485-8784067142BC" Win64="yes">
+        <!-- TODO: Insert files, registry keys, and other resources here. -->
+        <File Source="$(var.binaryDir)\QtClient.exe"/>
+        <File Source="$(var.binaryDir)\Client.exe" />
+        <File Source="..\build\trustCA.crt" />
+        <File Source="..\deps\openssl\binx64\libeay32.dll" />
+        <File Source="..\deps\openssl\binx64\ssleay32.dll" />
+        <File Source="..\deps\Microsoft.VC120.CRT\msvcp120.dll" />
+        <File Source="..\deps\Microsoft.VC120.CRT\msvcr120.dll" />
+        <File Source="..\deps\Qt\qt.conf" />
+        <File Source="$(var.qtDir)\bin\Qt5Core.dll" />
+        <File Source="$(var.qtDir)\bin\Qt5Network.dll" />
+        <File Source="$(var.qtDir)\bin\Qt5Widgets.dll" />
+        <File Source="$(var.qtDir)\bin\Qt5Gui.dll" />
+        <File Source="$(var.qtDir)\bin\icuin53.dll" />
+        <File Source="$(var.qtDir)\bin\icuuc53.dll" />
+        <File Source="$(var.qtDir)\bin\icudt53.dll" />
+        <File Source="$(var.qtDir)\bin\libGLESv2.dll" />
+      </Component>
+      <Component Id="QtPlatformComponent" Directory="QTPLATFORMSFOLDER" Guid="0C708248-8405-4D8B-80DF-4EF60165059F" Win64="yes">
+        <File Source="$(var.qtDir)\plugins\platforms\qwindows.dll" />
+      </Component>
+      <Component Id="StartMenuLinkComponent" Directory="ProgramMenuFolder" Guid="051D2061-A8A1-4E1C-85EE-033B34CD8CF7" Win64="yes">
+        <Shortcut Id="ApplicationStartMenuShortcut"
+                  Name="MyCloud"
+                  Description="MyCloud Client"
+                  Target="[#QtClient.exe]"
+                  WorkingDirectory="APPLICATIONROOTDIRECTORY"/>
+        <RegistryValue Root="HKCU" Key="Software\MyCloud" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+      </Component>
+		</ComponentGroup>
+	</Fragment>
+</Wix>
