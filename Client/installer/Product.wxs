@@ -51,9 +51,9 @@
         <File Source="$(var.qtDir)\bin\Qt5Network.dll" />
         <File Source="$(var.qtDir)\bin\Qt5Widgets.dll" />
         <File Source="$(var.qtDir)\bin\Qt5Gui.dll" />
-        <File Source="$(var.qtDir)\bin\icuin53.dll" />
-        <File Source="$(var.qtDir)\bin\icuuc53.dll" />
-        <File Source="$(var.qtDir)\bin\icudt53.dll" />
+        <File Source="$(var.qtDir)\bin\icuin54.dll" />
+        <File Source="$(var.qtDir)\bin\icuuc54.dll" />
+        <File Source="$(var.qtDir)\bin\icudt54.dll" />
         <File Source="$(var.qtDir)\bin\libGLESv2.dll" />
       </Component>
       <Component Id="QtPlatformComponent" Directory="QTPLATFORMSFOLDER" Guid="0C708248-8405-4D8B-80DF-4EF60165059F" Win64="yes">
