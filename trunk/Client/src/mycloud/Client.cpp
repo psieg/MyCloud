@@ -13,6 +13,7 @@
 #else
 #	include "mc_workerthread.h"
 #endif
+#include <QtCore/QCoreApplication>
 
 
 using namespace std;
@@ -128,7 +129,11 @@ int runmc()
 					MC_NOTIFY(MC_NT_CRYPTOFAIL, "");
 					MC_ERR_MSG(MC_ERR_CRYPTOALERT, "Untrusted server, aborting");
 				}
-				rc = srv_open(status.url, CAFILE, status.uname, status.passwd, &basedate, &uid, status.acceptallcerts);
+				
+				string certfile;
+				if (fs_exists(CAFILE)) certfile = CAFILE;
+				else certfile = qPrintable(QCoreApplication::applicationDirPath() + "/" CAFILE);
+				rc = srv_open(status.url, certfile, status.uname, status.passwd, &basedate, &uid, status.acceptallcerts);
 				if (!rc) {
 					try {
 						MC_NOTIFYSTART(MC_NT_CONN, status.url);
@@ -148,7 +153,7 @@ int runmc()
 						rc = db_update_status(&status);
 						if (rc) throw rc;
 #ifdef MC_WATCHMODE					
-						QtWatcher watcher(status.url.c_str(), CAFILE, status.acceptallcerts);
+						QtWatcher watcher(status.url.c_str(), certfile.c_str(), status.acceptallcerts);
 #endif
 
 						//TODO: resume and stuff
