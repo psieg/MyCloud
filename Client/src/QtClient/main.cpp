@@ -2,6 +2,7 @@
 #include <QtWidgets/QApplication>
 #include <QtCore/QDir>
 #include <QtCore/QTextCodec>
+#include <QtCore/QCommandLineParser>
 #include "qdebugstream.h"
 #include "mc_db.h"
 #include "mc_crypt.h"
@@ -26,13 +27,32 @@ int main(int argc, char *argv[])
 	int d;
 
 	QApplication a(argc, argv);
+	a.setApplicationName("MyCloud");
 	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 	a.setQuitOnLastWindowClosed(false);
-	if (argc>1 && strcmp(argv[1], "-startup") == 0) { 
+
+	QCommandLineParser parser;
+	parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
+	QCommandLineOption startupOption("startup", "Indicates program is run from an automatic startup mechanism");
+	parser.addOption(startupOption);
+	QCommandLineOption pathOption("dir", "Specifies the working directory where instance-specific files should be", "dir");
+	parser.addOption(pathOption);
+
+	parser.process(a);
+
+	if (parser.isSet(startupOption)) {
 		d = 15; 
-		//On -startup set working directory to own, as Windows starts us at System32
-		QDir::setCurrent(QApplication::applicationDirPath());
 	} else d = 0;
+
+	QString path;
+	if (parser.isSet(pathOption)) {
+		path = parser.value(pathOption);
+	} else {
+		path = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+	}
+	QDir dir;
+	dir.mkpath(path);
+	QDir::setCurrent(path);
 
 #ifdef MC_LOGFILE
 	mc_logfile.open("MyCloud.log", ios::app);
