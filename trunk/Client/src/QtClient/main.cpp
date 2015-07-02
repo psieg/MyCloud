@@ -3,6 +3,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QTextCodec>
 #include <QtCore/QCommandLineParser>
+#include <QtCore/qabstractnativeeventfilter.h>
 #include "qdebugstream.h"
 #include "mc_db.h"
 #include "mc_crypt.h"
@@ -20,6 +21,26 @@ void printfunc(QtMsgType t, const QMessageLogContext & c, const QString & s){
 		printing = false;
 	}
 }
+
+#ifdef MC_OS_WIN
+// Quitting when the installer asks us to while we have a window open does not work properly
+// We receive WM_CLOSE and go to tray, but for unknown reasons the WM_ENDSESSION is not processed properly
+// by Qt (https://bugreports.qt.io/browse/QTBUG-35986 is closed), install this filter to ensure we close
+class Filter : public QAbstractNativeEventFilter
+{
+	virtual bool nativeEventFilter(const QByteArray &eventType, void *message, long *result)  {
+		MSG* msg = (MSG*)message;
+		if (msg->message == WM_ENDSESSION)
+		{
+			if (QtClient::instance())
+				QtClient::instance()->quit();
+			else
+				qApp->quit();
+		}
+		return false;
+	}
+};
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -53,6 +74,10 @@ int main(int argc, char *argv[])
 	QDir dir;
 	dir.mkpath(path);
 	QDir::setCurrent(path);
+
+#ifdef MC_OS_WIN
+	a.installNativeEventFilter(new Filter());
+#endif
 
 #ifdef MC_LOGFILE
 	mc_logfile.open("MyCloud.log", ios::app);
