@@ -140,7 +140,12 @@ void QtPasswordChangeDialog::accept() {
 	QString _url = "https://";
 	_url.append(s.url.c_str());
 	_url.append("/bin.php");
-	performer = new QtNetworkPerformer(_url, "trustCA.crt", s.acceptallcerts, true);
+
+	QString certfile;
+	if (fs_exists(CAFILE)) certfile = CAFILE;
+	else certfile = QCoreApplication::applicationDirPath() + "/" CAFILE;
+
+	performer = new QtNetworkPerformer(_url, certfile, s.acceptallcerts, true);
 	SetBuf(&netibuf);
 	SetBuf(&netobuf);
 		
