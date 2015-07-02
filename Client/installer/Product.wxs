@@ -40,7 +40,7 @@
 
 	<Fragment>
 		<ComponentGroup Id="MainComponents" Directory="INSTALLFOLDER">
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.binaryDir)\QtClient.exe" KeyPath="yes"/>
         <Shortcut Id="ApplicationStartMenuShortcut"
                   Name="MyCloud"
@@ -48,54 +48,54 @@
                   WorkingDirectory="APPLICATIONROOTDIRECTORY"
                   Advertise="yes"/>
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.binaryDir)\Client.exe"/>
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="..\build\trustCA.crt" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="..\deps\openssl\binx64\libeay32.dll "/>
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="..\deps\openssl\binx64\ssleay32.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="..\deps\Microsoft.VC120.CRT\msvcr120.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="..\deps\Microsoft.VC120.CRT\msvcp120.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="..\deps\Qt\qt.conf" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.qtDir)\bin\Qt5Core.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.qtDir)\bin\Qt5Network.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.qtDir)\bin\Qt5Widgets.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.qtDir)\bin\Qt5Gui.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.qtDir)\bin\icuin54.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.qtDir)\bin\icuuc54.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.qtDir)\bin\icudt54.dll" />
       </Component>
-      <Component>
+      <Component Win64="yes">
         <File Source="$(var.qtDir)\bin\libGLESv2.dll" />
       </Component>
     </ComponentGroup>
     <ComponentGroup Id="OtherComponents">
-      <Component Id="QtPlatformComponent" Directory="QTPLATFORMSFOLDER">
+      <Component Id="QtPlatformComponent" Directory="QTPLATFORMSFOLDER" Win64="yes">
         <File Source="$(var.qtDir)\plugins\platforms\qwindows.dll" />
       </Component>
     </ComponentGroup>
