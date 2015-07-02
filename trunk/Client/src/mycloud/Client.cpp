@@ -15,9 +15,7 @@
 #endif
 #include <QtCore/QCoreApplication>
 
-
 using namespace std;
-#define CAFILE "trustCA.crt"
 
 ofstream mc_logfile;
 

@@ -1,6 +1,7 @@
 #include "qtSyncDialog.h"
 #include "qtClient.h"
 
+
 QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	: QDialog(parent)
 {
@@ -64,7 +65,12 @@ void QtSyncDialog::showEvent(QShowEvent *event) {
 	QString _url = "https://";
 	_url.append(s.url.c_str());
 	_url.append("/bin.php");
-	performer = new QtNetworkPerformer(_url, "trustCA.crt", s.acceptallcerts, true);
+
+	QString certfile;
+	if (fs_exists(CAFILE)) certfile = CAFILE;
+	else certfile = QCoreApplication::applicationDirPath() + "/" CAFILE;
+
+	performer = new QtNetworkPerformer(_url, certfile, s.acceptallcerts, true);
 		
 	connect(performer, SIGNAL(finished(int)), this, SLOT(authed(int)));
 	srv_auth_async(&netibuf, &netobuf, performer, s.uname, s.passwd, &authtime);
