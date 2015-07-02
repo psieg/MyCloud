@@ -39,9 +39,7 @@
 
 	<Fragment>
 		<ComponentGroup Id="ProductComponents">
-			<!-- TODO: Remove the comments around this Component element and the ComponentRef below in order to add resources to this installer. -->
       <Component Id="ProductComponent" Directory="INSTALLFOLDER" Guid="5EFAC359-1A03-4F8C-B485-8784067142BC" Win64="yes">
-        <!-- TODO: Insert files, registry keys, and other resources here. -->
         <File Source="$(var.binaryDir)\QtClient.exe"/>
         <File Source="$(var.binaryDir)\Client.exe" />
         <File Source="..\build\trustCA.crt" />
