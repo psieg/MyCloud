@@ -159,6 +159,17 @@ QtClient::QtClient(QWidget *parent, int autorun)
 		connect(delayTimer, SIGNAL(timeout()), &updateChecker, SLOT(checkForUpdate()));
 		delayTimer->start();
 	} else {
+		//Open settings dialog if no server is configured
+		mc_status s;
+		int rc;
+
+		rc = db_select_status(&s);
+		if (!rc) {
+			if (s.url == "") {
+				QMetaObject::invokeMethod(this, "on_settingsButton_clicked", Qt::QueuedConnection);
+			}
+		}
+
 		delayTimer = new QTimer();
 		delayTimer->setSingleShot(true);
 		delayTimer->setInterval(5000);
