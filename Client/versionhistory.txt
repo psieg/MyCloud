@@ -1,3 +1,9 @@
+0.4.2
++ Installer for Windows
++ Place state.db and log in user-specific directory (LocalAppData), add command-line switch
+* Now using Qt5.5.0
+
+
 0.4.1
 + Basic UI scaling capability
 + Windows: use non-blocking file handles so files being uploaded can be deleted
