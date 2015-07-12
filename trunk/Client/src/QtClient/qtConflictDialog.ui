@@ -16,18 +16,6 @@
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
-  <property name="minimumSize">
-   <size>
-    <width>611</width>
-    <height>211</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>611</width>
-    <height>211</height>
-   </size>
-  </property>
   <property name="palette">
    <palette>
     <active>
