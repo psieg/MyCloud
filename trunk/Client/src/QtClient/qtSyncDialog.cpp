@@ -7,6 +7,9 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 {
 	ui.setupUi(this);
 	setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
+	float scalingFactor = this->logicalDpiX() / 96.0;
+	setMinimumSize(minimumSize() * scalingFactor);
+
 	ui.filterTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
 	ui.filterTable->setColumnWidth(0, 23);
 	ui.filterTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
