@@ -82,7 +82,7 @@ string TimeToString(int64 time) {
 	if (time == 0) {
 		ret = "--.--.---- --:--:--";
 	} else {
-		ts = localtime((time_t*)&test);
+		ts = localtime((time_t*)&time);
 		if (ts == NULL) ret = "Invalid Time Value";
 		else {
 			strftime(buf, 20, "%d.%m.%Y %H:%M:%S", ts);
