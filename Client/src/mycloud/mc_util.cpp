@@ -75,7 +75,6 @@ string shortname(const string& s, size_t len) {
 	}
 }
 
-
 string TimeToString(int64 time) {
 	string ret;
 	struct tm *ts;
@@ -83,7 +82,7 @@ string TimeToString(int64 time) {
 	if (time == 0) {
 		ret = "--.--.---- --:--:--";
 	} else {
-		ts = localtime(&time);
+		ts = localtime((time_t*)&test);
 		if (ts == NULL) ret = "Invalid Time Value";
 		else {
 			strftime(buf, 20, "%d.%m.%Y %H:%M:%S", ts);
