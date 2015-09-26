@@ -2,7 +2,9 @@
 #ifdef MC_QTCLIENT
 #	include "qtClient.h"
 #else
+#ifndef MC_NOWORKERTHREAD
 #	include "mc_workerthread.h"
+#endif
 #endif
 #include "openssl/rand.h"
 
@@ -607,14 +609,9 @@ int crypt_getfile(mc_crypt_ctx *cctx, int id, int64 offset, int64 blocksize, FIL
 			}
 			
 			//Decrypt
-			QByteArray pre = QCryptographicHash::hash(QByteArray(cctx->pbuf.mem + writeoffset, write), QCryptographicHash::Md5);
 			rc = EVP_DecryptUpdate(cctx->evp, (unsigned char*) cctx->pbuf.mem+writeoffset, &cryptwritten, (unsigned char*) cctx->pbuf.mem+writeoffset, write);
 			if (!rc) MC_ERR_MSG(MC_ERR_CRYPTO, "DecryptUpdate failed");
 			//write = cryptwritten; //is the same anyway
-
-			QByteArray post = QCryptographicHash::hash(QByteArray(cctx->pbuf.mem + writeoffset, write), QCryptographicHash::Md5);
-
-			MC_DBG("Decrypted chunk at " << offset << " from " << MD5BinToHex((unsigned char*)pre.constData()) << " to " << MD5BinToHex((unsigned char*)post.constData()));
 
 			//Write to file
 			MC_NOTIFYIOSTART(MC_NT_FS);

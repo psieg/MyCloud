@@ -5,7 +5,7 @@
 #include "mc_srv.h"
 #include <QtCore/QObject>
 #include <QtCore/QThread>
-
+#error
 #ifdef MC_OS_WIN
 class QtFileSystemWatcher;
 class CReadDirectoryChanges;

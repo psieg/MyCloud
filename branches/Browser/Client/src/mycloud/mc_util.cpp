@@ -1,9 +1,7 @@
 #include "mc_util.h"
 #include <sys/stat.h> //needed for file stats  
 #include <bitset>
-#ifdef MC_QTCLIENT
-#	include "mc_workerthread.h"
-#else
+#ifndef MC_NOWORKERTHREAD
 #	include "mc_workerthread.h"
 #endif
 
