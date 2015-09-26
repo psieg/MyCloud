@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QtClient", "QtClient\QtClient.vcxproj", "{B12702AD-ABFB-343A-A199-8E24837244A3}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IntegrationTest", "IntegrationTest\IntegrationTest.vcxproj", "{12EBF44A-6075-484D-A343-77FDC322D454}"
 EndProject
 Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "Installer", "..\installer\Installer.wixproj", "{DBA13227-825C-45E2-9D8C-1374BCB7E4AA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleBrowser", "ConsoleBrowser\ConsoleBrowser.vcxproj", "{C45FBDEC-5AB1-4BDE-8FE7-3326145A4998}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +49,14 @@ Global
 		{DBA13227-825C-45E2-9D8C-1374BCB7E4AA}.Debug|x86.ActiveCfg = Debug|x86
 		{DBA13227-825C-45E2-9D8C-1374BCB7E4AA}.Release|x64.ActiveCfg = Release|x86
 		{DBA13227-825C-45E2-9D8C-1374BCB7E4AA}.Release|x86.ActiveCfg = Release|x86
+		{C45FBDEC-5AB1-4BDE-8FE7-3326145A4998}.Debug|x64.ActiveCfg = Debug|x64
+		{C45FBDEC-5AB1-4BDE-8FE7-3326145A4998}.Debug|x64.Build.0 = Debug|x64
+		{C45FBDEC-5AB1-4BDE-8FE7-3326145A4998}.Debug|x86.ActiveCfg = Debug|Win32
+		{C45FBDEC-5AB1-4BDE-8FE7-3326145A4998}.Debug|x86.Build.0 = Debug|Win32
+		{C45FBDEC-5AB1-4BDE-8FE7-3326145A4998}.Release|x64.ActiveCfg = Release|x64
+		{C45FBDEC-5AB1-4BDE-8FE7-3326145A4998}.Release|x64.Build.0 = Release|x64
+		{C45FBDEC-5AB1-4BDE-8FE7-3326145A4998}.Release|x86.ActiveCfg = Release|Win32
+		{C45FBDEC-5AB1-4BDE-8FE7-3326145A4998}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

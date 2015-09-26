@@ -16,7 +16,9 @@ using namespace std;
 
 #define CAFILE "trustCA.crt"
 
+#ifndef MC_NOWORKERTHREAD
 #define MC_WATCHMODE
+#endif
 
 #if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)
 #	define MC_OS_WIN
@@ -28,20 +30,20 @@ using namespace std;
 
 #ifndef MC_SILENT
 	#ifdef _DEBUG
-	//#	define MC_DEBUGLOW
+	#	define MC_DEBUGLOW
 	#	define MC_DEBUG
 	#	define MC_INFOLOW
 	#	define MC_INFO
 	#	define MC_WARN
 	#	define MC_ERROR
-	#	define MC_LOGFILE
+	//#	define MC_LOGFILE
 	#	define MC_IONOTIFY
 	#else
 	#	define MC_INFOLOW
 	#	define MC_INFO
 	#	define MC_WARN
 	#	define MC_ERROR
-	#	define MC_LOGFILE
+	//#	define MC_LOGFILE
 	#	define MC_IONOTIFY
 	#endif
 #endif
@@ -197,6 +199,7 @@ extern ofstream mc_logfile;
 #define MC_CHKERR_FD_DOWN(rc, fd, cctx)	{ if (rc) { crypt_abort_download(cctx); if (fd) fs_fclose(fd); return rc; } }
 
 
+#ifndef MC_NOWORKERTHREAD
 /* return wether the WorkerThreads terminating-indicator is set */
 #define MC_TERMINATING()				QtWorkerThread::instance()->terminating
 /* if the terminating indicator is set, return MC_ERR_TERMINATING */
@@ -211,7 +214,22 @@ extern ofstream mc_logfile;
 #define MC_CHECKTERMINATING_FD_UP(fd, cctx)		if (QtWorkerThread::instance()->terminating) { crypt_abort_upload(cctx); if (fd) fclose(fd); MC_ERR_MSG(MC_ERR_TERMINATING, "Aborting"); }
 /* if the terminating indicator is set, close fd and return MC_ERR_TERMINATING */
 #define MC_CHECKTERMINATING_FD_DOWN(fd, cctx)		if (QtWorkerThread::instance()->terminating) { crypt_abort_download(cctx); if (fd) fclose(fd); MC_ERR_MSG(MC_ERR_TERMINATING, "Aborting"); }
-
+#else
+/* return wether the WorkerThreads terminating-indicator is set */
+#define MC_TERMINATING()				false
+/* if the terminating indicator is set, return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING()			false
+/* if the terminating indicator is set, return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING_UP(cctx)	false
+/* if the terminating indicator is set, return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING_DOWN(cctx)	false
+/* if the terminating indicator is set, close fd and return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING_FD(fd)		false
+/* if the terminating indicator is set, close fd and return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING_FD_UP(fd, cctx)		false
+/* if the terminating indicator is set, close fd and return MC_ERR_TERMINATING */
+#define MC_CHECKTERMINATING_FD_DOWN(fd, cctx)	false
+#endif
 
 #ifdef MC_QTCLIENT
 	/* notify the UI thread of these events */

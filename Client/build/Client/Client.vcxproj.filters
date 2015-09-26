@@ -76,9 +76,6 @@
     <ClCompile Include="..\..\src\mycloud\mc_srv.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\mycloud\mc_transfer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\mycloud\mc_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -107,6 +104,9 @@
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\mycloud\mc_watch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\mycloud\mc_transfer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

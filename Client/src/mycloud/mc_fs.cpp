@@ -5,6 +5,7 @@
 #		include "qtClient.h"
 #	endif
 #endif
+
 #include "mc_watch.h"
 
 #ifdef MC_OS_WIN

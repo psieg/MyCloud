@@ -6,7 +6,9 @@
 #ifdef MC_QTCLIENT
 #	include "qtClient.h"
 #else
+#ifndef MC_NOWORKERTHREAD
 #	include "mc_workerthread.h"
+#endif
 #endif
 
 QMutex srv_mutex, token_mutex; // srv_mutex protects the synchronous versions as they share the same i/obufs, token_mutex protects the authtoken and user/pass only
@@ -166,7 +168,7 @@ void QtNetworkPerformer::checkquit() {
 }
 
 void QtNetworkPerformer::requestFinished(QNetworkReply *r) {
-	MC_DBG("Request finished: " << this << " " << r);
+	MC_DBGL("Request finished: " << this << " " << r);
 	timeouttimer.stop();
 	quittimer.stop();
 	
@@ -177,7 +179,7 @@ void QtNetworkPerformer::requestFinished(QNetworkReply *r) {
 	}
 }
 void QtNetworkPerformer::requestTimedout() {
-	MC_DBG("Request timedout " << this);
+	MC_DBGL("Request timedout " << this);
 	timedout = true;
 	if (rep && rep->isRunning()) rep->abort();
 }
@@ -213,7 +215,7 @@ int QtNetworkPerformer::perform(mc_buf *inbuf, mc_buf *outbuf, bool withprogress
 	req.setHeader(QNetworkRequest::ContentLengthHeader, QVariant::fromValue(inbuf->used));
 	rep = manager.post(req, QByteArray(inbuf->mem, inbuf->used));
 	connect(rep, SIGNAL(sslErrors(const QList<QSslError>&)), this, SLOT(tlsError(const QList<QSslError>&)));
-	MC_DBG("Request posted: " << this << " " << rep);
+	MC_DBGL("Request posted: " << this << " " << rep);
 	if (withprogress) {
 		connect(rep, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(downloadProgress(qint64, qint64)));
 		connect(rep, SIGNAL(uploadProgress(qint64, qint64)), this, SLOT(uploadProgress(qint64, qint64)));
@@ -823,8 +825,10 @@ int _srv_getfile_actual(int id, int64 offset, int64 blocksize, unsigned char has
 	MC_CHKERR(rc);
 
 	unpack_file(&obuf, write);
-	if (obuf.used-*write < (int64)(sizeof(int)+sizeof(int64))) MC_ERR_MSG(MC_ERR_PROTOCOL, "Protocol Error: Server did not send enough data"); //Server did not send enough data
-	if (obuf.used-*write > (int64)(sizeof(int)+sizeof(int64))) MC_ERR_MSG(MC_ERR_PROTOCOL, "Protocol Error: Server sent too much data"); //Server did not send enough data
+	if (((int64)obuf.used) - *write < (int64)(sizeof(int)+sizeof(int64))) 
+		MC_ERR_MSG(MC_ERR_PROTOCOL, "Protocol Error: Server did not send enough data"); //Server did not send enough data
+	if (((int64)obuf.used) - *write >(int64)(sizeof(int) + sizeof(int64)))
+		MC_ERR_MSG(MC_ERR_PROTOCOL, "Protocol Error: Server sent too much data"); //Server did not send enough data
 
 	return 0;
 }

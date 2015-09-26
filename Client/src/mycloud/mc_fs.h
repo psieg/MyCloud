@@ -4,7 +4,9 @@
 // Functions for filesystem interaction
 #include "mc.h"
 #include "mc_util.h"
+#ifndef MC_NOWORKERTHREAD
 #include "mc_workerthread.h"
+#endif
 #include <QtCore/QCryptographicHash>
 #ifdef MC_OS_WIN
 #include <sys/utime.h>
