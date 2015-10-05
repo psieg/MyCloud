@@ -136,3 +136,35 @@ int cryptopanic() {
 	MC_NOTIFY(MC_NT_CRYPTOFAIL, "");
 	return MC_ERR_CRYPTOALERT;
 }
+
+/* HFS+ (OS X) normalizes file names to a UTF8 NFD variant
+*	When listing files, we need to find the denormalized pendant in our database
+*	and use that name. It will be normalized back around when passed to the OS */
+void denormalize_filenames(list<mc_file_fs>& onfs, list<mc_file> indb) {
+	QString fsnormalized;
+	list<QString> dbnormalized;
+	list<mc_file_fs>::iterator onfsit, onfsend;
+	list<mc_file>::iterator indbit, indbend;
+	list<QString>::iterator fsit, fsend;
+	list<QString>::iterator dbit, dbend;
+
+	for (mc_file& db : indb) {
+		dbnormalized.push_back(QString::fromUtf8(db.name.c_str(), db.name.length()).normalized(QString::NormalizationForm_C));
+	}
+
+	indbend = indb.end();
+
+	for (mc_file_fs& fs : onfs) {
+		indbit = indb.begin();
+		dbit = dbnormalized.begin();
+		fsnormalized = QString::fromUtf8(fs.name.c_str(), fs.name.length()).normalized(QString::NormalizationForm_C);
+		while (indbit != indbend) {
+			if (fsnormalized == *dbit) {
+				fs.name = indbit->name;
+				break;
+			}
+			indbit++;
+			dbit++;
+		}
+	}
+}
