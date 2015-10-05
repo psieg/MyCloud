@@ -100,7 +100,7 @@ void QtLocalWatcher::pathChanged(const QString& path) {
 	}
 }
 
-#ifdef MC_OS_UNIX
+#ifndef MC_OS_WIN
 int QtLocalWatcher::recurseDirectory(string path, QStringList *l, int rdepth) {
 	string fpath;
 	int rc;

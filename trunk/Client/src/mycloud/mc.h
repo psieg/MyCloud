@@ -20,9 +20,9 @@ using namespace std;
 
 #if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)
 #	define MC_OS_WIN
-#	undef MC_OS_UNIX
+#elif defined(__APPLE__)
+#	define MC_OS_OSX
 #else
-#	undef MC_OS_WIN
 #	define MC_OS_UNIX
 #endif
 

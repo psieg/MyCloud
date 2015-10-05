@@ -297,12 +297,15 @@ void QtClient::__notify(int evt, QString object) {
 		case MC_NT_INCOMPATIBLE_FS:
 			QMessageBox::warning(this, tr("Incompatible filesystem"), tr("MyCloud tried to create the file/directory \"") + object + tr("\", \n"
 				"but the filesystem claims the file already exists. Unless you just created this file, "
-				"this means your filesystem cannot handle two files that differ only in capitalization.\n"
+				"this means your filesystem cannot handle two files that differ only in capitalization or UTF-8 encoding.\n"
 #ifdef MC_OS_WIN
 				"Windows by default is case insensitive.\n"
 #endif
 #ifdef MC_OS_UNIX
 				"FAT12, FAT16, FAT32, VFAT as well as SMB are known to be case insensitive.\n"
+#endif
+#ifdef MC_OS_OSX
+				"The HFS+ used on OS X forces UTF-8 normalization.\n"
 #endif
 				"The file was skipped. If you want to use the file on this system, one of the conflicting files must be renamed."));
 			break;

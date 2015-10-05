@@ -8,7 +8,7 @@
 #include "mc_crypt.h"
 #include "mc_workerthread.h"
 
-#ifdef MC_OS_UNIX
+#ifndef MC_OS_WIN
 #	include <signal.h>
 #endif
 

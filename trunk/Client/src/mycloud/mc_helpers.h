@@ -22,4 +22,10 @@ int fullsync(list<mc_sync_db> *dbsyncs);
 /* panic action when decryption failed */
 int cryptopanic();
 
+
+/* HFS+ (OS X) normalizes file names to a UTF8 NFD variant
+*	When listing files, we need to find the denormalized pendant in our database
+*	and use that name. It will be normalized back around when passed to the OS */
+void denormalize_filenames(list<mc_file_fs>& onfs, list<mc_file> indb);
+
 #endif /* MC_HELPERS_H */

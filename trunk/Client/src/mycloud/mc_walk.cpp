@@ -210,6 +210,10 @@ int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]) {
 	rc = db_list_file_parent(&indb, id);
 	MC_CHKERR(rc);
 
+#ifdef MC_OS_OSX
+	denormalize_filenames(onfs, indb);
+#endif
+
 	rc  = srv_listdir(&onsrv, id);
 	MC_CHKERR(rc);
 
@@ -459,6 +463,10 @@ int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 	rc = db_list_file_parent(&indb, id);
 	MC_CHKERR(rc);
 
+#ifdef MC_OS_OSX
+	denormalize_filenames(onfs, indb);
+#endif
+
 	onfs.sort(compare_mc_file_fs);
 	indb.sort(compare_mc_file);
 
@@ -668,6 +676,10 @@ int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16])
 
 	rc = db_list_file_parent(&indb, id);
 	MC_CHKERR(rc);
+
+#ifdef MC_OS_OSX
+	denormalize_filenames(onfs, indb);
+#endif
 
 	rc  = srv_listdir(&onsrv, id);
 	MC_CHKERR(rc);
