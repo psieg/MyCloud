@@ -88,7 +88,7 @@ void QtLocalWatcher::pathChanged(const string& path) {
 #else
 void QtLocalWatcher::pathChanged(const QString& path) {
 	string dirpath(qPrintable(path));
-	if (dirpath.endsWith('/')) {
+	if (dirpath.substr(dirpath.length() - 2) == '/') {
 		dirpath = dirpath.substr(0, dirpath.length() - 1);
 	}
 #endif
