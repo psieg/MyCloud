@@ -8,6 +8,7 @@
 #else
 #	include "mc_workerthread.h"
 #endif
+#include <QtNetwork/QNetworkProxyFactory>
 
 QMutex srv_mutex, token_mutex; // srv_mutex protects the synchronous versions as they share the same i/obufs, token_mutex protects the authtoken and user/pass only
 QtNetworkPerformer *perf = NULL;
@@ -387,6 +388,8 @@ int _srv_open(const string& url, const string& certfile, const string& user, con
 	SetBuf(&obuf);
 
 	if (!QSslSocket::supportsSsl()) MC_ERR_MSG(MC_ERR_NETWORK, "No SSL Sockets supported");
+    
+	QNetworkProxyFactory::setUseSystemConfiguration(true);
 
 	perf = new QtNetworkPerformer(_url.c_str(), certfile.c_str(), acceptall);
 
