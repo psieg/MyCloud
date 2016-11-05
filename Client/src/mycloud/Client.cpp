@@ -255,6 +255,12 @@ int runmc()
 									if (wrc == MC_ERR_CRYPTOALERT) 
 										throw MC_ERR_CRYPTOALERT;
 									MC_NOTIFYEND(MC_NT_SYNC);
+
+									rc = db_select_status(&status);
+									if (rc) throw rc;
+									status.lastconn = time(NULL);
+									rc = db_update_status(&status);
+									if (rc) throw rc;
 								}
 							}
 
