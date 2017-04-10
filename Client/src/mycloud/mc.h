@@ -41,7 +41,7 @@ using namespace std;
 	#	define MC_INFO
 	#	define MC_WARN
 	#	define MC_ERROR
-	#	define MC_LOGFILE
+	//#	define MC_LOGFILE
 	#	define MC_IONOTIFY
 	#endif
 #endif
