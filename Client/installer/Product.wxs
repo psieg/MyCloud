@@ -82,15 +82,6 @@
         <File Source="$(var.qtDir)\bin\Qt5Gui.dll" />
       </Component>
       <Component Win64="yes">
-        <File Source="$(var.qtDir)\bin\icuin54.dll" />
-      </Component>
-      <Component Win64="yes">
-        <File Source="$(var.qtDir)\bin\icuuc54.dll" />
-      </Component>
-      <Component Win64="yes">
-        <File Source="$(var.qtDir)\bin\icudt54.dll" />
-      </Component>
-      <Component Win64="yes">
         <File Source="$(var.qtDir)\bin\libGLESv2.dll" />
       </Component>
     </ComponentGroup>
