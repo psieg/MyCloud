@@ -43,6 +43,8 @@
       <Component Win64="yes">
         <File Source="$(var.binaryDir)\QtClient.exe" KeyPath="yes"/>
         <Shortcut Id="ApplicationStartMenuShortcut"
+                  Directory="ProgramMenuFolder"
+                  Icon="icon.ico"
                   Name="MyCloud"
                   Description="MyCloud Client"
                   WorkingDirectory="APPLICATIONROOTDIRECTORY"
