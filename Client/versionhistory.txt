@@ -1,8 +1,15 @@
+0.4.3
++ Automatically honor system proxy settings
+* Fix No-Connection-Warning shown too often
+* Window scaling adjustments
+* Updated CA certificates
+* Fix watchmode causing encryption error
+* Now using Qt5.8.0
+
 0.4.2
 + Installer for Windows
 + Place state.db and log in user-specific directory (LocalAppData), add command-line switch
 * Now using Qt5.5.0
-
 
 0.4.1
 + Basic UI scaling capability
