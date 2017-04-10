@@ -9,10 +9,7 @@
 	<Product Id="*" Name="MyCloud Client" Language="1033" Version="!(bind.FileVersion.QtClient.exe)" Manufacturer="Patrick Siegler" UpgradeCode="dd5f59de-08bb-4ef8-9017-65b2ef4cd9ce">
     <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" Platform="x64"/>
   
-		<!--<MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />-->
-    <InstallExecuteSequence>
-      <RemoveExistingProducts Before='InstallInitialize' />
-    </InstallExecuteSequence>
+		<MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
 		<MediaTemplate EmbedCab="yes" />
 
 		<Feature Id="ProductFeature" Title="MyCloudClient" Level="1">
