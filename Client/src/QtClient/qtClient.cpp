@@ -17,15 +17,7 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	conflictDialog = NULL;
 
 	ui.setupUi(this);
-
-	float scalingFactor = this->logicalDpiX() / 96.0;
-	setMinimumSize(minimumSize() * scalingFactor);
 	
-	// FIXME: works only if icon source is big enough
-	//foreach(QToolButton* button,findChildren<QToolButton*>()) {
-	//	button->setIconSize(button->iconSize() * scalingFactor);
-	//}
-
 	connect(this, SIGNAL(_logOutput(QString)), this, SLOT(__logOutput(QString)), Qt::QueuedConnection);
 	connect(this, SIGNAL(_notify(int, QString)), this, SLOT(__notify(int, QString)), Qt::BlockingQueuedConnection); //Notify presents dialogs to the user, wait for it
 	connect(this, SIGNAL(_notifyEnd(int)), this, SLOT(__notifyEnd(int)), Qt::QueuedConnection);
@@ -87,16 +79,16 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	progressBar->setRange(0, 100);
 	progressBar->setFormat("");
 	progressBar->setTextVisible(false);
-	progressBar->setMinimumWidth(120 * scalingFactor);
-	progressBar->setMaximumWidth(120 * scalingFactor);
-	progressBar->setMinimumHeight(15 * scalingFactor);
-	progressBar->setMaximumHeight(15 * scalingFactor);
+	progressBar->setMinimumWidth(120);
+	progressBar->setMaximumWidth(120);
+	progressBar->setMinimumHeight(15);
+	progressBar->setMaximumHeight(15);
 	ui.statusBar->addPermanentWidget(progressBar, 0);
 	progressBar->hide();
 	progressLabel = new QLabel();
 	progressLabel->setText("");
-	progressLabel->setMinimumWidth(100 * scalingFactor);
-	progressLabel->setMaximumWidth(100 * scalingFactor);
+	progressLabel->setMinimumWidth(100);
+	progressLabel->setMaximumWidth(100);
 	ui.statusBar->addPermanentWidget(progressLabel, 0);
 	progressLabel->hide();
 #ifdef MC_IONOTIFY
