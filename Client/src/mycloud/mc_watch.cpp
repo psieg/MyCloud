@@ -399,8 +399,8 @@ int QtWatcher::localChange(const mc_sync_db& sync, const string& path) {
 		int rc = fs_filestats(&fs, _fpath, qPrintable(name), true);
 		MC_CHKERR(rc)
 	} else {
-		fs.name = qPrintable(name);
-		fs.is_dir = true; // speculation
+		// if the file no longer exists, check the parent
+		return localChange(sync, p == 0 ? "" : path.substr(0, p - 1));
 	}
 	if (match_full(qPrintable(dirpath), &fs, &this->filters[sync.id])) {
 		return 0;
