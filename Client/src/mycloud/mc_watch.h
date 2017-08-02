@@ -25,8 +25,6 @@ public:
 
 signals:
 	void pathChanged(const mc_sync_db& sync, const string& path);
-	// compat. do not use
-	void pathChanged(const mc_sync_db& sync, const QString& path);
 
 protected:
 	list<mc_sync_db> syncs;
@@ -60,7 +58,6 @@ public:
 
 signals:
 	void pathChanged(const string& path);
-	void pathChanged(const QString& path);
 
 protected:
 	virtual void run();

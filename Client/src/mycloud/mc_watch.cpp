@@ -92,13 +92,14 @@ void QtLocalWatcher::pathChanged(const QString& path) {
 		dirpath = dirpath.substr(0, dirpath.length() - 1);
 	}
 #endif
+	string changepath;
 
 	// find corresponding sync(s)
 	for (mc_sync_db& sync : this->syncs) {
-		if (dirpath.substr(0, sync.path.length()) == sync.path) {
-			MC_DBGL(sync.name << " -> " << dirpath.substr(sync.path.length()) << " changed");
-			emit pathChanged(sync, dirpath.substr(sync.path.length()));
-			emit pathChanged(sync, QString(dirpath.substr(sync.path.length()).c_str()));
+		if (dirpath.substr(0, sync.path.length()-1) == sync.path.substr(0, sync.path.length()-1)) {
+			changepath = dirpath.length() > sync.path.length() ? dirpath.substr(sync.path.length()) : "";
+			MC_DBGL(sync.name << " -> " << changepath << " changed");
+			emit pathChanged(sync, changepath);
 		}
 	}
 }
