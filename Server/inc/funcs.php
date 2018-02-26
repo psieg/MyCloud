@@ -89,7 +89,7 @@ function updateHash($fid,$fparent=NULL,$fis_dir=NULL){
 
 function generatehash($password){
 	$cost = 10;
-	$salt = sprintf("$2a$%02d$",$cost).strtr(base64_encode(mcrypt_create_iv(16,MCRYPT_DEV_URANDOM)), '+', '.');
+	$salt = sprintf("$2a$%02d$",$cost).strtr(base64_encode(random_bytes(16)), '+', '.');
 	return crypt($password,$salt);
 }
 
