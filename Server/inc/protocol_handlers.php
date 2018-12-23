@@ -665,12 +665,12 @@ function handle_notifychange($ibuf,$uid){
 	$list = unpack_notifychange($ibuf);
 	if(count($list) == 0) return pack_code(MC_SRVSTAT_BADQRY);
 	ksort($list); //by id
-	$t = time(NULL);
+	$t = time();
 	$s = "";
 	foreach(array_keys($list) as $sid) $s .= $sid.",";
 	$s = substr($s,0,strlen($s)-1);
 
-	while(time(NULL) - $t < 30){
+	while(time() - $t < 30){
 		$q = $mysqli->query("SELECT id,hash FROM mc_syncs WHERE id IN (".$s.")".
 			" AND (uid = ".$uid." OR id IN (SELECT sid FROM mc_shares WHERE uid = ".$uid."))".
 			" ORDER BY id");
