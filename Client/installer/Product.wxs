@@ -54,34 +54,40 @@
         <File Source="..\build\trustCA.crt" />
       </Component>
       <Component Win64="yes">
-        <File Source="..\deps\openssl\binx64\libeay32.dll "/>
+        <File Source="..\deps\openssl\binx64\libcrypto-1_1-x64.dll "/>
       </Component>
       <Component Win64="yes">
-        <File Source="..\deps\openssl\binx64\ssleay32.dll" />
+        <File Source="..\deps\openssl\binx64\libssl-1_1-x64.dll" />
       </Component>
       <Component Win64="yes">
-        <File Source="..\deps\Microsoft.VC120.CRT\x64\msvcr120.dll" />
+        <File Source="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Redist\MSVC\14.29.30133\x64\Microsoft.VC142.CRT\msvcp140.dll" />
       </Component>
       <Component Win64="yes">
-        <File Source="..\deps\Microsoft.VC120.CRT\x64\msvcp120.dll" />
+        <File Source="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Redist\MSVC\14.29.30133\x64\Microsoft.VC142.CRT\msvcp140_1.dll" />
+      </Component>
+      <Component Win64="yes">
+        <File Source="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Redist\MSVC\14.29.30133\x64\Microsoft.VC142.CRT\msvcp140_2.dll" />
+      </Component>
+      <Component Win64="yes">
+        <File Source="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Redist\MSVC\14.29.30133\x64\Microsoft.VC142.CRT\vcruntime140.dll" />
+      </Component>
+      <Component Win64="yes">
+        <File Source="C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Redist\MSVC\14.29.30133\x64\Microsoft.VC142.CRT\vcruntime140_1.dll" />
       </Component>
       <Component Win64="yes">
         <File Source="..\deps\Qt\qt.conf" />
       </Component>
       <Component Win64="yes">
-        <File Source="$(var.qtDir)\bin\Qt5Core.dll" />
+        <File Source="$(var.qtDir)\bin\Qt6Core.dll" />
       </Component>
       <Component Win64="yes">
-        <File Source="$(var.qtDir)\bin\Qt5Network.dll" />
+        <File Source="$(var.qtDir)\bin\Qt6Network.dll" />
       </Component>
       <Component Win64="yes">
-        <File Source="$(var.qtDir)\bin\Qt5Widgets.dll" />
+        <File Source="$(var.qtDir)\bin\Qt6Widgets.dll" />
       </Component>
       <Component Win64="yes">
-        <File Source="$(var.qtDir)\bin\Qt5Gui.dll" />
-      </Component>
-      <Component Win64="yes">
-        <File Source="$(var.qtDir)\bin\libGLESv2.dll" />
+        <File Source="$(var.qtDir)\bin\Qt6Gui.dll" />
       </Component>
     </ComponentGroup>
     <ComponentGroup Id="OtherComponents">
