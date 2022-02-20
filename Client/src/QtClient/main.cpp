@@ -28,7 +28,12 @@ void printfunc(QtMsgType t, const QMessageLogContext & c, const QString & s){
 // by Qt (https://bugreports.qt.io/browse/QTBUG-35986 is closed), install this filter to ensure we close
 class Filter : public QAbstractNativeEventFilter
 {
-	virtual bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result)  {
+
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+	virtual bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result) {
+#else
+	virtual bool nativeEventFilter(const QByteArray & eventType, void* message, long* result) {
+#endif
 		MSG* msg = (MSG*)message;
 		if (msg->message == WM_ENDSESSION)
 		{
