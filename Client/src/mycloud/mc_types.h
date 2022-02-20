@@ -2,8 +2,6 @@
 #define MC_TYPES_H
 #include "mc.h"
 
-using namespace std;
-
 /* config */
 #define MC_MAXTIMEDIFF	20
 #define MC_NETTIMEOUT	60
@@ -54,7 +52,7 @@ enum MC_NOTIFYIOTYPE : int {
 #endif
 
 //what to add to conflict files to be solve manually
-//should be on the server's ignore list!
+//should be on the server's ignore std::list!
 #define MC_CONFLICTEXTENSION	".mc_conflict"
 
 #define MC_UNTRUSTEDPREFIX		"UNTRUSTED:"
@@ -72,7 +70,7 @@ enum MC_NOTIFYIOTYPE : int {
 #define MC_ERR_NOT_CONFIGURED	11
 #define MC_ERR_CRYPTO			12
 #define MC_ERR_CRYPTOALERT		13 //crypt_finish_download: TAG mismatch after download = the server can't be trusted
-#define MC_ERR_INCOMPATIBLE_FS	14 //the FS is case sensitive or worse - it claims files exist (fs_exist) altough they are not (in this casing) in directory listing
+#define MC_ERR_INCOMPATIBLE_FS	14 //the FS is case sensitive or worse - it claims files exist (fs_exist) altough they are not (in this casing) in directory std::listing
 //These aren't really errors
 #define MC_ERR_ALTCODE			20 //srv_perform: Server replied with altcode rather than requiredcode
 #define MC_ERR_AUTODECIDE_UP	21 //autodecide: automatic decision upload
@@ -102,14 +100,14 @@ enum MC_NOTIFYIOTYPE : int {
  */
 typedef struct _mc_status {
 	bool locked;
-	string url;
-	string uname;
-	string passwd;
+	std::string url;
+	std::string uname;
+	std::string passwd;
 	bool acceptallcerts;
 	int watchmode;
 	int64 basedate;
 	int64 updatecheck;
-	string updateversion;
+	std::string updateversion;
 	int uid;
 	int64 lastconn;
 } mc_status;
@@ -159,12 +157,12 @@ enum MC_CONFLICTRECOMMENDATION : int {
 	MC_CONFLICTREC_DOWN		= 2
 };
 
-inline bool compare_hashstr(const string& a, const string& b) { return *((int*)a.c_str()) < *((int*)b.c_str()); }
+inline bool compare_hashstr(const std::string& a, const std::string& b) { return *((int*)a.c_str()) < *((int*)b.c_str()); }
 
 struct mc_sync {
 	int id;
 	int uid;
-	string name;
+	std::string name;
 	int filterversion;
 	int shareversion;
 	bool crypted;
@@ -180,8 +178,8 @@ struct mc_sync_db {
 	int id;
 	int uid;
 	int priority;
-	string name;
-	string path;
+	std::string name;
+	std::string path;
 	int filterversion;
 	int shareversion;
 	bool crypted;
@@ -201,7 +199,7 @@ struct mc_filter {
 	bool files;
 	bool directories;
 	MC_FILTERTYPE type;
-	string rule;
+	std::string rule;
 };
 
 struct mc_share {
@@ -211,22 +209,22 @@ struct mc_share {
 
 struct mc_user {
 	int id;
-	string name;
+	std::string name;
 };
 
 struct mc_keyringentry {
-	string sname;
-	string uname;
+	std::string sname;
+	std::string uname;
 	unsigned char key[32];
 };
 
 struct mc_sync_ctx {
 	mc_sync_db *sync;
-	list<mc_filter> *filter;
+	std::list<mc_filter> *filter;
 	MC_CONFLICTACTION dirconflictact;	// confict action for current directory
 	bool rconflictact;					// wether dirconflictact is recursive
 };
-inline void init_sync_ctx(mc_sync_ctx *ctx, mc_sync_db *sync, list<mc_filter> *filter) { 
+inline void init_sync_ctx(mc_sync_ctx *ctx, mc_sync_db *sync, std::list<mc_filter> *filter) { 
 	ctx->dirconflictact = MC_CONFLICTACT_UNKNOWN; ctx->rconflictact = false; 
 	ctx->sync = sync; ctx->filter = filter; };
 
@@ -271,8 +269,8 @@ inline bool nocase_equals (const std::string& first, const std::string& second)
 
 struct mc_file {
 	int id; // negative if we don't know the server's id
-	string name;
-	string cryptname; // = "" for unencrypted
+	std::string name;
+	std::string cryptname; // = "" for unencrypted
 	int64 ctime;
 	int64 mtime;
 	int64 size;
@@ -287,7 +285,7 @@ inline bool compare_mc_file_id(mc_file a, mc_file b) { return a.id < b.id; }
 /* used by fs */
 /* smaller mc_file with information available directly from the os (= without md5 hashes) */
 struct mc_file_fs {
-	string name;
+	std::string name;
 	int64 ctime;
 	int64 mtime;
 	int64 size;

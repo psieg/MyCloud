@@ -40,12 +40,8 @@
     <ClCompile Include="..\..\src\IntegrationTest\IntegrationTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_IntegrationTest.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_IntegrationTest.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
+    
+    
     <ClCompile Include="..\..\src\mycloud\mc_transfer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -88,24 +84,12 @@
     <ClCompile Include="..\..\src\mycloud\mc_workerthread.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_mc_watch.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_mc_watch.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_mc_srv.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_mc_srv.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_mc_workerthread.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_mc_workerthread.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
+    
+    
+    
+    
+    
+    
     <ClCompile Include="..\..\src\sqlite-amalgamation\sqlite3.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -120,18 +104,18 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\src\IntegrationTest\IntegrationTest.h">
+    <QtMoc Include="..\..\src\IntegrationTest\IntegrationTest.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\..\src\mycloud\mc_watch.h">
+    </QtMoc>
+    <QtMoc Include="..\..\src\mycloud\mc_watch.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\..\src\mycloud\mc_srv.h">
+    </QtMoc>
+    <QtMoc Include="..\..\src\mycloud\mc_srv.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\..\src\mycloud\mc_workerthread.h">
+    </QtMoc>
+    <QtMoc Include="..\..\src\mycloud\mc_workerthread.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\mycloud\mc_fs.h">

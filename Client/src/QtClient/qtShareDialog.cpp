@@ -27,8 +27,8 @@ void QtShareDialog::showEvent(QShowEvent *event) {
 }
 
 void QtShareDialog::userListReceived(int rc) {
-	list<mc_user> l;
-	list<mc_share> sharelist;
+	std::list<mc_user> l;
+	std::list<mc_share> sharelist;
 
 	disconnect(performer, SIGNAL(finished(int)), this, SLOT(userListReceived(int)));
 	if (rc) {

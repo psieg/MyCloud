@@ -11,7 +11,7 @@ QtGeneralFilterDialog::QtGeneralFilterDialog(QWidget *parent, QtNetworkPerformer
 	ui.filterTable->setColumnWidth(1, 23);
 	ui.filterTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Fixed);
 	QFontMetrics fm(ui.filterTable->font()); 
-	ui.filterTable->setColumnWidth(2, fm.width(tr("MFull Name (regex)M")));
+	ui.filterTable->setColumnWidth(2, fm.horizontalAdvance(tr("MFull Name (regex)M")));
 	ui.filterTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
 	myparent = parent;
 	performer = parentperf;

@@ -10,6 +10,8 @@
 #endif
 #include <QtNetwork/QNetworkProxyFactory>
 
+using namespace std;
+
 QMutex srv_mutex, token_mutex; // srv_mutex protects the synchronous versions as they share the same i/obufs, token_mutex protects the authtoken and user/pass only
 QtNetworkPerformer *perf = NULL;
 mc_buf ibuf, obuf;
@@ -145,7 +147,7 @@ QtNetworkPerformer::QtNetworkPerformer(const QString& url, const QString& certfi
 	connect(&timeouttimer, SIGNAL(timeout()), this, SLOT(requestTimedout()));
 	quittimer.setInterval(2000);
 	connect(&quittimer, SIGNAL(timeout()), this, SLOT(checkquit()));
-	config.setProtocol(QSsl::TlsV1SslV3);
+	config.setProtocol(QSsl::SecureProtocols);
 	config.setCaCertificates(QSslCertificate::fromPath(certfile));
 	if (acceptall) config.setPeerVerifyMode(QSslSocket::QueryPeer);
 	else config.setPeerVerifyMode(QSslSocket::VerifyPeer);

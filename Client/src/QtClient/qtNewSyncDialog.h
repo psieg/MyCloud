@@ -40,7 +40,7 @@ private:
 	QtNetworkPerformer *performer;
 	mc_buf *netibuf, *netobuf;
 	mc_sync sync;
-	list<mc_keyringentry> keyring;
+	std::list<mc_keyringentry> keyring;
 	QString keyringpass;
 	mc_user self;
 

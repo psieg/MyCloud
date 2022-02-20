@@ -12,7 +12,6 @@
 #include <cstring>
 #include <list>
 #include <errno.h>
-using namespace std;
 
 #define CAFILE "trustCA.crt"
 
@@ -47,7 +46,7 @@ using namespace std;
 #endif
 
 #ifdef MC_LOGFILE
-extern ofstream mc_logfile;
+extern std::ofstream mc_logfile;
 #endif
 
 #ifdef MC_DEBUG

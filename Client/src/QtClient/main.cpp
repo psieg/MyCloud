@@ -1,8 +1,8 @@
 #include "qtClient.h"
 #include <QtWidgets/QApplication>
 #include <QtCore/QDir>
-#include <QtCore/QTextCodec>
 #include <QtCore/QCommandLineParser>
+#include <QtCore/QStandardPaths>
 #include <QtCore/qabstractnativeeventfilter.h>
 #include "qdebugstream.h"
 #include "mc_db.h"
@@ -12,7 +12,7 @@ bool printing = false;
 void printfunc(QtMsgType t, const QMessageLogContext & c, const QString & s){
 	if (printing)
 	{
-		cerr << qPrintable(s);
+		std::cerr << qPrintable(s);
 	}
 	else
 	{
@@ -28,7 +28,7 @@ void printfunc(QtMsgType t, const QMessageLogContext & c, const QString & s){
 // by Qt (https://bugreports.qt.io/browse/QTBUG-35986 is closed), install this filter to ensure we close
 class Filter : public QAbstractNativeEventFilter
 {
-	virtual bool nativeEventFilter(const QByteArray &eventType, void *message, long *result)  {
+	virtual bool nativeEventFilter(const QByteArray& eventType, void* message, qintptr* result)  {
 		MSG* msg = (MSG*)message;
 		if (msg->message == WM_ENDSESSION)
 		{
@@ -49,7 +49,6 @@ int main(int argc, char *argv[])
 
 	QApplication a(argc, argv);
 	a.setApplicationName("MyCloud");
-	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 	a.setQuitOnLastWindowClosed(false);
 
 	QCommandLineParser parser;
@@ -80,9 +79,9 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef MC_LOGFILE
-	mc_logfile.open("MyCloud.log", ios::app);
-	mc_logfile << "####################################################################" << endl;
-	mc_logfile << "MyCloud QtClient Version " << MC_VERSION << endl;
+	mc_logfile.open("MyCloud.log", std::ios::app);
+	mc_logfile << "####################################################################" << std::endl;
+	mc_logfile << "MyCloud QtClient Version " << MC_VERSION << std::endl;
 #endif
 
 	QtClient w(NULL, d);

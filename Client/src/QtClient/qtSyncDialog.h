@@ -91,7 +91,7 @@ private:
 	mc_sync_db *worksync;
 	mc_sync_db newsync;
 	mc_user worksyncowner;
-	list<mc_keyringentry> keyring;
+	std::list<mc_keyringentry> keyring;
 	bool keyringloaded;
 	QString keyringpass;
 	bool keychanged;

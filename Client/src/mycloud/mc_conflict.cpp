@@ -8,8 +8,9 @@
 #	include "mc_workerthread.h"
 #endif
 
-
 #include <sstream>
+
+using namespace std;
 
 /* Ask the user which of the conflicting versions he wants to keep, recommend doubtaction
 *	db may be NULL	*/

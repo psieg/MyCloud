@@ -1,5 +1,7 @@
 #include "mc_filter.h"
 
+using namespace std;
+
 /* update filter lists for sync from server	*/
 int update_filters(int sid, list<mc_filter> *l) {
 	;

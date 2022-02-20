@@ -6,6 +6,8 @@
 #endif
 #include "openssl/rand.h"
 
+using namespace std;
+
 //Helper function for generating IVs from string (parent path or sync name)
 int crypt_striv(mc_crypt_ctx *cctx, const string& path) {
 	unsigned char h[16];

@@ -1,7 +1,6 @@
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDir>
-#include <QtCore/QTextCodec>
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QStandardPaths>
 #include "mc_db.h"
@@ -43,7 +42,6 @@ int main(int argc, char *argv[])
 
 	QCoreApplication a(argc, argv);
 	a.setApplicationName("MyCloud");
-	QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 
 	QCommandLineParser parser;
 	QCommandLineOption pathOption("dir", "Specifies the working directory where instance-specific files should be", "dir");
@@ -62,9 +60,9 @@ int main(int argc, char *argv[])
 	QDir::setCurrent(path);
 
 #ifdef MC_LOGFILE
-	mc_logfile.open("MyCloud.log",ios::app);
-	mc_logfile << "####################################################################" << endl;
-	mc_logfile << "MyCloud Client Version " << MC_VERSION << endl;
+	mc_logfile.open("MyCloud.log", std::ios::app);
+	mc_logfile << "####################################################################" << std::endl;
+	mc_logfile << "MyCloud Client Version " << MC_VERSION << std::endl;
 #endif
 	QtWorkerThread w;
 		

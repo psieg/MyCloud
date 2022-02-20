@@ -13,11 +13,11 @@
 int updateHash(mc_sync_ctx *ctx, mc_file *f, mc_sync_db *s);
 
 /* if the mtime is not as db says, touch it */
-int updateMtimeIfMismatch(string fpath, mc_file* db);
+int updateMtimeIfMismatch(std::string fpath, mc_file* db);
 
 /* retrieve and compare sync hashes */
 int fullsync();
-int fullsync(list<mc_sync_db> *dbsyncs);
+int fullsync(std::list<mc_sync_db> *dbsyncs);
 
 /* panic action when decryption failed */
 int cryptopanic();
@@ -26,6 +26,6 @@ int cryptopanic();
 /* HFS+ (OS X) normalizes file names to a UTF8 NFD variant
 *	When listing files, we need to find the denormalized pendant in our database
 *	and use that name. It will be normalized back around when passed to the OS */
-void denormalize_filenames(list<mc_file_fs>& onfs, list<mc_file> indb);
+void denormalize_filenames(std::list<mc_file_fs>& onfs, std::list<mc_file> indb);
 
 #endif /* MC_HELPERS_H */

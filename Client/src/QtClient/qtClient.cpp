@@ -36,7 +36,7 @@ QtClient::QtClient(QWidget *parent, int autorun)
 	ui.syncTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 	ui.syncTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
 	QFontMetrics fm(ui.syncTable->font()); 
-	ui.syncTable->setColumnWidth(3, fm.width(tr("MLast Sync successfulM"))+16);
+	ui.syncTable->setColumnWidth(3, fm.horizontalAdvance(tr("MLast Sync successfulM"))+16);
 
 	//ui.splitter->setStretchFactor(0, 2);
 	//ui.splitter->setStretchFactor(1, 3);
@@ -827,17 +827,17 @@ int QtClient::listSyncs() {
 void QtClient::updateStatus(QString object) {
 	QFontMetrics met(ui.statusBar->font());
 	QString obj = object;
-	int prwidth = met.width(currentPrefix);
-	int powidth = met.width("...");
+	int prwidth = met.horizontalAdvance(currentPrefix);
+	int powidth = met.horizontalAdvance("...");
 
 	trayIcon->setToolTip(currentPrefix + (object.length()>60-currentPrefix.length()?"..."+object.right(60-currentPrefix.length()):object));
 	statusLabel->setToolTip(currentPrefix + object);
 	float reservedwidth = progressBar->isVisible() ? RESERVED_STATUSWIDTH + progressBar->width() + progressLabel->width() : RESERVED_STATUSWIDTH;
 
-	if (met.width(obj) + prwidth < this->geometry().width() - reservedwidth) statusLabel->setText(currentPrefix + obj);
+	if (met.horizontalAdvance(obj) + prwidth < this->geometry().width() - reservedwidth) statusLabel->setText(currentPrefix + obj);
 	else {
 		if (this->geometry().width() < reservedwidth + prwidth + powidth + 20) obj = ""; else
-			while (met.width(obj) + prwidth + powidth > this->geometry().width() - reservedwidth) obj = obj.right(obj.length() - 5);
+			while (met.horizontalAdvance(obj) + prwidth + powidth > this->geometry().width() - reservedwidth) obj = obj.right(obj.length() - 5);
 		statusLabel->setText(currentPrefix + "..." + obj);
 	}
 }
@@ -845,8 +845,8 @@ void QtClient::updateStatus(QString object) {
 void QtClient::setStatus(QString prefix, QString object, QIcon icon, bool wicon) {
 	QFontMetrics met(ui.statusBar->font());
 	QString obj = object;
-	int prwidth = met.width(prefix);
-	int powidth = met.width("...");
+	int prwidth = met.horizontalAdvance(prefix);
+	int powidth = met.horizontalAdvance("...");
 
 	currentPrefix = prefix;
 	if (wicon) {
@@ -857,10 +857,10 @@ void QtClient::setStatus(QString prefix, QString object, QIcon icon, bool wicon)
 	statusLabel->setToolTip(prefix + object);
 	float reservedwidth = progressBar->isVisible() ? RESERVED_STATUSWIDTH + progressBar->width() + progressLabel->width() : RESERVED_STATUSWIDTH;
 
-	if (met.width(obj) + prwidth < this->geometry().width() - reservedwidth) statusLabel->setText(currentPrefix + obj);
+	if (met.horizontalAdvance(obj) + prwidth < this->geometry().width() - reservedwidth) statusLabel->setText(currentPrefix + obj);
 	else {
 		if (this->geometry().width() < reservedwidth + prwidth + powidth + 20) obj = ""; else
-			while (met.width(obj) + prwidth + powidth > this->geometry().width() - reservedwidth) obj = obj.right(obj.length() - 5);
+			while (met.horizontalAdvance(obj) + prwidth + powidth > this->geometry().width() - reservedwidth) obj = obj.right(obj.length() - 5);
 		statusLabel->setText(currentPrefix + "..." + obj);
 	}
 }

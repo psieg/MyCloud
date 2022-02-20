@@ -52,16 +52,16 @@ public:
 		::DeleteCriticalSection(&m_Crit);
 	}
 
-	void push(C& c)
+	void push(const C& c)
 	{
 		::EnterCriticalSection(&m_Crit);
-		push_back(c);
+		__super::push_back(std::move(c));
 		::LeaveCriticalSection(&m_Crit);
 
 		if (!::ReleaseSemaphore(m_hSemaphore, 1, NULL))
 		{
 			// If the semaphore is full, then take back the entry.
-			pop_back();
+			__super::pop_back();
 			if (GetLastError() == ERROR_TOO_MANY_POSTS)
 			{
 				m_bOverflow = true;
@@ -76,7 +76,7 @@ public:
 		// If the user calls pop() more than once after the
 		// semaphore is signaled, then the semaphore count will
 		// get out of sync.  We fix that when the queue empties.
-		if (empty())
+		if (__super::empty())
 		{
 			while (::WaitForSingleObject(m_hSemaphore, 0) != WAIT_TIMEOUT)
 				1;
@@ -84,8 +84,8 @@ public:
 			return false;
 		}
 
-		c = front();
-		pop_front();
+		c = __super::front();
+		__super::pop_front();
 
 		::LeaveCriticalSection(&m_Crit);
 		return true;
@@ -96,7 +96,7 @@ public:
 	{
 		::EnterCriticalSection(&m_Crit);
 
-		for (DWORD i = 0; i<size(); i++)
+		for (DWORD i = 0; i<__super::size(); i++)
 			WaitForSingleObject(m_hSemaphore, 0);
 
 		__super::clear();

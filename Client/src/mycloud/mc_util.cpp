@@ -7,6 +7,8 @@
 #	include "mc_workerthread.h"
 #endif
 
+using namespace std;
+
 
 /* Choose a "smart" bufsize for e.g. md5 */
 size_t choosebufsize(size_t fsize) {

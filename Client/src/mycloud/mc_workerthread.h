@@ -28,21 +28,21 @@ public:
 			QEventLoop loop;
 			QTimer timer;
 			terminating = true;
-			cout << "Waiting 10 sec for Worker Thread termination" << endl;
+			std::cout << "Waiting 10 sec for Worker Thread termination" << std::endl;
 			timer.setSingleShot(true);
 			connect(&timer, SIGNAL(timeout()), &loop, SLOT(quit()));
 			connect(this, SIGNAL(finished()), &loop, SLOT(quit()));
 			timer.start(10000);
 			loop.exec();
 			if (this->isRunning()) {
-				cout << "Killing Worker Thread" << endl;
+				std::cout << "Killing Worker Thread" << std::endl;
 				this->terminate();
-				db_execstr(string("UPDATE syncs SET status = ") + to_string(MC_SYNCSTAT_ABORTED) + " WHERE status = " + to_string(MC_SYNCSTAT_RUNNING));
+				db_execstr(std::string("UPDATE syncs SET status = ") + std::to_string(MC_SYNCSTAT_ABORTED) + " WHERE status = " + std::to_string(MC_SYNCSTAT_RUNNING));
 				//srv_mutex.unlock();
 				//srv_close();
 				//db_mutex.unlock();
 			} else {
-				cout << "Worker Thread exited" << endl;
+				std::cout << "Worker Thread exited" << std::endl;
 			}
 			terminating = false;
 		}

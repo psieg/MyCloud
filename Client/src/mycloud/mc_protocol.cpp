@@ -1,5 +1,7 @@
 #include "mc_protocol.h"
 
+using namespace std;
+
 /* These functions fill buf with the respective request body */
 
 void pack_auth(mc_buf *buf, string user, string passwd) {

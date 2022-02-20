@@ -11,6 +11,8 @@
 #include <io.h>
 #endif
 
+using namespace std;
+
 #ifdef MC_WATCHMODE
 #define NOTIFYFUNC(name)	int name(const string& path) {	\
 	int rc;												\

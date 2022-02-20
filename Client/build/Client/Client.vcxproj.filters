@@ -37,18 +37,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GeneratedFiles\Debug\moc_mc_srv.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_mc_srv.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_mc_workerthread.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_mc_workerthread.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
+    
+    
+    
+    
     <ClCompile Include="..\..\src\Client\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -100,12 +92,8 @@
     <ClCompile Include="..\..\src\mycloud\ReadDirectoryChanges\ReadDirectoryChangesPrivate.cpp">
       <Filter>Source Files\ReadDirectoryChanges</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_mc_watch.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_mc_watch.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
+    
+    
     <ClCompile Include="..\..\src\mycloud\mc_watch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -170,15 +158,15 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="..\..\src\mycloud\mc_workerthread.h">
+    <QtMoc Include="..\..\src\mycloud\mc_workerthread.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\..\src\mycloud\mc_srv.h">
+    </QtMoc>
+    <QtMoc Include="..\..\src\mycloud\mc_srv.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\..\src\mycloud\mc_watch.h">
+    </QtMoc>
+    <QtMoc Include="..\..\src\mycloud\mc_watch.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\Client\resource.rc">

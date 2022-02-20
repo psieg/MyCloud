@@ -18,31 +18,31 @@
 /* Choose a "smart" bufsize for e.g. md5 */
 size_t choosebufsize(size_t fsize);
 
-/* Convert a 128-bit hash to a hex string */
-string MD5BinToHex(unsigned char binhash[16]);
+/* Convert a 128-bit hash to a hex std::string */
+std::string MD5BinToHex(unsigned char binhash[16]);
 
-/* Convert a string of binary data to a hex string */
-string BinToHex(const string& data);
+/* Convert a std::string of binary data to a hex std::string */
+std::string BinToHex(const std::string& data);
 
-/* Calculate MD5 hash of string */
-int strmd5(unsigned char hash[16], const string& str);
+/* Calculate MD5 hash of std::string */
+int strmd5(unsigned char hash[16], const std::string& str);
 
-/* add a string identifying the file to s for hashing */
+/* add a std::string identifying the file to s for hashing */
 // Deprecated, use crypt_filestring
-//void filestring(mc_sync_ctx *ctx, mc_file *f, string *s);
+//void filestring(mc_sync_ctx *ctx, mc_file *f, std::string *s);
 
 /* add a slash behind the name if it's a dir */
-string printname(mc_file *f);
-string printname(mc_file_fs *f);
+std::string printname(mc_file *f);
+std::string printname(mc_file_fs *f);
 
 /* crop and add ... where necessary */
-string shortname(const string& s, size_t len);
+std::string shortname(const std::string& s, size_t len);
 
-string TimeToString(int64 time);
+std::string TimeToString(int64 time);
 //negative precision indicates dynamic (up to 2)
-string BytesToSize(int64 bytes, bool exact = true, int precision = 2);
+std::string BytesToSize(int64 bytes, bool exact = true, int precision = 2);
 
-string AddConflictExtension(string path);
+std::string AddConflictExtension(std::string path);
 
 #ifdef MC_OS_WIN
 int64 FileTimeToPosix(FILETIME ft);
@@ -57,10 +57,10 @@ void mc_sleepms(int ms);
 
 
 #ifdef MC_OS_WIN
-// Convert a wide Unicode string to an UTF8 string
+// Convert a wide Unicode std::string to an UTF8 std::string
 std::string unicode_to_utf8(const std::wstring &wstr);
 
-// Convert an UTF8 string to a wide Unicode String
+// Convert an UTF8 std::string to a wide Unicode String
 std::wstring utf8_to_unicode(const std::string &str);
 #endif
 

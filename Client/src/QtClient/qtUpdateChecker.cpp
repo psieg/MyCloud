@@ -147,7 +147,7 @@ int QtUpdateChecker::checkForUpdate() {
 	if (s.updatecheck >= 0) {
 		if (time(NULL)-s.updatecheck >= MC_UPDATEFREQ) {
 			MC_INF("Checking for updates");
-			sslconfig.setProtocol(QSsl::TlsV1SslV3);
+			sslconfig.setProtocol(QSsl::SecureProtocols);
 			sslconfig.setCaCertificates(QSslCertificate::fromData(MC_UPDATECERT_DATA));
 			req.setSslConfiguration(sslconfig);
 			req.setUrl(QUrl(MC_UPDATECHECKURL));

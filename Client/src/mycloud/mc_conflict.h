@@ -9,14 +9,14 @@
 
 /* Ask the user which of the conflicting versions he wants to keep, recommend doubtaction
 *	db may be NULL	*/
-int conflicted(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr, MC_CONFLICTRECOMMENDATION doubtaction);
+int conflicted(mc_sync_ctx *ctx, const std::string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, std::string *hashstr, MC_CONFLICTRECOMMENDATION doubtaction);
 /* Ask ...
 *	db may be null	*/
-int conflicted_nolocal(mc_sync_ctx *ctx, const string& path, mc_file *db, mc_file *srv, string *hashstr);
+int conflicted_nolocal(mc_sync_ctx *ctx, const std::string& path, mc_file *db, mc_file *srv, std::string *hashstr);
 
 /* Ask ...
 *	srv must be NULL or srv->status must be deleted	*/
-int conflicted_noremote(mc_sync_ctx *ctx, const string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, string *hashstr);
+int conflicted_noremote(mc_sync_ctx *ctx, const std::string& path, mc_file_fs *fs, mc_file *db, mc_file *srv, std::string *hashstr);
 
 
 #endif

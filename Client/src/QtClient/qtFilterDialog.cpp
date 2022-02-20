@@ -36,7 +36,7 @@ void QtFilterDialog::showEvent(QShowEvent *event) {
 
 void QtFilterDialog::accept() {
 	mc_sync_ctx ctx;
-	string cleanrule;
+	std::string cleanrule;
 	int rc;
 	if (!ui.filesBox->isChecked() && !ui.directoriesBox->isChecked()) {
 		QMessageBox b(this);

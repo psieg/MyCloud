@@ -1,7 +1,6 @@
 #include "qtSyncDialog.h"
 #include "qtClient.h"
 
-
 QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	: QDialog(parent)
 {
@@ -16,7 +15,7 @@ QtSyncDialog::QtSyncDialog(QWidget *parent, int editID)
 	ui.filterTable->setColumnWidth(1, 23);
 	ui.filterTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Fixed);
 	QFontMetrics fm(ui.filterTable->font()); 
-	ui.filterTable->setColumnWidth(2, fm.width(tr("MFull Name (regex)M")));
+	ui.filterTable->setColumnWidth(2, fm.horizontalAdvance(tr("MFull Name (regex)M")));
 	ui.filterTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
 	ui.fetchFilterLabel->setVisible(false);
 	ui.fetchShareLabel->setVisible(false);
@@ -148,7 +147,7 @@ void QtSyncDialog::syncListReceived(int rc) {
 	if (list.size() > 0) {
 		//add to ComboBox
 		i = 0;
-		srvsynclist = vector<mc_sync>(list.begin(), list.end());
+		srvsynclist = std::vector<mc_sync>(list.begin(), list.end());
 		for (mc_sync& s : srvsynclist) {
 			QString details;
 
@@ -531,7 +530,7 @@ void QtSyncDialog::userReceived(int rc) {
 }
 
 void QtSyncDialog::keyringReceived_actual(int rc) {
-	string keyringdata;
+	std::string keyringdata;
 	if (rc) {
 		reject();
 		return;
@@ -669,7 +668,7 @@ void QtSyncDialog::keyringReceivedAdding(int rc) {
 				keyring.push_back(newentry);
 			}
 
-			string keyringdata;
+			std::string keyringdata;
 			rc = crypt_keyring_tosrv(&keyring, keyringpass.toStdString(), &keyringdata);
 			if (rc) {
 				reject();
@@ -743,7 +742,7 @@ void QtSyncDialog::accept() {
 		}
 	}
 
-	string newpath = qPrintable(ui.pathEdit->text().replace("\\", "/"));
+	std::string newpath = qPrintable(ui.pathEdit->text().replace("\\", "/"));
 	if (newpath[newpath.length()-1] != '/') newpath.append("/");
 	if (worksync->path != "" && newpath != worksync->path) {
 		QMessageBox::warning(this, tr("Moving Syncs"), 
@@ -759,7 +758,7 @@ void QtSyncDialog::accept() {
 	if (rc == SQLITE_DONE) {
 		ui.statusLabel->setText(tr("<i>fetching user...</i>"));
 		connect(performer, SIGNAL(finished(int)), this, SLOT(userReceived(int)));
-		list<int> l;
+		std::list<int> l;
 		l.push_back(worksyncowner.id);
 		srv_idusers_async(&netibuf, &netobuf, performer, l);
 		//calls step2
@@ -779,8 +778,8 @@ void QtSyncDialog::accept_step2() {
 					tr("All zeroes is not a key. If you want a secure key generated for you, delete and recreate the Sync."));
 				return;
 			}
-			QRegExp hexMatcher("^[0-9A-F]{64}$", Qt::CaseInsensitive);
-			if (hexMatcher.exactMatch(ui.keyEdit->text())) {
+			const QRegularExpression hexMatcher("^[0-9A-F]{64}$", QRegularExpression::CaseInsensitiveOption);
+			if (hexMatcher.match(ui.keyEdit->text()).hasMatch()) {
 				QByteArray ckey = QByteArray::fromHex(ui.keyEdit->text().toLatin1());
 				if (memcmp(worksync->cryptkey, ckey.constData(), 32) != 0) {
 					memcpy(worksync->cryptkey, ckey.constData(), 32);

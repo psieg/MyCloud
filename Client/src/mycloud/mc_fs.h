@@ -23,41 +23,41 @@ enum MC_FILEACCESS : int {
 };
 
 /* For platform independence */
-FILE* fs_fopen(const string& filename, MC_FILEACCESS access);
+FILE* fs_fopen(const std::string& filename, MC_FILEACCESS access);
 int fs_fseek(FILE *f, int64 offset, int origin);
 int64 fs_ftell(FILE *f);
 int fs_fclose(FILE *f);
 
 /* Calculate (plain) MD5 hash of the file at fname */
-int fs_filemd5(unsigned char hash[16], const string& fpath, size_t fsize);
+int fs_filemd5(unsigned char hash[16], const std::string& fpath, size_t fsize);
 int fs_filemd5(unsigned char hash[16], size_t fsize, FILE *fdesc);
 
 /* Get stats of a file */
-int fs_filestats(mc_file_fs *file_fs, const string& fpath, const string& fname, bool fileMightBeGone = false);
+int fs_filestats(mc_file_fs *file_fs, const std::string& fpath, const std::string& fname, bool fileMightBeGone = false);
 
-/* List directory, expects / at end of path */
-int fs_listdir(list<mc_file_fs> *l, const string& path);
+/* list directory, expects / at end of path */
+int fs_listdir(std::list<mc_file_fs> *l, const std::string& path);
 
 /* Set mtime of a file */
-int fs_touch(const string& path, int64 mtime, int64 ctime = 0);
+int fs_touch(const std::string& path, int64 mtime, int64 ctime = 0);
 
 /* Create a directory */
-int fs_mkdir(const string& path);
-int fs_mkdir(const string& path, int64 mtime, int64 ctime = 0);
+int fs_mkdir(const std::string& path);
+int fs_mkdir(const std::string& path, int64 mtime, int64 ctime = 0);
 
 /* Rename a file */
-int fs_rename(const string& oldpath, const string& newpath);
+int fs_rename(const std::string& oldpath, const std::string& newpath);
 
 /* Delete a file */
-int fs_delfile(const string& path);
+int fs_delfile(const std::string& path);
 
 /* Delete a directory */
-int fs_rmdir(const string& path);
+int fs_rmdir(const std::string& path);
 
 /* Test wether a file exits (is readable) */
-bool fs_exists(const string& path);
+bool fs_exists(const std::string& path);
 
 /* Test wether a file is an existing directory */
-bool fs_isdir(const string& path);
+bool fs_isdir(const std::string& path);
 
 #endif /* MC_FS_H */

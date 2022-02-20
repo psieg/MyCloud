@@ -24,12 +24,14 @@ QtWatcher *QtWatcher::_instance = NULL;
 
 #endif
 
+using namespace std;
+
 #pragma region QtLocalWatcher
 
 QtLocalWatcher::QtLocalWatcher() {
 #ifdef MC_OS_WIN
 	watcher = new QtFileSystemWatcher();
-	connect(watcher->toQObject(), SIGNAL(pathChanged(const string&)), this, SLOT(pathChanged(const string&)));
+	connect(watcher->toQObject(), SIGNAL(pathChanged(const std::string&)), this, SLOT(pathChanged(const std::string&)));
 #else
 	watcher = new QFileSystemWatcher();
 	connect(watcher, SIGNAL(directoryChanged(const QString &)), this, SLOT(pathChanged(const QString &)));
@@ -283,7 +285,7 @@ QtWatcher::QtWatcher(const QString& url, const QString& certfile, bool acceptall
 	Q_ASSERT_X((QtWatcher::_instance == NULL), "QtWatcher", "There should only be one QtWatcher Instance");
 	QtWatcher::_instance = this;
 
-	connect(&localWatcher, SIGNAL(pathChanged(const mc_sync_db&, const string&)), this, SLOT(localChange(const mc_sync_db&, const string&)));
+	connect(&localWatcher, SIGNAL(pathChanged(const mc_sync_db&, const std::string&)), this, SLOT(localChange(const mc_sync_db&, const std::string&)));
 	connect(&remoteWatcher, SIGNAL(syncChanged(const mc_sync_db&)), this, SLOT(remoteChange(const mc_sync_db&)));
 
 	delaytimer.setSingleShot(true);

@@ -8,6 +8,8 @@
 #include "mc_conflict.h"
 #include "mc_helpers.h"
 
+using namespace std;
+
 /* Helper: catches the case when a file was purged but then restored with a new ID 
 *	this case may apply whenever db and srv are known */
 int checkidmismatch(mc_file *db, mc_file *srv) {

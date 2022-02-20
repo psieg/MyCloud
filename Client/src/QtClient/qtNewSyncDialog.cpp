@@ -62,7 +62,7 @@ void QtNewSyncDialog::accept() {
 	if (rc == SQLITE_DONE) { //unkown
 		ui.sendLabel->setText(tr("<i>fetching user...</i>"));
 		connect(performer, SIGNAL(finished(int)), this, SLOT(userReceived(int)));
-		list<int> l;
+		std::list<int> l;
 		l.push_back(s.uid);
 		srv_idusers_async(netibuf, netobuf, performer, l);
 	} else if (rc) {
@@ -83,7 +83,7 @@ void QtNewSyncDialog::userReceived(int rc) {
 		return;
 	}
 
-	list<mc_user> l;
+	std::list<mc_user> l;
 	rc = srv_idusers_process(netobuf, &l);
 	if (rc) {
 		reject();
@@ -135,7 +135,7 @@ void QtNewSyncDialog::replyReceived(int rc) {
 }
 
 void QtNewSyncDialog::keyringReceived(int rc) {
-	string keyringdata;
+	std::string keyringdata;
 	disconnect(performer, SIGNAL(finished(int)), this, SLOT(keyringReceived(int)));
 	if (rc) {
 		reject();

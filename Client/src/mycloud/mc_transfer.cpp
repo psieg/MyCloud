@@ -9,6 +9,8 @@
 
 #include "mc_helpers.h"
 
+using namespace std;
+
 /* The actions taken for a certain file. What to do is decided by walk.
 *	Note they may modify the mc_file(_fs) structs	*/
 

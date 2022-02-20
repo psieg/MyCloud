@@ -5,6 +5,8 @@
 #	endif
 #endif
 
+using namespace std;
+
 
 sqlite3 *db;
 QMutex db_mutex;

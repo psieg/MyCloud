@@ -14,12 +14,12 @@
 
 
 /* Walk through the files in this directory and sync them */
-int walk(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]);
+int walk(mc_sync_ctx *ctx, std::string path, int id, unsigned char hash[16]);
 /* The server has not been updated, thus db == srv */
-int walk_nochange(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]);
+int walk_nochange(mc_sync_ctx *ctx, std::string path, int id, unsigned char hash[16]);
 /* Files have been deleted locally, when downloading make sure to restore things properly */
-int walk_nolocal(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]);
+int walk_nolocal(mc_sync_ctx *ctx, std::string path, int id, unsigned char hash[16]);
 /* Files have been deleted remotely, when uploading make sure to restore things properly */
-int walk_noremote(mc_sync_ctx *ctx, string path, int id, unsigned char hash[16]);
+int walk_noremote(mc_sync_ctx *ctx, std::string path, int id, unsigned char hash[16]);
 
 #endif /* MC_WALK_H */

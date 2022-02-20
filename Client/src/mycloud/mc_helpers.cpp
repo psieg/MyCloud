@@ -3,6 +3,8 @@
 #	include "qtClient.h"
 #endif
 
+using namespace std;
+
 /* cascade up the tree and recalc hashes from db */
 int directoryHash(mc_sync_ctx *ctx, int id, unsigned char hash[16]) {
 	list<mc_file> l;

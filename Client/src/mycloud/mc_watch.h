@@ -21,25 +21,25 @@ public:
 	QtLocalWatcher();
 	~QtLocalWatcher();
 
-	int setScope(const list<mc_sync_db>& syncs);
+	int setScope(const std::list<mc_sync_db>& syncs);
 
 signals:
-	void pathChanged(const mc_sync_db& sync, const string& path);
+	void pathChanged(const mc_sync_db& sync, const std::string& path);
 
 protected:
-	list<mc_sync_db> syncs;
+	std::list<mc_sync_db> syncs;
 
 #ifdef MC_OS_WIN
 	QtFileSystemWatcher* watcher;
 protected slots:
-	void pathChanged(const string& path);
+	void pathChanged(const std::string& path);
 #else
 	QFileSystemWatcher* watcher;
 protected slots:
 	void pathChanged(const QString& path);
 #endif
 protected:
-	int recurseDirectory(string path, QStringList *l, int rdepth);
+	int recurseDirectory(std::string path, QStringList *l, int rdepth);
 };
 
 #ifdef MC_OS_WIN
@@ -54,10 +54,10 @@ public:
 
 	inline const QObject* toQObject() const { return this; }
 
-	void setScope(list<string>& paths);
+	void setScope(std::list<std::string>& paths);
 
 signals:
-	void pathChanged(const string& path);
+	void pathChanged(const std::string& path);
 
 protected:
 	virtual void run();
@@ -79,7 +79,7 @@ public:
 	QtRemoteWatcher(const QString& url, const QString& certfile, bool acceptall);
 	~QtRemoteWatcher();
 
-	void setScope(const list<mc_sync_db>& syncs);
+	void setScope(const std::list<mc_sync_db>& syncs);
 
 	void stop();
 
@@ -93,7 +93,7 @@ protected slots:
 	void remoteChange(int status);
 
 protected:
-	list<mc_sync_db> syncs;
+	std::list<mc_sync_db> syncs;
 	QtNetworkPerformer* performer;
 	mc_buf netibuf, netobuf;
 	QTimer restarttimer;
@@ -110,7 +110,7 @@ public:
 	~QtWatcher();
 	static QtWatcher* instance() { return _instance; }
 
-	int setScope(const list<mc_sync_db>& syncs);
+	int setScope(const std::list<mc_sync_db>& syncs);
 	int catchUpAndWatch(int timeout);
 
 	void beginExcludingLocally(const QString& path);
@@ -120,7 +120,7 @@ public:
 private slots:
 	void checkquit();
 	void endExcludingTimeout();
-	int localChange(const mc_sync_db& sync, const string& path);
+	int localChange(const mc_sync_db& sync, const std::string& path);
 	int localChangeTimeout();
 	int remoteChange(const mc_sync_db& sync);
 
@@ -133,12 +133,12 @@ private:
 	QtRemoteWatcher remoteWatcher;
 	QTimer quittimer, timetimer, delaytimer, excludetimer;
 	QEventLoop loop;
-	list<mc_sync_db> syncs;
+	std::list<mc_sync_db> syncs;
 	QMutex exclusionMutex;
 	QStringList excludedPaths;
 	QStringList pendingUnExcludes;
-	map<int, QStringList> changedPaths;
-	map<int, list<mc_filter>> filters;
+	std::map<int, QStringList> changedPaths;
+	std::map<int, std::list<mc_filter>> filters;
 	bool watching;
 };
 
